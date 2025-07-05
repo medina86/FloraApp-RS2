@@ -1,0 +1,6 @@
+@FloraAPI_HostAddress = http://localhost:5014
+
+GET {{FloraAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
