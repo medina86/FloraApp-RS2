@@ -30,6 +30,7 @@ builder.Services.AddAuthentication("BasicAuthentication")
 builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
+builder.Services.AddTransient<ICategoryService, CategoryService>();
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();

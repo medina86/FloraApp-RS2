@@ -36,7 +36,7 @@ namespace Flora.Services.Services
 
             if (!string.IsNullOrEmpty(search.LastName))
             {
-                query = query.Where(u => u.FirstName.Contains(search.LastName));
+                query = query.Where(u => u.LastName.Contains(search.LastName));
             }
 
             if (!string.IsNullOrEmpty(search.Email))
