@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flora_mobile_app/layouts/constants.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final int userId;
@@ -27,7 +28,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _loadUserData() async {
     final url = Uri.parse(
-      'http://192.168.1.102:5014/api/Users/${widget.userId}',
+      '$baseUrl/api/Users/${widget.userId}',
     );
     final response = await http.get(url);
 
@@ -42,45 +43,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
     }
   }
+Future<void> _updateProfile() async {
+  final url = Uri.parse(
+    '$baseUrl/Users/${widget.userId}',
+  );
 
-  Future<void> _updateProfile() async {
-    final url = Uri.parse(
-      'http://192.168.1.102:5014/api/Users/${widget.userId}',
-    );
+  final body = jsonEncode({
+    'firstName': _firstName.text,
+    'lastName': _lastName.text,
+    'email': _email.text,
+    'username': _username.text,
+    'phoneNumber': _phone.text,
+    'isActive': true,
+    'password': _password.text.isNotEmpty ? _password.text : null,
+    'roleIds': [2],
+  });
 
-    final body = jsonEncode({
-      'firstName': _firstName.text,
-      'lastName': _lastName.text,
-      'email': _email.text,
-      'username': _username.text,
-      'phoneNumber': _phone.text,
-      'isActive': true,
-      'password': _password.text.isNotEmpty ? _password.text : null,
-      'roleIds': [2],
-    });
+  final response = await http.put(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: body,
+  );
 
-    final response = await http.put(url, body: body);
-
-    if (response.statusCode == 200) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("Uspješno"),
-            content: const Text("Podaci su uspješno izmijenjeni."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
-              ),
-            ],
+if (response.statusCode == 200) {
+  if (mounted) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Uspješno"),
+        content: const Text("Podaci su uspješno izmijenjeni."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, true), 
+            child: const Text("OK"),
           ),
-        );
-      }
-    } else {
-      print(response.body);
-    }
+        ],
+      ),
+    );
   }
+}
+
+}
+
 
   @override
   Widget build(BuildContext context) {

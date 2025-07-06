@@ -29,9 +29,14 @@ namespace Flora.Services.Services
         {
             var query = _context.Users.AsQueryable();
 
-            if (!string.IsNullOrEmpty(search.Username))
+            if (!string.IsNullOrEmpty(search.FirstName))
             {
-                query = query.Where(u => u.Username.Contains(search.Username));
+                query = query.Where(u => u.FirstName.Contains(search.FirstName));
+            }
+
+            if (!string.IsNullOrEmpty(search.LastName))
+            {
+                query = query.Where(u => u.FirstName.Contains(search.LastName));
             }
 
             if (!string.IsNullOrEmpty(search.Email))
@@ -212,7 +217,8 @@ namespace Flora.Services.Services
                 PhoneNumber = user.PhoneNumber,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt
+                LastLoginAt = user.LastLoginAt,
+                ProfileImageUrl = user.ProfileImageUrl,
             };
         }
 

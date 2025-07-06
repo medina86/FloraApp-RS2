@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flora_mobile_app/layouts/constants.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -21,7 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final url = Uri.parse('http://192.168.1.102:5014/api/Users');
+    final url = Uri.parse('$baseUrl:5014/api/Users');
 
     final body = jsonEncode({
       'firstName': _firstName.text,

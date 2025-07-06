@@ -5,6 +5,7 @@ import 'package:flora_mobile_app/screens/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/providers/auth_provider.dart';
+import 'package:flora_mobile_app/layouts/constants.dart';
 
 void main() {
   runApp(const MyApp());
@@ -58,7 +59,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      final url = Uri.parse('http://192.168.1.102:5014/api/Users/login');
+      final url = Uri.parse('$baseUrl/Users/login');
 
       final response = await http.post(
         url,
