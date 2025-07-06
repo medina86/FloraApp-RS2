@@ -13,6 +13,11 @@ namespace Flora.Services.Database
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Categories> Categories { get; set; }
+        public DbSet<Product>Products { get; set; }
+        public DbSet<ProductImages>ProductImages { get; set; }
+        public DbSet<Occasion> Occasions {  get; set; }   
+                            
+
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -45,6 +50,11 @@ namespace Flora.Services.Database
             modelBuilder.Entity<UserRole>()
                 .HasIndex(ur => new { ur.UserId, ur.RoleId })
                 .IsUnique();
+            modelBuilder.Entity<Occasion>().HasData(
+                new Occasion { OccasionId = 1, Name = "Birthday" },
+                new Occasion { OccasionId = 2, Name = "Weeding" },
+                new Occasion { OccasionId = 3, Name = "Graduation" }
+            );
         }
     }
     }

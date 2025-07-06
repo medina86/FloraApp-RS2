@@ -4,6 +4,7 @@ using Flora.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Flora.Services.Migrations
 {
     [DbContext(typeof(FLoraDbContext))]
-    partial class FLoraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706214309_Occasion")]
+    partial class Occasion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,24 +61,7 @@ namespace Flora.Services.Migrations
 
                     b.HasKey("OccasionId");
 
-                    b.ToTable("Occasions");
-
-                    b.HasData(
-                        new
-                        {
-                            OccasionId = 1,
-                            Name = "Birthday"
-                        },
-                        new
-                        {
-                            OccasionId = 2,
-                            Name = "Weeding"
-                        },
-                        new
-                        {
-                            OccasionId = 3,
-                            Name = "Graduation"
-                        });
+                    b.ToTable("Occasion");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Product", b =>

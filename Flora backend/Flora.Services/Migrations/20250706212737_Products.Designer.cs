@@ -4,6 +4,7 @@ using Flora.Services.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Flora.Services.Migrations
 {
     [DbContext(typeof(FLoraDbContext))]
-    partial class FLoraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706212737_Products")]
+    partial class Products
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -44,40 +47,6 @@ namespace Flora.Services.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("Flora.Services.Database.Occasion", b =>
-                {
-                    b.Property<int>("OccasionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OccasionId"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("OccasionId");
-
-                    b.ToTable("Occasions");
-
-                    b.HasData(
-                        new
-                        {
-                            OccasionId = 1,
-                            Name = "Birthday"
-                        },
-                        new
-                        {
-                            OccasionId = 2,
-                            Name = "Weeding"
-                        },
-                        new
-                        {
-                            OccasionId = 3,
-                            Name = "Graduation"
-                        });
-                });
-
             modelBuilder.Entity("Flora.Services.Database.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -92,19 +61,10 @@ namespace Flora.Services.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsFeatured")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsNew")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("OccasionId")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
@@ -112,8 +72,6 @@ namespace Flora.Services.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
-
-                    b.HasIndex("OccasionId");
 
                     b.ToTable("Products");
                 });
@@ -269,13 +227,7 @@ namespace Flora.Services.Migrations
                         .WithMany()
                         .HasForeignKey("CategoryId");
 
-                    b.HasOne("Flora.Services.Database.Occasion", "Occasion")
-                        .WithMany("Products")
-                        .HasForeignKey("OccasionId");
-
                     b.Navigation("Category");
-
-                    b.Navigation("Occasion");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.ProductImages", b =>
@@ -306,11 +258,6 @@ namespace Flora.Services.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Flora.Services.Database.Occasion", b =>
-                {
-                    b.Navigation("Products");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Product", b =>

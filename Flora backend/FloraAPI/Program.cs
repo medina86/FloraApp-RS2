@@ -1,4 +1,5 @@
 using eCommerce.Services.Database;
+using Flora.Models.Requests;
 using Flora.Services;
 using Flora.Services.Database;
 using Flora.Services.Interfaces;
@@ -18,7 +19,8 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 builder.Services.AddMapster();
-
+TypeAdapterConfig<ProductRequest, Product>.NewConfig()
+    .Ignore(dest => dest.Images);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDatabaseServices(connectionString);
 
@@ -31,6 +33,7 @@ builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
+builder.Services.AddTransient<IProductService,ProductService>();    
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
