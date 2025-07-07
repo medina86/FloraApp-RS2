@@ -1,4 +1,5 @@
 import 'package:flora_desktop_app/screens/dashboard_screen.dart';
+import 'package:flora_desktop_app/screens/product_screen.dart';
 import 'package:flora_desktop_app/screens/user_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -6,13 +7,6 @@ class OrdersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(child: Text("Orders Page", style: TextStyle(fontSize: 24)));
-  }
-}
-
-class ProductsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("Products Page", style: TextStyle(fontSize: 24)));
   }
 }
 
@@ -171,6 +165,11 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                       onNavigateToUsers: () {
                         setState(() {
                           _selectedIndex = 7;
+                        });
+                      },
+                      onNavigateToProducts: () {
+                        setState(() {
+                          _selectedIndex = 2;
                         });
                       },
                     )

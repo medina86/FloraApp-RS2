@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 class AdminDashboard extends StatelessWidget {
   final VoidCallback? onNavigateToUsers;
+final VoidCallback? onNavigateToProducts;
 
-  const AdminDashboard({Key? key, this.onNavigateToUsers}) : super(key: key);
+  const AdminDashboard({Key? key, this.onNavigateToUsers, this.onNavigateToProducts}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +22,15 @@ class AdminDashboard extends StatelessWidget {
             "Check new orders",
             Color.fromARGB(255, 137, 20, 82),
           ),
-          _buildCard(
+           _buildCard(
             "Products",
             "Add, edit and delete products",
             Color.fromARGB(255, 137, 20, 82),
+            onTap: () {
+              if (onNavigateToProducts != null) {
+                onNavigateToProducts!();
+              }
+            },
           ),
           _buildCard(
             "Donations",

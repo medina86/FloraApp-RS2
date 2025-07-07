@@ -60,6 +60,16 @@ namespace FloraAPI.Controllers
             var result = products.Select(p => _mapper.Map<ProductResponse>(p)).ToList();
             return Ok(result);
         }
+        [HttpPost("{productId}/upload-images")]
+        public async Task<IActionResult> UploadMultipleImages(int productId, [FromForm] List<IFormFile> files)
+        {
+            if (files == null || files.Count == 0)
+                return BadRequest("No files uploaded.");
+
+            var urls = await _productService.UploadMultipleImages(productId, files);
+
+            return Ok(urls); 
+        }
 
     }
 }

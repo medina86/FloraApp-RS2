@@ -4,8 +4,9 @@
     using Flora.Services.Database;
     using Flora.Services.Interfaces;
     using MapsterMapper;
-    using Microsoft.EntityFrameworkCore;
-    using System;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -15,8 +16,11 @@
     {
         public class ProductService : BaseCRUDService<ProductResponse, ProductSearchObject, Database.Product, ProductRequest, ProductRequest>, IProductService
         {
-            public ProductService(FLoraDbContext context, IMapper mapper) : base(context, mapper)
+
+        private readonly IBlobService _blobService;
+        public ProductService(FLoraDbContext context, IMapper mapper,IBlobService bls) : base(context, mapper)
             {
+            _blobService = bls;
             }
             protected override IQueryable<Product> ApplyFilter(IQueryable<Product> query, ProductSearchObject search)
             {
@@ -102,6 +106,34 @@
             response.CategoryName = entity.Category?.Name;
             response.OccasionName = entity.Occasion?.Name;
             return response;
+        }
+        public async Task<List<string>> UploadMultipleImages(int productId, List<IFormFile> files)
+        {
+            var product = await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == productId);
+
+            if (product == null)
+                throw new Exception("Product not found.");
+
+            var urls = new List<string>();
+
+            foreach (var file in files)
+            {
+                var imageUrl = await _blobService.UploadFileAsync(file);
+
+                var productImage = new ProductImages
+                {
+                    ProductId = productId,
+                    ImageUrl = imageUrl
+                };
+
+                product.Images.Add(productImage);
+                urls.Add(imageUrl);
+            }
+
+            await _context.SaveChangesAsync();
+            return urls;
         }
 
 
