@@ -24,9 +24,10 @@ using System;
             }
             protected override IQueryable<Product> ApplyFilter(IQueryable<Product> query, ProductSearchObject search)
             {
-                   query = query
-               .Include(p => p.Category)
-               .Include(p => p.Occasion);
+            query = query
+        .Include(p => p.Category)
+        .Include(p => p.Occasion)
+     .Include(p => p.Images);
 
 
             if (!string.IsNullOrEmpty(search.Name))
@@ -42,8 +43,19 @@ using System;
                 {
                     query=query.Where(p=>p.Price<=search.MaxPrice.Value && p.Price>=search.MinPrice);
                 }
+            if (search.Active)
+            {
+                query = query.Where(p => p.Active == search.Active);
+            }
+            
 
-                return query;
+            if (search.IsAvailable)
+            {
+                query = query.Where(p => p.IsAvailable == search.IsAvailable);
+            }
+
+
+            return query;
             }
             protected override async Task BeforeInsert(Product entity, ProductRequest request)
             {
@@ -105,6 +117,7 @@ using System;
             var response = base.MapToResponse(entity);
             response.CategoryName = entity.Category?.Name;
             response.OccasionName = entity.Occasion?.Name;
+            response.ImageUrls = entity.Images?.Select(i => i.ImageUrl).ToList() ?? new();
             return response;
         }
         public async Task<List<string>> UploadMultipleImages(int productId, List<IFormFile> files)
@@ -135,7 +148,19 @@ using System;
             await _context.SaveChangesAsync();
             return urls;
         }
+        public async Task<List<string>> GetImagesForProduct(int productId)
+        {
+            var product = await _context.Products
+                .Include(p => p.Images)
+                .FirstOrDefaultAsync(p => p.Id == productId);
 
+            if (product == null)
+                throw new Exception("Product not found.");
+
+            return product.Images
+                .Select(img => img.ImageUrl)
+                .ToList();
+        }
 
     }
 

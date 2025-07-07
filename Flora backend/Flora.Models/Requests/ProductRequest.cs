@@ -22,6 +22,8 @@ namespace Flora.Models.Requests
         public bool IsNew { get; set; } = false;
         public bool IsFeatured { get; set; } = false;
         public int? OccasionId { get; set; }
+        public bool Active { get; set; } = true;
+        public bool IsAvailable { get; set; } = true;
     }
 
 }

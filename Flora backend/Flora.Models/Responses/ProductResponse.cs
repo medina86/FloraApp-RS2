@@ -19,6 +19,9 @@ namespace Flora.Models.Responses
         public bool IsFeatured { get; set; } = false;
         public int? OccasionId { get; set; }
         public string? OccasionName { get; set; }
+        public bool Active { get; set; }
+        public bool IsAvailable { get; set; }
+
     }
 
 }

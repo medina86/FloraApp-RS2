@@ -18,6 +18,7 @@
             Task<List<Product>> GetFeaturedProductsAsync();
             Task<List<Product>> GetByOccasionAsync(int occasionId);
             Task<List<string>> UploadMultipleImages(int productId, List<IFormFile> files);
+            Task<List<string>>GetImagesForProduct(int productId);
 
         }
     }

@@ -27,5 +27,7 @@ namespace Flora.Services.Database
         public bool IsFeatured { get; set; } = false;
         public int? OccasionId { get; set; } 
         public Occasion? Occasion { get; set; }
+        public bool Active { get; set; } = true;
+        public bool IsAvailable { get; set; } = true;
     }
 }
