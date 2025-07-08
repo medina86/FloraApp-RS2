@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/admin_login_screen.dart'; 
+import 'screens/admin_login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,10 +13,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flora Admin Panel',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.pink,
-      ),
-      home: const AdminLoginScreen(), // 👈 Login je prva stranica
+      theme: ThemeData(primarySwatch: Colors.pink),
+      home: const AdminLoginScreen(),
     );
   }
 }

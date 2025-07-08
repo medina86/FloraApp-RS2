@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
       title: 'Flora App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 154, 39, 120),
+          seedColor: const Color.fromARGB(255, 172, 36, 84),
         ),
       ),
       home: const LoginPage(),
