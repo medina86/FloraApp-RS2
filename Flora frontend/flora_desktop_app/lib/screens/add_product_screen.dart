@@ -6,9 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flora_desktop_app/layouts/constants.dart';
 import 'package:flora_desktop_app/providers/product_provider.dart';
 
+
 class AddProductPage extends StatefulWidget {
   final List<Category> categories;
-
   const AddProductPage({Key? key, required this.categories}) : super(key: key);
 
   @override
@@ -19,15 +19,55 @@ class _AddProductPageState extends State<AddProductPage> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
-
   int? selectedCategoryId;
+  int? selectedOccasionId; 
   bool isNew = false;
   bool isFeatured = false;
   bool active = true;
   bool isAvailable = true;
   List<File> selectedImages = [];
   bool isUploadingImages = false;
+  
 
+  List<Occasion> occasions = [];
+  bool occasionsLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOccasions(); 
+  }
+Future<void> _fetchOccasions() async {
+  try {
+    final response = await http.get(Uri.parse('$baseUrl/Occasion'));
+    
+    print('Response status: ${response.statusCode}'); 
+    print('Response body: ${response.body}'); 
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      
+      final List<dynamic> items = jsonResponse['items'] ?? [];
+      
+      setState(() {
+        occasions = items.map((json) => Occasion.fromJson(json)).toList();
+        occasionsLoading = false;
+      });
+      
+      print('Loaded ${occasions.length} occasions'); 
+    } else {
+      setState(() {
+        occasionsLoading = false;
+      });
+      print('Failed to load occasions: ${response.statusCode}');
+    }
+  } catch (e) {
+    setState(() {
+      occasionsLoading = false;
+    });
+    print('Error fetching occasions: $e');
+  }
+}
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
@@ -35,7 +75,6 @@ class _AddProductPageState extends State<AddProductPage> {
       maxHeight: 1024,
       imageQuality: 85,
     );
-
     if (images.isNotEmpty) {
       setState(() {
         for (var image in images) {
@@ -44,7 +83,6 @@ class _AddProductPageState extends State<AddProductPage> {
           }
         }
       });
-
       if (images.length + selectedImages.length > 5) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -61,21 +99,17 @@ class _AddProductPageState extends State<AddProductPage> {
     int productId,
   ) async {
     List<String> uploadedUrls = [];
-
     for (File imageFile in imageFiles) {
       try {
         var request = http.MultipartRequest(
           'POST',
           Uri.parse('$baseUrl/Product/$productId/upload-images'),
         );
-
         request.files.add(
           await http.MultipartFile.fromPath('files', imageFile.path),
         );
-
         var response = await request.send();
         var responseData = await response.stream.bytesToString();
-
         if (response.statusCode == 200) {
           final List<dynamic> urls = json.decode(responseData);
           if (urls.isNotEmpty) {
@@ -86,7 +120,6 @@ class _AddProductPageState extends State<AddProductPage> {
         print('Error uploading image: $e');
       }
     }
-
     return uploadedUrls;
   }
 
@@ -99,10 +132,11 @@ class _AddProductPageState extends State<AddProductPage> {
             : _descriptionController.text.trim(),
         'price': double.parse(_priceController.text),
         'categoryId': selectedCategoryId,
+        'occasionId': selectedOccasionId, // DODANO - može biti null
         'isNew': isNew,
         'isFeatured': isFeatured,
-        'active': active, // NOVO
-        'isAvailable': isAvailable, // NOVO
+        'active': active,
+        'isAvailable': isAvailable,
         'imageUrls': <String>[],
       };
 
@@ -120,9 +154,7 @@ class _AddProductPageState extends State<AddProductPage> {
           setState(() {
             isUploadingImages = true;
           });
-
           await uploadImages(selectedImages, productId);
-
           setState(() {
             isUploadingImages = false;
           });
@@ -134,7 +166,6 @@ class _AddProductPageState extends State<AddProductPage> {
             backgroundColor: Colors.green,
           ),
         );
-
         Navigator.pop(context, true);
       } else {
         throw Exception('Failed to create product: ${response.statusCode}');
@@ -201,7 +232,6 @@ class _AddProductPageState extends State<AddProductPage> {
   Widget _buildImageGrid() {
     return Column(
       children: [
-        // Grid slika
         GridView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
@@ -215,18 +245,12 @@ class _AddProductPageState extends State<AddProductPage> {
               selectedImages.length + (selectedImages.length < 5 ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == selectedImages.length) {
-              // Add button
               return _buildAddMoreButton();
             }
-
-            // Image item
             return _buildImageItem(selectedImages[index], index);
           },
         ),
-
         SizedBox(height: 8),
-
-        // Info text
         Text(
           '${selectedImages.length}/5 images selected',
           style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
@@ -285,7 +309,6 @@ class _AddProductPageState extends State<AddProductPage> {
       ),
       child: Stack(
         children: [
-          // Slika
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: Image.file(
@@ -295,8 +318,6 @@ class _AddProductPageState extends State<AddProductPage> {
               fit: BoxFit.cover,
             ),
           ),
-
-          // Primary badge
           if (index == 0)
             Positioned(
               top: 4,
@@ -317,8 +338,6 @@ class _AddProductPageState extends State<AddProductPage> {
                 ),
               ),
             ),
-
-          // Delete button
           Positioned(
             top: 4,
             right: 4,
@@ -345,7 +364,6 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
           ),
-
           Positioned(
             bottom: 4,
             right: 4,
@@ -389,8 +407,6 @@ class _AddProductPageState extends State<AddProductPage> {
               ],
             ),
             SizedBox(height: 30),
-
-            // Form
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -435,7 +451,7 @@ class _AddProductPageState extends State<AddProductPage> {
                               child: DropdownButton<int>(
                                 value: selectedCategoryId,
                                 hint: Text(
-                                  'Category',
+                                  'Select Category',
                                   style: TextStyle(color: Colors.grey.shade600),
                                 ),
                                 underline: SizedBox(),
@@ -452,6 +468,80 @@ class _AddProductPageState extends State<AddProductPage> {
                                   });
                                 },
                               ),
+                            ),
+                            SizedBox(height: 24),
+
+                            // DODANO - Occasion dropdown
+                            Text(
+                              'Occasion (Optional)',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFFE91E63),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: occasionsLoading
+                                  ? Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                Color(0xFFE91E63),
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text('Loading occasions...'),
+                                        ],
+                                      ),
+                                    )
+                                  : DropdownButton<int>(
+                                      value: selectedOccasionId,
+                                      hint: Text(
+                                        'Select Occasion (Optional)',
+                                        style: TextStyle(color: Colors.grey.shade600),
+                                      ),
+                                      underline: SizedBox(),
+                                      isExpanded: true,
+                                      items: [
+                                        // "None" opcija
+                                        DropdownMenuItem<int>(
+                                          value: null,
+                                          child: Text(
+                                            'None',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                        // Occasions iz baze
+                                        ...occasions.map((occasion) {
+                                          return DropdownMenuItem<int>(
+                                            value: occasion.occasionId,
+                                            child: Text(occasion.name),
+                                          );
+                                        }).toList(),
+                                      ],
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedOccasionId = value;
+                                        });
+                                      },
+                                    ),
                             ),
                             SizedBox(height: 24),
 
@@ -530,8 +620,7 @@ class _AddProductPageState extends State<AddProductPage> {
                         ),
                       ),
                       SizedBox(width: 40),
-
-                      // Right Column
+                      // Right Column - ostaje isto kao prije
                       Expanded(
                         flex: 1,
                         child: Column(
@@ -572,7 +661,6 @@ class _AddProductPageState extends State<AddProductPage> {
                               ),
                             ),
                             SizedBox(height: 24),
-
                             Text(
                               'Status:',
                               style: TextStyle(
@@ -582,7 +670,6 @@ class _AddProductPageState extends State<AddProductPage> {
                               ),
                             ),
                             SizedBox(height: 8),
-
                             Row(
                               children: [
                                 Expanded(
@@ -619,7 +706,6 @@ class _AddProductPageState extends State<AddProductPage> {
                                 ),
                               ],
                             ),
-
                             Row(
                               children: [
                                 Expanded(
@@ -656,9 +742,7 @@ class _AddProductPageState extends State<AddProductPage> {
                                 ),
                               ],
                             ),
-
                             SizedBox(height: 24),
-
                             // Product images
                             Text(
                               'Product images',
@@ -669,8 +753,6 @@ class _AddProductPageState extends State<AddProductPage> {
                               ),
                             ),
                             SizedBox(height: 8),
-
-                            // Grid za prikaz slika
                             Container(
                               width: double.infinity,
                               constraints: BoxConstraints(minHeight: 120),
@@ -678,9 +760,7 @@ class _AddProductPageState extends State<AddProductPage> {
                                   ? _buildAddImageButton()
                                   : _buildImageGrid(),
                             ),
-
                             SizedBox(height: 30),
-
                             // CREATE Button
                             SizedBox(
                               width: double.infinity,
@@ -713,7 +793,6 @@ class _AddProductPageState extends State<AddProductPage> {
                                           );
                                           return;
                                         }
-
                                         if (_priceController.text
                                             .trim()
                                             .isEmpty) {
@@ -729,7 +808,6 @@ class _AddProductPageState extends State<AddProductPage> {
                                           );
                                           return;
                                         }
-
                                         if (selectedCategoryId == null) {
                                           ScaffoldMessenger.of(
                                             context,
@@ -743,7 +821,6 @@ class _AddProductPageState extends State<AddProductPage> {
                                           );
                                           return;
                                         }
-
                                         final price = double.tryParse(
                                           _priceController.text,
                                         );

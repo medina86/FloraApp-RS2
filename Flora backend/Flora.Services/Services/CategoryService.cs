@@ -4,18 +4,25 @@ using Flora.Models.SearchObjects;
 using Flora.Services.Database;
 using Flora.Services.Interfaces;
 using MapsterMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Flora.Services.Services
 {
     public class CategoryService : BaseCRUDService<CategoryResponse, CategorySearchObject, Database.Categories, CategoryRequest, CategoryRequest>, ICategoryService
     {
-        public CategoryService(FLoraDbContext context, IMapper mapper): base(context,mapper) { 
+        private readonly IBlobService _blobService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public CategoryService(FLoraDbContext context, IMapper mapper, IBlobService blobService, IHttpContextAccessor httpContextAccessor) : base(context, mapper)
+        {
+            _blobService = blobService;
+            _httpContextAccessor = httpContextAccessor;
         }
         protected override IQueryable<Database.Categories> ApplyFilter(IQueryable<Database.Categories> query, CategorySearchObject search)
         {
@@ -42,5 +49,33 @@ namespace Flora.Services.Services
                 throw new InvalidOperationException("A category with this name already exists.");
             }
         }
+        public override async Task<CategoryResponse> CreateAsync(CategoryRequest request)
+        {
+            var entity = new Categories
+            {
+                Name = request.Name,
+                Description = request.Description,
+                CategoryImageUrl = request.CategoryImageUrl
+            };
+
+            await BeforeInsert(entity, request);
+
+            _context.Categories.Add(entity);
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<CategoryResponse>(entity);
+        }
+        protected override Categories MapInsertToEntity(Categories entity, CategoryRequest request)
+        {
+            entity = base.MapInsertToEntity(entity, request);
+
+            entity.CategoryImageUrl = request.CategoryImageUrl;
+
+            return entity;
+        }
+
     }
+
+
 }
+

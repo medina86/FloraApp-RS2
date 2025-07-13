@@ -1,5 +1,7 @@
 import 'package:flora_mobile_app/layouts/constants.dart';
+import 'package:flora_mobile_app/layouts/main_layout.dart'; // DODANO - potrebno za navigaciju
 import 'package:flora_mobile_app/models/product_model.dart';
+import 'package:flora_mobile_app/screens/selected_category_products_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -7,7 +9,6 @@ import 'categories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int userId;
-
   const HomeScreen({super.key, required this.userId});
 
   @override
@@ -28,7 +29,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final response = await http.get(
       Uri.parse('$baseUrl/Product/product_image_$productId'),
     );
-
     if (response.statusCode == 200) {
       final List<dynamic> imagesJson = json.decode(response.body);
       return imagesJson.map((e) => e.toString()).toList();
@@ -39,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchFeaturedProducts() async {
     final response = await http.get(Uri.parse('$baseUrl/Product/featured'));
-
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Product> products = jsonData
@@ -140,7 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-
     if (featuredProducts.isEmpty) {
       return const Center(child: Text("No featured products"));
     }
@@ -163,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       : const NetworkImage(
                           'https://via.placeholder.com/400x200',
                         ),
-
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
                     const Color(0xFFE91E63).withOpacity(0.1),
@@ -196,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: () {
-                        //product
+                        MainLayout.of(context)?.openProductScreen(product);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -240,29 +237,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFE91E63),
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CategoriesScreen()),
-                  );
-                },
-                child: Icon(
-
-                  Icons.arrow_forward_ios,
-                  color: Color(0xFFE91E63),
-                  size: 16,
-                ),
-              ),
             ],
           ),
           SizedBox(height: 15),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildCategoryItem('Bouquet', Icons.local_florist),
-              _buildCategoryItem('Box', Icons.card_giftcard),
-              _buildCategoryItem('Domes', Icons.home),
+              _buildCategoryItem('Bouquet', Icons.local_florist, context),
+              _buildCategoryItem('Box', Icons.card_giftcard, context),
+              _buildCategoryItem('Domes', Icons.home, context),
             ],
           ),
         ],
@@ -270,35 +253,40 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCategoryItem(String title, IconData icon) {
-    return Column(
-      children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: Offset(0, 2),
-              ),
-            ],
+  Widget _buildCategoryItem(String title, IconData icon, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        MainLayout.of(context)?.openCategoryScreen(0, title);
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Color(0xFFE91E63), size: 30),
           ),
-          child: Icon(icon, color: Color(0xFFE91E63), size: 30),
-        ),
-        SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+          SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -336,27 +324,32 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildOccasionItem(String title, IconData icon) {
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Color(0xFFE91E63).withOpacity(0.1),
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        MainLayout.of(context)?.openOccasionScreen(title);
+      },
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Color(0xFFE91E63).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Color(0xFFE91E63), size: 25),
           ),
-          child: Icon(icon, color: Color(0xFFE91E63), size: 25),
-        ),
-        SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+          SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey[700],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

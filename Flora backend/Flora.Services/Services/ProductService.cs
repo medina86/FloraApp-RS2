@@ -25,11 +25,19 @@ using System;
             protected override IQueryable<Product> ApplyFilter(IQueryable<Product> query, ProductSearchObject search)
             {
             query = query
-        .Include(p => p.Category)
+                    .Include(p => p.Category)
         .Include(p => p.Occasion)
      .Include(p => p.Images);
-
-
+            if (!string.IsNullOrEmpty(search.OccasionName))
+            {
+                var lowerOccasionName = search.OccasionName.ToLower();
+                query = query.Where(p => p.Occasion != null && p.Occasion.Name.ToLower() == lowerOccasionName);
+            }
+            if (!string.IsNullOrEmpty(search.CategoryName))
+            {
+                var lowerOccasionName = search.CategoryName.ToLower();
+                query = query.Where(p => p.Category != null && p.Category.Name.ToLower() == lowerOccasionName);
+            }
             if (!string.IsNullOrEmpty(search.Name))
                 {
                     query = query.Where(p => p.Name.Contains(search.Name));
@@ -93,12 +101,19 @@ using System;
                     .ToListAsync();
             }
 
-            public async Task<List<Product>> GetByOccasionAsync(int occasionId)
-            {
-                return await _context.Products
-                    .Where(p => p.OccasionId == occasionId)
-                    .ToListAsync();
-            }
+        public async Task<List<Product>> GetByOccasionAsync(string occasionName)
+        {
+            return await _context.Products
+                .Include(p => p.Occasion)
+                .Include(p => p.Images)
+                .Include(p => p.Category)
+                .Where(p => p.Occasion != null &&
+                            p.Occasion.Name.ToLower() == occasionName.ToLower())
+                .Where(p => p.Active && p.IsAvailable)
+                .ToListAsync();
+        }
+
+
         protected override Product MapInsertToEntity(Product entity, ProductRequest request)
         {
             entity = base.MapInsertToEntity(entity, request);
@@ -161,7 +176,10 @@ using System;
                 .Select(img => img.ImageUrl)
                 .ToList();
         }
-
+        public ProductResponse MapProductToResponse(Product entity)
+        {
+            return MapToResponse(entity);
+        }
     }
 
 }

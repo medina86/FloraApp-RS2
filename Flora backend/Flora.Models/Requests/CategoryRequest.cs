@@ -15,5 +15,6 @@ namespace Flora.Models.Requests
 
         [MaxLength(500)]
         public string? Description { get; set; }
+        public string? CategoryImageUrl { get; set; }
     }
 }

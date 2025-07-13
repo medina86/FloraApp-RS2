@@ -16,7 +16,7 @@
             Task<List<Product>> GetByCategoryIdAsync(int categoryId);
             Task<List<Product>> GetNewProductsAsync();
             Task<List<Product>> GetFeaturedProductsAsync();
-            Task<List<Product>> GetByOccasionAsync(int occasionId);
+            Task<List<Product>> GetByOccasionAsync(string name);
             Task<List<string>> UploadMultipleImages(int productId, List<IFormFile> files);
             Task<List<string>>GetImagesForProduct(int productId);
 

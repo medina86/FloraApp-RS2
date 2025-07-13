@@ -33,7 +33,10 @@ builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
-builder.Services.AddTransient<IProductService,ProductService>();    
+builder.Services.AddTransient<IProductService,ProductService>();
+builder.Services.AddScoped<IOccasionService, OccasionService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
@@ -64,7 +67,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
-
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 app.UseCors("AllowAll");
@@ -87,6 +90,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12:5014");
+app.Run("http://192.168.0.12 :5014");
 
 //app.Run();

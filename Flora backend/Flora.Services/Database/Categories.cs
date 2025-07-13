@@ -18,5 +18,7 @@ namespace Flora.Services.Database
 
         [MaxLength(500)]
         public string? Description { get; set; }
+        
+        public string? CategoryImageUrl { get; set; }
     }
 }

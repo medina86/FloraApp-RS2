@@ -94,3 +94,17 @@ class Category {
     return Category(id: json['id'], name: json['name'] ?? '');
   }
 }
+
+class Occasion {
+  final int occasionId;
+  final String name;
+
+  Occasion({required this.occasionId, required this.name});
+
+  factory Occasion.fromJson(Map<String, dynamic> json) {
+    return Occasion(
+      occasionId: json['occasionId'] ?? 0,
+      name: json['name'] ?? '',
+    );
+  }
+}

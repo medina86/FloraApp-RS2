@@ -52,15 +52,17 @@ namespace FloraAPI.Controllers
             return Ok(result);
         }
 
-        [HttpGet("by-occasion/{occasionId}")]
+        [HttpGet("by-occasion/{name}")]
         [AllowAnonymous]
-        public async Task<ActionResult<List<ProductResponse>>> GetByOccasion(int occasionId)
+        public async Task<ActionResult<List<ProductResponse>>> GetByOccasion(string name)
         {
-            var products = await _productService.GetByOccasionAsync(occasionId);
+            var products = await _productService.GetByOccasionAsync(name);
             var result = products.Select(p => _mapper.Map<ProductResponse>(p)).ToList();
+
             return Ok(result);
-            }
-            [HttpPost("{productId}/upload-images")]
+        }
+           
+        [HttpPost("{productId}/upload-images")]
         public async Task<IActionResult> UploadMultipleImages(int productId, [FromForm] List<IFormFile> files)
         {
             if (files == null || files.Count == 0)
