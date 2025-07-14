@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCategoryItem(String title, IconData icon, BuildContext context) {
     return GestureDetector(
       onTap: () {
-        MainLayout.of(context)?.openCategoryScreen(0, title);
+        MainLayout.of(context)?.openCategoryScreen(0, title, fromHome: true);
       },
       child: Column(
         children: [

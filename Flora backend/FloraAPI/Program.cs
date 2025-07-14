@@ -34,8 +34,10 @@ builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
 builder.Services.AddTransient<IProductService,ProductService>();
-builder.Services.AddScoped<IOccasionService, OccasionService>();
-builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddTransient<IOccasionService, OccasionService>();
+builder.Services.AddTransient<IFavoriteService, FavoriteService>();
+builder.Services.AddTransient<ICartItemService,CartItemService>();
+builder.Services.AddTransient<ICartService, CartService>();
 
 builder.Services.AddControllers();
 

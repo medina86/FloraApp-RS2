@@ -1,4 +1,5 @@
 import 'package:flora_mobile_app/layouts/main_layout.dart';
+import 'package:flora_mobile_app/providers/cart_api.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
@@ -6,11 +7,15 @@ import 'package:flora_mobile_app/models/product_model.dart';
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
   final int userId;
+  final VoidCallback? onBack;       // DODATO
+  final VoidCallback? onOpenCart;   // DODATO
 
   const ProductDetailScreen({
     Key? key,
     required this.product,
     required this.userId,
+    this.onBack,                    // DODATO
+    this.onOpenCart,                // DODATO
   }) : super(key: key);
 
   @override
@@ -22,7 +27,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _showSpecialInstructions = false;
   bool _isFavorite = false;
   bool _isLoadingFavorite = false;
-  
+
   final TextEditingController _cardMessageController = TextEditingController();
   final TextEditingController _specialInstructionsController = TextEditingController();
 
@@ -32,7 +37,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _checkIfFavorite();
   }
 
-  // Check if product is already in favorites
   Future<void> _checkIfFavorite() async {
     try {
       final favoriteIds = await FavoriteApiService.getFavoriteProductIds(widget.userId);
@@ -44,7 +48,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  // Toggle favorite status
   Future<void> _toggleFavorite() async {
     if (_isLoadingFavorite) return;
 
@@ -55,7 +58,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       bool success;
       if (_isFavorite) {
-        // Remove from favorites
         success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
           widget.userId, 
         );
@@ -71,7 +73,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           );
         }
       } else {
-        // Add to favorites
         success = await FavoriteApiService.addToFavorites(
           widget.userId, 
           widget.product.id
@@ -249,6 +250,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           : null,
                     ),
                     const SizedBox(height: 30),
+
                     // Add to Cart Button
                     Container(
                       width: double.infinity,
@@ -291,10 +293,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Back Button
+          
           GestureDetector(
             onTap: () {
-              MainLayout.of(context)?.goBackToProductsList();
+              if (widget.onBack != null) {
+                widget.onBack!();
+              } else {
+                Navigator.pop(context);
+              }
             },
             child: Container(
               width: 40,
@@ -327,7 +333,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               fontStyle: FontStyle.italic,
             ),
           ),
-          // Favorite Heart Button
           GestureDetector(
             onTap: _toggleFavorite,
             child: Container(
@@ -405,15 +410,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  void _addToCart() {
-    // Implement add to cart functionality
+  void _addToCart() async {
+  try {
+    final cartId = await CartApiService.getCartIdByUser(widget.userId);
+
+    if (cartId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No cart found for user'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final success = await CartApiService.addToCart(
+      cartId: cartId,
+      productId: widget.product.id,
+      quantity: 1,
+      cardMessage: _cardMessageController.text.trim(),
+      specialInstructions: _specialInstructionsController.text.trim(),
+    );
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${widget.product.name} added to cart!'),
+          backgroundColor: const Color(0xFFE91E63),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to add to cart'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${widget.product.name} added to cart!'),
-        backgroundColor: const Color(0xFFE91E63),
+        content: Text('Error adding to cart: $e'),
+        backgroundColor: Colors.red,
       ),
     );
   }
+
+
+}
 
   @override
   void dispose() {

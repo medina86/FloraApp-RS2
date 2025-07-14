@@ -1,4 +1,5 @@
 import 'package:flora_mobile_app/screens/account_screen.dart';
+import 'package:flora_mobile_app/screens/cart_screen.dart';
 import 'package:flora_mobile_app/screens/categories_screen.dart';
 import 'package:flora_mobile_app/screens/favorites_screen.dart';
 import 'package:flora_mobile_app/screens/home_page.dart';
@@ -21,13 +22,14 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+
+  // Dinamični “child” ekrani
   Widget? _selectedCategoryScreen;
   Widget? _selectedProductScreen;
   Widget? _selectedOccasionScreen;
 
   int? _currentCategoryId;
   String? _currentCategoryName;
-  int? _currentOccasionId;
   String? _currentOccasionName;
   bool _openedFromHome = false;
 
@@ -40,115 +42,117 @@ class _MainLayoutState extends State<MainLayout> {
       HomeScreen(userId: widget.userId),
       CategoriesScreen(userId: widget.userId),
       FavouritesScreen(userId: widget.userId),
-      const Text("Cart"),
+      CartScreen(userId: widget.userId),
       AccountScreen(userId: widget.userId),
     ];
   }
 
+  /* ---------- Bottom‑nav ---------- */
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       _selectedCategoryScreen = null;
-      _selectedProductScreen = null;
+      _selectedProductScreen  = null;
       _selectedOccasionScreen = null;
-      _currentCategoryId = null;
+      _currentCategoryId  = null;
       _currentCategoryName = null;
       _currentOccasionName = null;
     });
   }
 
-  void openCategoryScreen(
-    int categoryId,
-    String categoryName, {
-    bool fromHome = false,
-  }) {
-    print('Opening category: $categoryName (ID: $categoryId)');
+  void openCategoryScreen(int categoryId, String categoryName, {bool fromHome = false}) {
     setState(() {
-      _currentCategoryId = categoryId;
+      _currentCategoryId   = categoryId;
       _currentCategoryName = categoryName;
-      _openedFromHome = fromHome;
+      _openedFromHome      = fromHome;
+
       _selectedCategoryScreen = SelectedCategoryProductsScreen(
         categoryId: categoryId,
         categoryName: categoryName,
         userId: widget.userId,
       );
-      _selectedProductScreen = null;
+
+      _selectedProductScreen  = null;
       _selectedOccasionScreen = null;
     });
   }
 
   void openProductScreen(Product product) {
-    print('Opening product: ${product.name}');
     setState(() {
       _selectedProductScreen = ProductDetailScreen(
         product: product,
         userId: widget.userId,
+        onBack: goBackToProductsList,   
+        onOpenCart: openCartTab,        
       );
     });
   }
 
   void openOccasionScreen(String occasionName) {
-    print('Opening occasion: $occasionName');
     setState(() {
-      _currentOccasionName = occasionName;
+      _currentOccasionName   = occasionName;
       _selectedOccasionScreen = OccasionProductsScreen(
         occasionName: occasionName,
         userId: widget.userId,
       );
+
       _selectedCategoryScreen = null;
-      _selectedProductScreen = null;
+      _selectedProductScreen  = null;
     });
   }
 
-  void goBackToProductsList() {
-    print('Going back to products list');
-    setState(() {
-      _selectedProductScreen = null;
-    });
+  /* ---------- Povratci ---------- */
+  void goBackToProductsList() {        // iz ProductDetail ⇒ listu proizvoda
+    setState(() => _selectedProductScreen = null);
   }
 
-  void goBackToCategories() {
-    print('Going back to categories');
+  void goBackToCategories() {          // iz liste proizvoda ⇒ kategorije/occasion
     setState(() {
-      _selectedProductScreen = null;
+      _selectedProductScreen  = null;
       _selectedCategoryScreen = null;
       _selectedOccasionScreen = null;
-      _currentCategoryId = null;
+      _currentCategoryId   = null;
       _currentCategoryName = null;
       _currentOccasionName = null;
-      _selectedIndex = _openedFromHome ? 0 : 1;
-      _openedFromHome = false;
+      _selectedIndex       = _openedFromHome ? 0 : 1;
+      _openedFromHome      = false;
     });
   }
 
-  void goBackToHome() {
-    print('Going back to home');
+  void goBackToHome() {                // univerzalni → Home tab
     setState(() {
-      _selectedProductScreen = null;
+      _selectedProductScreen  = null;
       _selectedCategoryScreen = null;
       _selectedOccasionScreen = null;
-      _currentCategoryId = null;
+      _currentCategoryId   = null;
       _currentCategoryName = null;
       _currentOccasionName = null;
-      _selectedIndex = 0; // Home tab
+      _selectedIndex       = 0;
     });
   }
 
+  /* ---------- NOVO: direktno prebacivanje na Cart tab ---------- */
+  void openCartTab() {
+    setState(() {
+      _selectedIndex       = 3;   // 3 = Cart u _pages / bottom nav
+      _selectedProductScreen  = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = null;
+    });
+  }
+
+  /* ---------- Build ---------- */
   @override
   Widget build(BuildContext context) {
     Widget currentScreen;
 
     if (_selectedProductScreen != null) {
-      print('Showing product detail screen');
       currentScreen = _selectedProductScreen!;
     } else if (_selectedOccasionScreen != null) {
-      print('Showing occasion products screen');
       currentScreen = _selectedOccasionScreen!;
     } else if (_selectedCategoryScreen != null) {
-      print('Showing category products screen');
       currentScreen = _selectedCategoryScreen!;
     } else {
-      print('Showing main page: $_selectedIndex');
       currentScreen = _pages[_selectedIndex];
     }
 
@@ -163,17 +167,11 @@ class _MainLayoutState extends State<MainLayout> {
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: "Favorites",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: "Cart",
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+          BottomNavigationBarItem(icon: Icon(Icons.home),     label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.store),    label: "Shop"),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorites"),
+          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(icon: Icon(Icons.person),   label: "Account"),
         ],
       ),
     );

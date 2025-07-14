@@ -30,7 +30,6 @@ class FavoriteProduct {
     );
   }
 
-  // Convert to Product model for navigation
   Product toProduct() {
     return Product(
       id: productId,

@@ -17,6 +17,8 @@ namespace Flora.Services.Database
         public DbSet<ProductImages>ProductImages { get; set; }
         public DbSet<Occasion> Occasions {  get; set; }
         public DbSet<Favorite> Favorites { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Cart> Carts { get; set; }
 
 
 
