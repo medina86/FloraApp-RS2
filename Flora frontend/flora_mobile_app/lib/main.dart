@@ -38,24 +38,20 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false; // Add loading state
 
   void _handleLogin() async {
-    final username = _usernameController.text;
-    final password = _passwordController.text;
-
-    AuthProvider.username = username;
-    AuthProvider.password = password;
+    final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => const AlertDialog(
-          title: Text("Greška"),
-          content: Text("Molimo unesite korisničko ime i lozinku."),
-        ),
-      );
+      _showErrorDialog("Molimo unesite korisničko ime i lozinku.");
       return;
     }
+
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final url = Uri.parse('$baseUrl/Users/login');
@@ -69,45 +65,66 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('Successful login: $data');
+        
+        // Set credentials ONLY after successful login verification
+        AuthProvider.username = username;
+        AuthProvider.password = password;
+        
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => MainLayout(userId: data['id'])),
         );
       } else {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Greška"),
-            content: Text('Login nije uspio: ${response.reasonPhrase}'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
+        // Clear any previously set credentials on failed login
+        AuthProvider.username = null;
+        AuthProvider.password = null;
+        
+        String errorMessage = 'Login nije uspio';
+        if (response.statusCode == 401) {
+          errorMessage = 'Pogrešno korisničko ime ili lozinka';
+        } else if (response.statusCode == 500) {
+          errorMessage = 'Greška na serveru. Pokušajte ponovo.';
+        }
+        
+        _showErrorDialog(errorMessage);
       }
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Greška"),
-          content: Text('Greška prilikom spajanja na server: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        ),
-      );
+      // Clear credentials on any error
+      AuthProvider.username = null;
+      AuthProvider.password = null;
+      
+      _showErrorDialog('Greška prilikom spajanja na server. Provjerite internetsku konekciju.');
+      print('Login error: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Greška"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleRegister() {
-    print("Navigate to register page");
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage()));
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RegisterPage(),
+      ),
+    );
   }
 
   @override
@@ -130,7 +147,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ],
             ),
-
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -138,10 +154,11 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 30),
                 TextField(
                   controller: _usernameController,
+                  enabled: !_isLoading, // Disable during loading
                   decoration: InputDecoration(
                     labelText: "Username",
-                    labelStyle: TextStyle(
-                      color: const Color.fromARGB(255, 218, 104, 146),
+                    labelStyle: const TextStyle(
+                      color: Color.fromARGB(255, 218, 104, 146),
                     ),
                     filled: true,
                     fillColor: const Color.fromARGB(255, 255, 253, 253),
@@ -162,11 +179,12 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 15),
                 TextField(
                   controller: _passwordController,
+                  enabled: !_isLoading, // Disable during loading
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
-                    labelStyle: TextStyle(
-                      color: const Color.fromARGB(255, 218, 104, 146),
+                    labelStyle: const TextStyle(
+                      color: Color.fromARGB(255, 218, 104, 146),
                     ),
                     filled: true,
                     fillColor: const Color.fromARGB(255, 255, 253, 253),
@@ -188,7 +206,7 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _handleLogin,
+                    onPressed: _isLoading ? null : _handleLogin, // Disable when loading
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(165, 53, 131, 1),
                       foregroundColor: Colors.white,
@@ -201,20 +219,22 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: const Text("Login"),
+                    child: _isLoading 
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text("Login"),
                   ),
                 ),
                 const SizedBox(height: 20),
                 const Text("Don't have an account?"),
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterPage(),
-                      ),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _handleRegister, // Disable when loading
                   child: const Text("Register"),
                 ),
               ],

@@ -16,5 +16,6 @@ namespace Flora.Services.Interfaces
         Task<OrderResponse> ConfirmPayPalPaymentAsync(int orderId, string paymentId);
         Task<OrderResponse> ProcessOrder(int orderId);
         Task<OrderResponse> DeliverOrder(int orderId);
+        Task<OrderResponse> CompleteOrder(int orderId);
     }
 }

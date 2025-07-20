@@ -41,7 +41,6 @@ namespace FloraAPI.Filters
             if (user == null)
                 return AuthenticateResult.Fail("Invalid credentials");
 
-            // Create a list to hold all claims
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -51,7 +50,6 @@ namespace FloraAPI.Filters
                 new Claim(ClaimTypes.Email, user.Email)
             };
 
-            // Add role claims
             if (user.Roles != null)
             {
                 foreach (var role in user.Roles)

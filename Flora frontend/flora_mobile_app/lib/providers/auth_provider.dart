@@ -14,4 +14,16 @@ class AuthProvider {
 
     return headers;
   }
+
+  static bool get isAuthenticated => username != null && password != null;
+
+  static void logout() {
+    username = null;
+    password = null;
+  }
+
+  static void setCredentials(String user, String pass) {
+    username = user;
+    password = pass;
+  }
 }

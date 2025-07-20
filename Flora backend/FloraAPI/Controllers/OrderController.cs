@@ -2,12 +2,14 @@
 using Flora.Models.Responses;
 using Flora.Models.SearchObjects;
 using Flora.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FloraAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class OrderController : BaseCRUDController<OrderResponse, OrderSearchObject, OrderRequest, OrderRequest>
     {
         private readonly IOrderService _orderService;
@@ -84,6 +86,19 @@ namespace FloraAPI.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Error delivering order: {ex.Message}");
+            }
+        }
+        [HttpPost("{orderId}/complete")]
+        public async Task<ActionResult<OrderResponse>> CompleteOrder(int orderId)
+        {
+            try
+            {
+                var order = await _orderService.CompleteOrder(orderId);
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error completing order: {ex.Message}");
             }
         }
     }

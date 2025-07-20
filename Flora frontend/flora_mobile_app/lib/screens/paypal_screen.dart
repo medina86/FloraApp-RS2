@@ -20,8 +20,8 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
   
   bool _isLoading = true;
   String? _paymentStatus;
-  String? _simulatedPaymentId; // Čuvamo simulirani paymentId
-  
+  String? _simulatedPaymentId;
+
   @override
   void initState() {
     super.initState();
@@ -59,15 +59,14 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
       print('  Payment ID (simulated): ${payPalResponse.paymentId}');
       print('---------------------------------');
 
-      // Parsiramo orderId i paymentId iz approvalUrl-a
       final uri = Uri.parse(payPalResponse.approvalUrl);
       final receivedOrderId = uri.queryParameters['orderId'];
       final receivedPaymentId = uri.queryParameters['paymentId'];
 
       if (receivedOrderId != null && receivedPaymentId != null) {
         setState(() {
-          _simulatedPaymentId = receivedPaymentId; // Sačuvaj paymentId
-          _isLoading = false; // UI je spreman
+          _simulatedPaymentId = receivedPaymentId;
+          _isLoading = false;
         });
       } else {
         throw Exception('Missing order or payment ID from backend response.');
@@ -94,7 +93,6 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
     });
 
     try {
-      // Simulacija kašnjenja za "Log In"
       await Future.delayed(const Duration(seconds: 2)); 
 
       final confirmedOrder = await OrderApiService.confirmPayPalPayment(
@@ -138,7 +136,7 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
               onPressed: () {
                 Navigator.of(dialogContext).pop();
                 if (_paymentStatus != 'success') {
-                  Navigator.of(context).pop(); // Vrati se nazad na checkout
+                  Navigator.of(context).pop();
                 }
               },
             ),
@@ -219,8 +217,21 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
                   const SizedBox(height: 20),
                   Center(
                     child: Image.network(
-                      'https://www.paypalobjects.com/digitalassets/c/website/marketing/na/us/logos-and-badges/pp_cc_mark_74x46.jpg', // PayPal logo URL
+                      'https://via.placeholder.com/150x50/003087/FFFFFF?text=PayPal+Logo',
                       height: 50,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 50,
+                          width: 150,
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Text(
+                              'PayPal Logo',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -269,9 +280,9 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _confirmPayment, // "Log In" dugme pokreće potvrdu
+                      onPressed: _isLoading ? null : _confirmPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 112, 186), // PayPal plava
+                        backgroundColor: const Color.fromARGB(255, 0, 112, 186),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -302,9 +313,9 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _confirmPayment, // "DONE" dugme takođe pokreće potvrdu
+                      onPressed: _isLoading ? null : _confirmPayment,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 255, 102, 204), // Pink boja
+                        backgroundColor: const Color.fromARGB(255, 255, 102, 204),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -338,15 +349,12 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
         selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
         unselectedItemColor: Colors.white,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        currentIndex: 3, // Pretpostavljamo da je ovo tab za korpu
+        currentIndex: 3,
         onTap: (index) {
-          // Implementiraj navigaciju za donji bar ako je potrebno
-          // Trenutno, samo se vraća na prethodni ekran ako se klikne na Cart tab
-          if (index == 3) { // Ako je Cart tab
+          if (index == 3) {
             MainLayout.of(context)?.openCartTab();
-            Navigator.of(context).pop(); // Vrati se sa Checkout ekrana
+            Navigator.of(context).pop();
           } else {
-            // Implementiraj navigaciju za ostale tabove
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Navigation to tab $index not implemented.')),
             );

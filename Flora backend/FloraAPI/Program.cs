@@ -22,10 +22,7 @@ TypeAdapterConfig<ProductRequest, Product>.NewConfig()
     .Ignore(dest => dest.Images);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDatabaseServices(connectionString);
-
-builder.Services.AddAuthentication("BasicAuthentication")
-    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
-
+    
 builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
@@ -58,6 +55,11 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+builder.Services.AddAuthentication("BasicAuthentication")
+    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -85,11 +87,11 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-//app.Run("http://192.168.0.12:5014");
+app.Run("http://192.168.0.12:5014");
 
-app.Run();
+//app.Run();

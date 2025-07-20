@@ -1,5 +1,4 @@
-﻿
-using Flora.Models.Requests;
+﻿using Flora.Models.Requests;
 using Flora.Models.Responses;
 using Flora.Models.SearchObjects;
 using Flora.Services.Database;
@@ -39,6 +38,7 @@ namespace Flora.Services.Services
                 throw new Exception("Cart is invalid or empty.");
 
             var shippingAddress = _mapper.Map<ShippingAddress>(request.ShippingAddress);
+            
             _context.ShippingAddresses.Add(shippingAddress);
             await _context.SaveChangesAsync();
 
@@ -50,7 +50,6 @@ namespace Flora.Services.Services
                 ShippingAddressId = shippingAddress.Id,
                 TotalAmount = cart.Items.Sum(item => (item.Product?.Price ?? 0) * item.Quantity)
             };
-
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
@@ -67,7 +66,6 @@ namespace Flora.Services.Services
                 };
                 _context.OrderDetails.Add(orderDetail);
             }
-
             await _context.SaveChangesAsync();
 
             _context.CartItems.RemoveRange(cart.Items);
@@ -82,7 +80,9 @@ namespace Flora.Services.Services
             var paypalSecretKey = _configuration["PayPal:SecretKey"];
 
             if (string.IsNullOrEmpty(paypalClientId) || string.IsNullOrEmpty(paypalSecretKey))
+            {
                 throw new Exception("PayPal credentials are missing.");
+            }
 
             var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == request.OrderId);
             if (order == null)
@@ -92,33 +92,37 @@ namespace Flora.Services.Services
             order.Status = OrderStatus.PaymentInitiated;
             await _context.SaveChangesAsync();
 
-            var dummyPaymentId = Guid.NewGuid().ToString();
-            var returnUrl = $"{request.ReturnUrl}?orderId={request.OrderId}&paymentId={dummyPaymentId}";
+            var dummyPaymentIdFromPayPal = Guid.NewGuid().ToString();
+            var simulatedReturnUrl = $"{request.ReturnUrl}?orderId={request.OrderId}&paymentId={dummyPaymentIdFromPayPal}";
 
             return new PayPalPaymentResponse
             {
-                ApprovalUrl = returnUrl,
-                PaymentId = dummyPaymentId
+                ApprovalUrl = simulatedReturnUrl,
+                PaymentId = dummyPaymentIdFromPayPal
             };
         }
 
         public async Task<OrderResponse> ConfirmPayPalPaymentAsync(int orderId, string paymentId)
         {
             var order = await _context.Orders
-                                      .Include(o => o.ShippingAddress)
-                                      .Include(o => o.OrderDetails)
-                                          .ThenInclude(od => od.Product)
-                                              .ThenInclude(p => p.Images)
-                                      .FirstOrDefaultAsync(o => o.Id == orderId);
+                                    .Include(o => o.ShippingAddress)
+                                    .Include(o => o.OrderDetails)
+                                        .ThenInclude(od => od.Product)
+                                            .ThenInclude(p => p.Images)
+                                    .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
-                throw new Exception("Order not found.");
+            {
+                throw new Exception($"Order with ID {orderId} not found.");
+            }
 
             if (string.IsNullOrEmpty(paymentId))
-                throw new Exception("Invalid payment ID.");
+            {
+                throw new Exception("Invalid PayPal payment ID.");
+            }
 
-            OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Completed);
-            order.Status = OrderStatus.Completed;
+            OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
+            order.Status = OrderStatus.Processed;
             await _context.SaveChangesAsync();
 
             return _mapper.Map<OrderResponse>(order);
@@ -127,14 +131,16 @@ namespace Flora.Services.Services
         public async Task<OrderResponse> ProcessOrder(int orderId)
         {
             var order = await _context.Orders
-                                      .Include(o => o.ShippingAddress)
-                                      .Include(o => o.OrderDetails)
-                                          .ThenInclude(od => od.Product)
-                                              .ThenInclude(p => p.Images)
-                                      .FirstOrDefaultAsync(o => o.Id == orderId);
+                                  .Include(o => o.ShippingAddress)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.Product)
+                                          .ThenInclude(p => p.Images)
+                                  .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
-                throw new Exception("Order not found.");
+            {
+                throw new Exception($"Order with ID {orderId} not found.");
+            }
 
             OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
             order.Status = OrderStatus.Processed;
@@ -146,17 +152,40 @@ namespace Flora.Services.Services
         public async Task<OrderResponse> DeliverOrder(int orderId)
         {
             var order = await _context.Orders
-                                      .Include(o => o.ShippingAddress)
-                                      .Include(o => o.OrderDetails)
-                                          .ThenInclude(od => od.Product)
-                                              .ThenInclude(p => p.Images)
-                                      .FirstOrDefaultAsync(o => o.Id == orderId);
+                                  .Include(o => o.ShippingAddress)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.Product)
+                                          .ThenInclude(p => p.Images)
+                                  .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
-                throw new Exception("Order not found.");
+            {
+                throw new Exception($"Order with ID {orderId} not found.");
+            }
 
             OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Delivered);
             order.Status = OrderStatus.Delivered;
+            await _context.SaveChangesAsync();
+
+            return _mapper.Map<OrderResponse>(order);
+        }
+
+        public async Task<OrderResponse> CompleteOrder(int orderId)
+        {
+            var order = await _context.Orders
+                                  .Include(o => o.ShippingAddress)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.Product)
+                                          .ThenInclude(p => p.Images)
+                                  .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                throw new Exception($"Order with ID {orderId} not found.");
+            }
+
+            OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Completed);
+            order.Status = OrderStatus.Completed;
             await _context.SaveChangesAsync();
 
             return _mapper.Map<OrderResponse>(order);
@@ -169,16 +198,15 @@ namespace Flora.Services.Services
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
                         .ThenInclude(p => p.Images);
-
             if (search.UserId.HasValue)
+            {
                 query = query.Where(o => o.UserId == search.UserId.Value);
-
+            }
             if (!string.IsNullOrEmpty(search.Status))
             {
                 if (Enum.TryParse<OrderStatus>(search.Status, true, out var parsedStatus))
                     query = query.Where(o => o.Status == parsedStatus);
             }
-
             return query;
         }
 
