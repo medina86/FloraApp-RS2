@@ -1,8 +1,13 @@
 import 'package:flora_desktop_app/screens/dashboard_screen.dart';
+import 'package:flora_desktop_app/screens/orders_screen.dart';
 import 'package:flora_desktop_app/screens/product_screen.dart';
 import 'package:flora_desktop_app/screens/user_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
+// Privremene definicije ako nisu u zasebnim fajlovima
+// U suprotnom, obriši ove klase i dodaj import-e
+/*
 class OrdersPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -17,28 +22,32 @@ class DonationsPage extends StatelessWidget {
       child: Text("Donations Page", style: TextStyle(fontSize: 24)),
     );
   }
+
+class ProductsPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text("Products Page", style: TextStyle(fontSize: 24)));
+  }
 }
+
+class UsersPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text("Users Page", style: TextStyle(fontSize: 24)));
+  }
+}
+*/
 
 class AdminMainLayout extends StatefulWidget {
   const AdminMainLayout({Key? key}) : super(key: key);
 
   @override
-  State<AdminMainLayout> createState() => _AdminMainLayoutState();
+  State<AdminMainLayout> createState() => AdminMainLayoutState();
 }
 
-class _AdminMainLayoutState extends State<AdminMainLayout> {
+class AdminMainLayoutState extends State<AdminMainLayout> {
   int _selectedIndex = 0;
-
-  final List<Widget> _pages = [
-    AdminDashboard(),
-    OrdersPage(),
-    ProductsPage(),
-    DonationsPage(),
-    Center(child: Text("Statistics Page", style: TextStyle(fontSize: 24))),
-    Center(child: Text("Reservations Page", style: TextStyle(fontSize: 24))),
-    Center(child: Text("Blog Page", style: TextStyle(fontSize: 24))),
-    UsersPage(),
-  ];
+  late final List<Widget> _pages;
 
   final List<Map<String, dynamic>> _menuItems = [
     {"title": "Dashboard", "icon": Icons.dashboard},
@@ -48,10 +57,42 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
     {"title": "Statistics", "icon": Icons.bar_chart},
     {"title": "Reservations", "icon": Icons.event_seat},
     {"title": "Blog", "icon": Icons.article},
-    {"title": "Users", "icon": Icons.people},
+    {"title": "Users", "icon": Icons.people}, 
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      AdminDashboard(
+        onNavigateToUsers: () {
+          setState(() {
+            _selectedIndex = 7; 
+          });
+        },
+        onNavigateToProducts: () {
+          setState(() {
+            _selectedIndex = 2; 
+          });
+        },
+      ),
+      const OrdersPage(),
+      ProductsPage(),
+      //DonationsPage(),
+      const Center(child: Text("Statistics Page", style: TextStyle(fontSize: 24))),
+      const Center(child: Text("Reservations Page", style: TextStyle(fontSize: 24))),
+      const Center(child: Text("Blog Page", style: TextStyle(fontSize: 24))),
+      UsersPage(), // Dodaj UsersPage ovde da bi lista imala 8 elemenata
+    ];
+  }
+
   void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  void setSelectedIndex(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -69,7 +110,7 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
           // Sidebar
           Container(
             width: 250,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -82,8 +123,8 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
             child: Column(
               children: [
                 Container(
-                  padding: EdgeInsets.all(30),
-                  child: Text(
+                  padding: const EdgeInsets.all(30),
+                  child: const Text(
                     'Flora',
                     style: TextStyle(
                       color: Colors.white,
@@ -93,17 +134,15 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                     ),
                   ),
                 ),
-
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                     itemCount: _menuItems.length,
                     itemBuilder: (context, index) {
                       final item = _menuItems[index];
                       final isSelected = _selectedIndex == index;
-
                       return Container(
-                        margin: EdgeInsets.symmetric(
+                        margin: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 2,
                         ),
@@ -134,16 +173,15 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
                     },
                   ),
                 ),
-
                 Container(
-                  margin: EdgeInsets.all(10),
+                  margin: const EdgeInsets.all(10),
                   child: ListTile(
-                    leading: Icon(
+                    leading: const Icon(
                       Icons.logout,
                       color: Colors.white70,
                       size: 20,
                     ),
-                    title: Text(
+                    title: const Text(
                       "Logout",
                       style: TextStyle(color: Colors.white70, fontSize: 16),
                     ),
@@ -156,24 +194,10 @@ class _AdminMainLayoutState extends State<AdminMainLayout> {
               ],
             ),
           ),
-
           Expanded(
             child: Container(
-              color: Color(0xFFF5F5F5),
-              child: _selectedIndex == 0
-                  ? AdminDashboard(
-                      onNavigateToUsers: () {
-                        setState(() {
-                          _selectedIndex = 7;
-                        });
-                      },
-                      onNavigateToProducts: () {
-                        setState(() {
-                          _selectedIndex = 2;
-                        });
-                      },
-                    )
-                  : _pages[_selectedIndex],
+              color: const Color(0xFFF5F5F5),
+              child: _pages[_selectedIndex],
             ),
           ),
         ],

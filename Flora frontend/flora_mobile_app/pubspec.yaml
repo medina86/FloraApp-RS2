@@ -19,7 +19,9 @@ dependencies:
   intl: ^0.19.0
   image_picker: ^1.0.4
   image_cropper: ^9.1.0
-
+  webview_flutter: ^4.0.0
+  webview_flutter_android: ^3.0.0 
+  webview_flutter_wkwebview: ^3.0.0 
   
 
 

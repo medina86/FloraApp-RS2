@@ -19,6 +19,9 @@ namespace Flora.Services.Database
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<ShippingAddress> ShippingAddresses { get; set; }
+        public DbSet<OrderDetail>OrderDetails { get; set; }
+        public DbSet<Order>Orders { get; set; }
 
 
 
@@ -54,6 +57,9 @@ namespace Flora.Services.Database
             modelBuilder.Entity<UserRole>()
                 .HasIndex(ur => new { ur.UserId, ur.RoleId })
                 .IsUnique();
+            modelBuilder.Entity<Order>()
+                .Property(o => o.Status)
+                .HasConversion<string>();
             modelBuilder.Entity<Occasion>().HasData(
                 new Occasion { OccasionId = 1, Name = "Birthday" },
                 new Occasion { OccasionId = 2, Name = "Weeding" },

@@ -23,7 +23,6 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
-  // Dinamični “child” ekrani
   Widget? _selectedCategoryScreen;
   Widget? _selectedProductScreen;
   Widget? _selectedOccasionScreen;
@@ -101,12 +100,11 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
-  /* ---------- Povratci ---------- */
-  void goBackToProductsList() {        // iz ProductDetail ⇒ listu proizvoda
+  void goBackToProductsList() {        
     setState(() => _selectedProductScreen = null);
   }
 
-  void goBackToCategories() {          // iz liste proizvoda ⇒ kategorije/occasion
+  void goBackToCategories() {          
     setState(() {
       _selectedProductScreen  = null;
       _selectedCategoryScreen = null;
@@ -119,7 +117,7 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
-  void goBackToHome() {                // univerzalni → Home tab
+  void goBackToHome() {               
     setState(() {
       _selectedProductScreen  = null;
       _selectedCategoryScreen = null;
@@ -131,17 +129,15 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
-  /* ---------- NOVO: direktno prebacivanje na Cart tab ---------- */
   void openCartTab() {
     setState(() {
-      _selectedIndex       = 3;   // 3 = Cart u _pages / bottom nav
+      _selectedIndex       = 3;  
       _selectedProductScreen  = null;
       _selectedCategoryScreen = null;
       _selectedOccasionScreen = null;
     });
   }
 
-  /* ---------- Build ---------- */
   @override
   Widget build(BuildContext context) {
     Widget currentScreen;

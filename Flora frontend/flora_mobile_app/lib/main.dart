@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:flora_mobile_app/screens/home_page.dart';
 import 'package:flora_mobile_app/screens/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;

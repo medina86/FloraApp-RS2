@@ -1,4 +1,3 @@
-import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/providers/cart_api.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
 import 'package:flutter/material.dart';
@@ -7,15 +6,15 @@ import 'package:flora_mobile_app/models/product_model.dart';
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
   final int userId;
-  final VoidCallback? onBack;       // DODATO
-  final VoidCallback? onOpenCart;   // DODATO
+  final VoidCallback? onBack;      
+  final VoidCallback? onOpenCart;   
 
   const ProductDetailScreen({
     Key? key,
     required this.product,
     required this.userId,
-    this.onBack,                    // DODATO
-    this.onOpenCart,                // DODATO
+    this.onBack,                    
+    this.onOpenCart,               
   }) : super(key: key);
 
   @override

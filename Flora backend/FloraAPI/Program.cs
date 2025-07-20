@@ -10,8 +10,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
-
+    
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -27,8 +26,6 @@ builder.Services.AddDatabaseServices(connectionString);
 builder.Services.AddAuthentication("BasicAuthentication")
     .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
-
-
 builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IRoleService,RoleService>();
 builder.Services.AddTransient<IBlobService, BlobService>();
@@ -38,6 +35,7 @@ builder.Services.AddTransient<IOccasionService, OccasionService>();
 builder.Services.AddTransient<IFavoriteService, FavoriteService>();
 builder.Services.AddTransient<ICartItemService,CartItemService>();
 builder.Services.AddTransient<ICartService, CartService>();
+builder.Services.AddTransient<IOrderService,OrderService>();
 
 builder.Services.AddControllers();
 
@@ -86,12 +84,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12 :5014");
+//app.Run("http://192.168.0.12:5014");
 
-//app.Run();
+app.Run();

@@ -1,4 +1,4 @@
-import 'package:flora_desktop_app/screens/user_screen.dart';
+import 'package:flora_desktop_app/layouts/admin_main_layout.dart';
 import 'package:flutter/material.dart';
 
 class AdminDashboard extends StatelessWidget {
@@ -24,12 +24,21 @@ class AdminDashboard extends StatelessWidget {
           _buildCard(
             "Orders management",
             "Check new orders",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
+            onTap: () {
+              // Navigacija na OrdersPage
+              // Pretpostavljamo da je OrdersPage na indeksu 1 u _pages listi
+              final AdminMainLayoutState? adminLayout = context
+                  .findAncestorStateOfType<AdminMainLayoutState>();
+              if (adminLayout != null) {
+                adminLayout.setSelectedIndex(1); // Postavi indeks za Orders
+              }
+            },
           ),
           _buildCard(
             "Products",
             "Add, edit and delete products",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
             onTap: () {
               if (onNavigateToProducts != null) {
                 onNavigateToProducts!();
@@ -39,12 +48,20 @@ class AdminDashboard extends StatelessWidget {
           _buildCard(
             "Donations",
             "Donations management, add new campaign, view results",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
+            onTap: () {
+              // Navigacija na DonationsPage
+              final AdminMainLayoutState? adminLayout = context
+                  .findAncestorStateOfType<AdminMainLayoutState>();
+              if (adminLayout != null) {
+                adminLayout.setSelectedIndex(3); // Postavi indeks za Donations
+              }
+            },
           ),
           _buildCard(
             "Users",
             "Users management",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
             onTap: () {
               if (onNavigateToUsers != null) {
                 onNavigateToUsers!();
@@ -54,12 +71,30 @@ class AdminDashboard extends StatelessWidget {
           _buildCard(
             "Reservations",
             "Check out Flora reservations",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
+            onTap: () {
+              // Navigacija na ReservationsPage
+              final AdminMainLayoutState? adminLayout = context
+                  .findAncestorStateOfType<AdminMainLayoutState>();
+              if (adminLayout != null) {
+                adminLayout.setSelectedIndex(
+                  5,
+                ); // Postavi indeks za Reservations
+              }
+            },
           ),
           _buildCard(
             "Blog",
             "Manage your posts",
-            Color.fromARGB(255, 137, 20, 82),
+            const Color.fromARGB(255, 137, 20, 82),
+            onTap: () {
+              // Navigacija na BlogPage
+              final AdminMainLayoutState? adminLayout = context
+                  .findAncestorStateOfType<AdminMainLayoutState>();
+              if (adminLayout != null) {
+                adminLayout.setSelectedIndex(6); // Postavi indeks za Blog
+              }
+            },
           ),
         ],
       ),

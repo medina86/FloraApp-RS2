@@ -5,6 +5,7 @@ import 'package:flora_mobile_app/layouts/cart_item_widget.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/screens/product_detail.screen.dart';
+import 'package:flora_mobile_app/screens/checkout_screen.dart'; // Dodaj ovo
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/cart_model.dart';
 import 'package:flora_mobile_app/providers/cart_api.dart';
@@ -113,7 +114,6 @@ class _CartScreenState extends State<CartScreen> {
       final result = await CartApiService.decreaseQuantity(itemId);
       
       if (result != null) {
-        // Proveri da li je item obrisan
         if (result is Map && result['removed'] == true) {
           setState(() {
             _cart!.items.removeWhere((item) => item.id == itemId);
@@ -126,7 +126,6 @@ class _CartScreenState extends State<CartScreen> {
             ),
           );
         } else if (result is CartItemModel) {
-          // Ažuriraj postojeći item
           setState(() {
             final index = _cart!.items.indexWhere((item) => item.id == itemId);
             if (index != -1) {
@@ -204,10 +203,25 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
+  // Izmenjeno - dodana navigacija na CheckoutScreen
   void _checkout() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Proceeding to checkout...')));
+    if (_cart != null && _cart!.items.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CheckoutScreen(
+            cart: _cart!,
+            userId: widget.userId,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your cart is empty!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   @override

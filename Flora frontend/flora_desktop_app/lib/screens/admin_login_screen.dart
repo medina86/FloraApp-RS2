@@ -19,11 +19,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
-    final url = Uri.parse('$baseUrl/Users/login');
-
+    final url = Uri.parse('${baseUrl}/Users/login');
     try {
       final response = await http.post(
         url,
@@ -33,10 +30,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           'password': _password.text.trim(),
         }),
       );
-
       print("Status code: ${response.statusCode}");
       print("Body: '${response.body}'");
-
       if (response.statusCode == 200) {
         Navigator.pushReplacement(
           context,
