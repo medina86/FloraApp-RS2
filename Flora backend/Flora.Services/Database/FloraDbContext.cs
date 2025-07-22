@@ -22,6 +22,9 @@ namespace Flora.Services.Database
         public DbSet<ShippingAddress> ShippingAddresses { get; set; }
         public DbSet<OrderDetail>OrderDetails { get; set; }
         public DbSet<Order>Orders { get; set; }
+        public DbSet<CustomBouquetItem> CustomBouquetItems { get; set; }
+        public DbSet<CustomBouquet>CustomBouquets { get; set; }
+
 
 
 

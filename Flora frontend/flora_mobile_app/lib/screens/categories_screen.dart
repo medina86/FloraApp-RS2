@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/category_model.dart';
+import 'package:flora_mobile_app/screens/custom_bouquet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -154,20 +155,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
     );
   }
-        // Navigator.push(context, MaterialPageRoute(builder: (context) => CustomBouquetScreen()));
-        // ili
-        // MainLayout.of(context)?.openCustomBouquetScreen();
+        
 
  
  Widget _buildCustomBouquetCard(BuildContext context) {
   return GestureDetector(
-    onTap: () {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Custom Bouquets - Coming Soon!'),
-          backgroundColor: Color(0xFFE91E63),
-        ),
-      );
+   
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CreateCustomBouquetScreen(userId: widget.userId),
+                ),
+              );
     },
     child: Container(
       height: 120,

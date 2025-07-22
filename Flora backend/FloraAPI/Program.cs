@@ -33,6 +33,7 @@ builder.Services.AddTransient<IFavoriteService, FavoriteService>();
 builder.Services.AddTransient<ICartItemService,CartItemService>();
 builder.Services.AddTransient<ICartService, CartService>();
 builder.Services.AddTransient<IOrderService,OrderService>();
+builder.Services.AddTransient<ICustomBouquetService, CustomBouquetService>();
 
 builder.Services.AddControllers();
 

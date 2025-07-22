@@ -3,7 +3,7 @@ import 'package:flora_mobile_app/models/shipping_model.dart';
 import 'package:flora_mobile_app/screens/paypal_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:flora_mobile_app/models/cart_model.dart';// Ispravljen import
+import 'package:flora_mobile_app/models/cart_model.dart';
 import 'package:flora_mobile_app/providers/order_api.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -40,9 +40,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _placeOrder() async {
-    print('Attempting to place order...');
     if (!_formKey.currentState!.validate()) {
-      print('Form validation failed!');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required shipping address fields.'),
@@ -51,7 +49,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
       return;
     }
-    print('Form validation passed.');
     setState(() {
       _isProcessingOrder = true;
     });
@@ -84,7 +81,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         );
         print('Order created: ${order.id}');
 
-        // NAVIGACIJA NA PAYPAL EKRAN NAKON USPEŠNOG KREIRANJA NARUDŽBINE
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => PayPalPaymentScreen(order: order),
@@ -162,7 +158,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               itemCount: widget.cart.items.length,
               itemBuilder: (context, index) {
                 final item = widget.cart.items[index];
-                // Reusing CartItemWidget for display, but without quantity controls
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Row(

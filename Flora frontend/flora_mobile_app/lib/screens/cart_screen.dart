@@ -1,10 +1,6 @@
-import 'dart:convert';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/layouts/cart_item_widget.dart';
-import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
-import 'package:flora_mobile_app/screens/product_detail.screen.dart';
 import 'package:flora_mobile_app/screens/checkout_screen.dart'; // Dodaj ovo
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/cart_model.dart';
@@ -89,7 +85,6 @@ class _CartScreenState extends State<CartScreen> {
         throw Exception('Failed to increase quantity');
       }
     } catch (e) {
-      print('Error increasing quantity: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -145,7 +140,6 @@ class _CartScreenState extends State<CartScreen> {
         throw Exception('Failed to decrease quantity');
       }
     } catch (e) {
-      print('Error decreasing quantity: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
@@ -188,7 +182,6 @@ class _CartScreenState extends State<CartScreen> {
         );
       }
     } catch (e) {
-      print('Error removing item: $e');
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -203,7 +196,6 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 
-  // Izmenjeno - dodana navigacija na CheckoutScreen
   void _checkout() {
     if (_cart != null && _cart!.items.isNotEmpty) {
       Navigator.of(context).push(
@@ -333,7 +325,6 @@ class _CartScreenState extends State<CartScreen> {
                           },
                         ),
                 ),
-                // Total Amount and Checkout Section
                 if (cartItems.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.all(16),

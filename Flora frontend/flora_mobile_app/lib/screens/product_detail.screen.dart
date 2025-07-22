@@ -1,5 +1,6 @@
 import 'package:flora_mobile_app/providers/cart_api.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
+import 'package:flora_mobile_app/providers/auth_provider.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 
@@ -33,22 +34,51 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAuthAndInitialize();
+  }
+  void _checkAuthAndInitialize() {
+    if (!AuthProvider.isAuthenticated) {
+      _showAuthError();
+      return;
+    }
     _checkIfFavorite();
   }
 
+  void _showAuthError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Authentication required. Please login again.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   Future<void> _checkIfFavorite() async {
+    if (!AuthProvider.isAuthenticated) {
+      _showAuthError();
+      return;
+    }
+
     try {
       final favoriteIds = await FavoriteApiService.getFavoriteProductIds(widget.userId);
       setState(() {
         _isFavorite = favoriteIds.contains(widget.product.id);
       });
     } catch (e) {
-      print('Error checking favorite status: $e');
+      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        AuthProvider.logout();
+        _showAuthError();
+      }
     }
   }
 
   Future<void> _toggleFavorite() async {
     if (_isLoadingFavorite) return;
+
+    if (!AuthProvider.isAuthenticated) {
+      _showAuthError();
+      return;
+    }
 
     setState(() {
       _isLoadingFavorite = true;
@@ -98,16 +128,87 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('Error toggling favorite: $e');
+    
+      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        AuthProvider.logout();
+        _showAuthError();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setState(() {
         _isLoadingFavorite = false;
       });
+    }
+  }
+
+  void _addToCart() async {
+    if (!AuthProvider.isAuthenticated) {
+      _showAuthError();
+      return;
+    }
+
+    try {
+      final cartId = await CartApiService.getCartIdByUser(widget.userId);
+
+      if (cartId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No cart found for user'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      final success = await CartApiService.addToCart(
+        cartId: cartId,
+        productId: widget.product.id,
+        quantity: 1,
+        cardMessage: _cardMessageController.text.trim(),
+        specialInstructions: _specialInstructionsController.text.trim(),
+      );
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.product.name} added to cart!'),
+            backgroundColor: const Color(0xFFE91E63),
+          ),
+        );
+        _cardMessageController.clear();
+        _specialInstructionsController.clear();
+        setState(() {
+          _showCardMessage = false;
+          _showSpecialInstructions = false;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to add to cart'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error adding to cart: $e');
+      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+        AuthProvider.logout();
+        _showAuthError();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error adding to cart: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -161,7 +262,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                       ),
                     ),
-                    // Product Info Card
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       padding: const EdgeInsets.all(20),
@@ -216,7 +316,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Add card message section
                     _buildExpandableSection(
                       'Add card message',
                       _showCardMessage,
@@ -250,24 +349,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Add to Cart Button
                     Container(
                       width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       child: ElevatedButton(
-                        onPressed: () {
-                          _addToCart();
-                        },
+                        onPressed: AuthProvider.isAuthenticated ? _addToCart : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE91E63),
+                          backgroundColor: AuthProvider.isAuthenticated 
+                              ? const Color(0xFFE91E63) 
+                              : Colors.grey,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(25),
                           ),
                         ),
-                        child: const Text(
-                          'ADD TO CART',
-                          style: TextStyle(
+                        child: Text(
+                          AuthProvider.isAuthenticated ? 'ADD TO CART' : 'LOGIN REQUIRED',
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -292,7 +390,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          
           GestureDetector(
             onTap: () {
               if (widget.onBack != null) {
@@ -333,7 +430,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           GestureDetector(
-            onTap: _toggleFavorite,
+            onTap: AuthProvider.isAuthenticated ? _toggleFavorite : null,
             child: Container(
               width: 40,
               height: 40,
@@ -358,7 +455,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     )
                   : Icon(
                       _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: const Color(0xFFE91E63),
+                      color: AuthProvider.isAuthenticated 
+                          ? const Color(0xFFE91E63) 
+                          : Colors.grey,
                       size: 24,
                     ),
             ),
@@ -408,55 +507,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
     );
   }
-
-  void _addToCart() async {
-  try {
-    final cartId = await CartApiService.getCartIdByUser(widget.userId);
-
-    if (cartId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No cart found for user'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final success = await CartApiService.addToCart(
-      cartId: cartId,
-      productId: widget.product.id,
-      quantity: 1,
-      cardMessage: _cardMessageController.text.trim(),
-      specialInstructions: _specialInstructionsController.text.trim(),
-    );
-
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${widget.product.name} added to cart!'),
-          backgroundColor: const Color(0xFFE91E63),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to add to cart'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error adding to cart: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-
-}
 
   @override
   void dispose() {

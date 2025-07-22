@@ -4,10 +4,12 @@ using Flora.Models.SearchObjects;
 using Flora.Services.Interfaces;
 using Flora.Services.Services;
 using MapsterMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FloraAPI.Controllers
 {
+    [Authorize]
     public class FavoriteController: BaseCRUDController<FavoriteResponse,FavoriteSearchObject,FavoriteRequest,FavoriteRequest>
     {
         private readonly IFavoriteService favoriteService;

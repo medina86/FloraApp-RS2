@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:flora_desktop_app/providers/base_provider.dart';
 import 'package:flora_desktop_app/screens/add_product_screen.dart';
 import 'package:flora_desktop_app/screens/edit_product_dialog.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flora_desktop_app/layouts/constants.dart';
 import 'package:flora_desktop_app/providers/product_provider.dart';
 
@@ -19,7 +19,8 @@ class _ProductsPageState extends State<ProductsPage> {
   bool isLoading = true;
   String searchQuery = '';
   bool? activeFilter; // null = all, true = active only, false = inactive only
-  bool? availableFilter; // null = all, true = available only, false = unavailable only
+  bool?
+  availableFilter; // null = all, true = available only, false = unavailable only
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -40,27 +41,27 @@ class _ProductsPageState extends State<ProductsPage> {
 
   Future<void> fetchCategories() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/Category'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        final dynamic responseData = json.decode(response.body);
-        List<dynamic> jsonData;
-        if (responseData is List) {
-          jsonData = responseData;
-        } else if (responseData is Map<String, dynamic>) {
-          jsonData = responseData['items'] ?? responseData['data'] ?? [];
-        } else {
-          jsonData = [];
+      final categories = await BaseApiService.get<List<Category>>('/Category', (
+        data,
+      ) {
+        if (data is List) {
+          return data.map((item) => Category.fromJson(item)).toList();
+        } else if (data is Map<String, dynamic>) {
+          final items = data['items'] ?? data['data'] ?? [];
+          return (items as List)
+              .map((item) => Category.fromJson(item))
+              .toList();
         }
-        final List<Category> loadedCategories = jsonData
-            .map((item) => Category.fromJson(item))
-            .toList();
-        setState(() {
-          categories = loadedCategories;
-        });
-      }
+        return <Category>[];
+      });
+
+      setState(() {
+        this.categories = categories;
+      });
+    } on UnauthorizedException catch (e) {
+      _handleAuthError(e.message);
+    } on ApiException catch (e) {
+      print('Error loading categories: ${e.message}');
     } catch (e) {
       print('Error loading categories: $e');
     }
@@ -68,13 +69,13 @@ class _ProductsPageState extends State<ProductsPage> {
 
   Future<void> fetchProductImages(Product product) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/Product/product_image_${product.id}'),
+      final imageUrls = await BaseApiService.get<List<String>>(
+        '/Product/product_image_${product.id}',
+        (data) => (data as List).cast<String>(),
       );
-      if (response.statusCode == 200) {
-        final List<dynamic> imageList = json.decode(response.body);
-        product.imageUrls = imageList.cast<String>();
-      }
+      product.imageUrls = imageUrls;
+    } on UnauthorizedException catch (e) {
+      _handleAuthError(e.message);
     } catch (e) {
       print('Error fetching images for product ${product.id}: $e');
     }
@@ -84,49 +85,56 @@ class _ProductsPageState extends State<ProductsPage> {
     setState(() {
       isLoading = true;
     });
+
     try {
-      String url = '$baseUrl/Product';
-      List<String> queryParams = [];
+      Map<String, dynamic> queryParams = {};
 
       if (searchQuery.isNotEmpty) {
-        queryParams.add('name=${Uri.encodeComponent(searchQuery)}');
+        queryParams['name'] = searchQuery;
       }
-
       if (activeFilter != null) {
-        queryParams.add('active=$activeFilter');
+        queryParams['active'] = activeFilter!;
       }
-
       if (availableFilter != null) {
-        queryParams.add('isAvailable=$availableFilter');
+        queryParams['isAvailable'] = availableFilter!;
       }
 
-      if (queryParams.isNotEmpty) {
-        url += '?' + queryParams.join('&');
+      final productsResponse =
+          await BaseApiService.getWithParams<List<Product>>(
+            '/Product',
+            queryParams,
+            (data) {
+              if (data is Map<String, dynamic>) {
+                final items = data['items'] as List;
+                return items.map((item) => Product.fromJson(item)).toList();
+              }
+              return <Product>[];
+            },
+          );
+
+      // Dohvatanje slika za svaki proizvod
+      for (var product in productsResponse) {
+        await fetchProductImages(product);
       }
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = json.decode(response.body);
-        final List<dynamic> jsonData = responseData['items'] as List<dynamic>;
-        final List<Product> loadedProducts = jsonData
-            .map((item) => Product.fromJson(item))
-            .toList();
-
-        for (var product in loadedProducts) {
-          await fetchProductImages(product);
-        }
-
-        setState(() {
-          products = loadedProducts;
-          _applyLocalFilters();
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load products: ${response.statusCode}');
+      setState(() {
+        products = productsResponse;
+        _applyLocalFilters();
+        isLoading = false;
+      });
+    } on UnauthorizedException catch (e) {
+      _handleAuthError(e.message);
+      setState(() => isLoading = false);
+    } on ApiException catch (e) {
+      print('Error loading products: ${e.message}');
+      setState(() => isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading products: ${e.message}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       print('Error: $e');
@@ -139,6 +147,18 @@ class _ProductsPageState extends State<ProductsPage> {
           ),
         );
       }
+    }
+  }
+
+  void _handleAuthError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Authentication error: $message'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      // Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -958,12 +978,11 @@ class _ProductsPageState extends State<ProductsPage> {
               onPressed: () async {
                 Navigator.of(context).pop();
                 try {
-                  final response = await http.delete(
-                    Uri.parse('$baseUrl/Product/${product.id}'),
-                    headers: {'Content-Type': 'application/json'},
+                  final success = await BaseApiService.delete(
+                    '/Product/${product.id}',
                   );
-                  if (response.statusCode == 200 ||
-                      response.statusCode == 204) {
+
+                  if (success) {
                     setState(() {
                       products.removeWhere((p) => p.id == product.id);
                       filteredProducts.removeWhere((p) => p.id == product.id);
@@ -982,10 +1001,13 @@ class _ProductsPageState extends State<ProductsPage> {
                       ),
                     );
                   }
-                } catch (e) {
+                }
+                on UnauthorizedException catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error deleting product: $e'),
+                      content: Text(
+                        'Unauthorized: ${e.message ?? 'Please log in again.'}',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );

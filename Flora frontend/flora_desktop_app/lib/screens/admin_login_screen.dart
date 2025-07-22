@@ -1,8 +1,7 @@
 import 'package:flora_desktop_app/layouts/admin_main_layout.dart';
+import 'package:flora_desktop_app/providers/auth_provider.dart';
+import 'package:flora_desktop_app/providers/base_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../layouts/constants.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -19,35 +18,61 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
+    
     setState(() => _isLoading = true);
-    final url = Uri.parse('${baseUrl}/Users/login');
+    
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      AuthProvider.setCredentials(
+        _username.text.trim(), 
+        _password.text.trim()
+      );
+      
+      await BaseApiService.post<Map<String, dynamic>>(
+        '/Users/login',
+        {
           'username': _username.text.trim(),
           'password': _password.text.trim(),
-        }),
+        },
+        (data) => data ?? <String, dynamic>{},
       );
-      print("Status code: ${response.statusCode}");
-      print("Body: '${response.body}'");
-      if (response.statusCode == 200) {
+      
+      if (mounted) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminMainLayout()),
         );
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Login nije uspio")));
       }
+      
+    } on UnauthorizedException catch (e) {
+      AuthProvider.logout();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Neispravni podaci za prijavu: ${e.message}"))
+        );
+      }
+      
+    } on ApiException catch (e) {
+      AuthProvider.logout();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Login greška: ${e.message}"))
+        );
+      }
+      
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Greška pri konekciji: $e")));
+      AuthProvider.logout();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Greška pri konekciji: $e"))
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

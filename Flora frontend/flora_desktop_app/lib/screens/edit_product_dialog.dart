@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:flora_desktop_app/providers/auth_provider.dart';
+import 'package:flora_desktop_app/providers/base_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flora_desktop_app/layouts/constants.dart';
@@ -69,15 +71,16 @@ class _EditProductDialogState extends State<EditProductDialog> {
     super.dispose();
   }
 
-  Future<void> updateProduct() async {
+    Future<void> updateProduct() async {
     setState(() {
       isUpdating = true;
     });
 
     try {
+      final _headers = AuthProvider.getHeaders();
       final response = await http.put(
         Uri.parse('$baseUrl/Product/${widget.product.id}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: _headers,
         body: json.encode({
           'name': _nameController.text,
           'description': _descriptionController.text.isEmpty
@@ -87,8 +90,8 @@ class _EditProductDialogState extends State<EditProductDialog> {
           'categoryId': selectedCategoryId,
           'isNew': isNew,
           'isFeatured': isFeatured,
-          'active': active, // NOVO
-          'isAvailable': isAvailable, // NOVO
+          'active': active, 
+          'isAvailable': isAvailable, 
           'occasionId': widget.product.occasionId,
         }),
       );
@@ -118,6 +121,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

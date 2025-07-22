@@ -1,34 +1,34 @@
-import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/models/cart_model.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flora_mobile_app/providers/base_provider.dart';
 
 class CartApiService {
   static Future<CartModel> getCartByUser(int userId) async {
     try {
-      final cartResponse = await http.get(
-        Uri.parse('$baseUrl/cart?UserId=$userId'),
-        headers: {'Content-Type': 'application/json'},
+      final cartData = await BaseApiService.get(
+        '/cart?UserId=$userId',
+        (data) => data,
       );
       
-      if (cartResponse.statusCode != 200) {
-        throw Exception('Failed to load cart');
+      if (cartData['items'] == null || cartData['items'].isEmpty) {
+        throw ApiException('Cart not found for user $userId');
       }
       
-      final cartData = json.decode(cartResponse.body);
       final cartInfo = cartData['items'][0];
       
-      final itemsResponse = await http.get(
-        Uri.parse('$baseUrl/cartItem?CartId=${cartInfo['id']}'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      
       List<CartItemModel> items = [];
-      if (itemsResponse.statusCode == 200) {
-        final itemsData = json.decode(itemsResponse.body);
-        items = (itemsData['items'] as List)
-            .map((item) => CartItemModel.fromJson(item))
-            .toList();
+      try {
+        final itemsData = await BaseApiService.get(
+          '/cartItem?CartId=${cartInfo['id']}',
+          (data) => data,
+        );
+        
+        if (itemsData['items'] != null) {
+          items = (itemsData['items'] as List)
+              .map((item) => CartItemModel.fromJson(item))
+              .toList();
+        }
+      } catch (e) {
+        print('No items found for cart ${cartInfo['id']}: $e');
       }
       
       return CartModel(
@@ -39,28 +39,17 @@ class CartApiService {
         items: items,
       );
     } catch (e) {
-      throw Exception('Error fetching cart: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('Error fetching cart: $e');
     }
   }
 
   static Future<CartItemModel?> increaseQuantity(int itemId) async {
     try {
-      print('Calling increase API for item $itemId');
-      
-      final response = await http.post(
-        Uri.parse('$baseUrl/cartItem/$itemId/increase'),
-        headers: {'Content-Type': 'application/json'},
+      return await BaseApiService.postEmpty(
+        '/cartItem/$itemId/increase',
+        (data) => data != null ? CartItemModel.fromJson(data) : null,
       );
-      
-      print('Increase API response: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return CartItemModel.fromJson(data);
-      }
-      
-      return null;
     } catch (e) {
       print('Error in increaseQuantity: $e');
       return null;
@@ -69,26 +58,17 @@ class CartApiService {
 
   static Future<dynamic> decreaseQuantity(int itemId) async {
     try {
-      print('Calling decrease API for item $itemId');
-      
-      final response = await http.post(
-        Uri.parse('$baseUrl/cartItem/$itemId/decrease'),
-        headers: {'Content-Type': 'application/json'},
+      return await BaseApiService.postEmpty(
+        '/cartItem/$itemId/decrease',
+        (data) {
+          if (data == null) return null;
+          
+          if (data['removed'] == true) {
+            return {'removed': true};
+          }
+          return CartItemModel.fromJson(data);
+        },
       );
-      
-      print('Decrease API response: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        if (data['removed'] == true) {
-          return {'removed': true};
-        }
-        return CartItemModel.fromJson(data);
-      }
-      
-      return null;
     } catch (e) {
       print('Error in decreaseQuantity: $e');
       return null;
@@ -100,49 +80,39 @@ class CartApiService {
     required int quantity,
   }) async {
     try {
-      final response = await http.put(
-        Uri.parse('$baseUrl/cartItem/$itemId'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'quantity': quantity}),
+      return await BaseApiService.put(
+        '/cartItem/$itemId',
+        {'quantity': quantity},
+        (data) => data != null ? CartItemModel.fromJson(data) : null,
       );
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return CartItemModel.fromJson(data);
-      }
-      return null;
     } catch (e) {
-      throw Exception('Error updating cart item: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('Error updating cart item: $e');
     }
   }
 
   static Future<bool> removeCartItem(int itemId) async {
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/cartItem/$itemId'),
-        headers: {'Content-Type': 'application/json'},
-      );
-      return response.statusCode == 200 || response.statusCode == 204;
+      return await BaseApiService.delete('/cartItem/$itemId');
     } catch (e) {
-      throw Exception('Error removing cart item: $e');
+      throw ApiException('Error removing cart item: $e');
     }
   }
 
   static Future<int?> getCartIdByUser(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/cart?UserId=$userId'),
-        headers: {'Content-Type': 'application/json'},
+      return await BaseApiService.get(
+        '/cart?UserId=$userId',
+        (data) {
+          if (data['items'] != null && data['items'].isNotEmpty) {
+            return data['items'][0]['id'] as int?;
+          }
+          return null;
+        },
       );
-      if (response.statusCode == 200) {
-        final jsonData = json.decode(response.body);
-        if (jsonData['items'] != null && jsonData['items'].isNotEmpty) {
-          return jsonData['items'][0]['id'];
-        }
-      }
-      return null;
     } catch (e) {
-      throw Exception('Error getting cartId: $e');
+      if (e is ApiException) rethrow;
+      throw ApiException('Error getting cartId: $e');
     }
   }
 
@@ -154,20 +124,61 @@ class CartApiService {
     String specialInstructions = '',
   }) async {
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/cartItem'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
+      await BaseApiService.post(
+        '/cartItem',
+        {
           'cartId': cartId,
           'productId': productId,
           'quantity': quantity,
           'cardMessage': cardMessage,
           'specialInstructions': specialInstructions,
-        }),
+        },
+        (data) => data,
       );
-      return response.statusCode == 200 || response.statusCode == 201;
+      return true;
     } catch (e) {
-      throw Exception('Error adding to cart: $e');
+      if (e is ApiException) {
+        print('API Error adding to cart: $e');
+        return false;
+      }
+      throw ApiException('Error adding to cart: $e');
+    }
+  }
+
+  static Future<CartModel> getCartByUserWithParams(int userId) async {
+    return await BaseApiService.getWithParams(
+      '/cart',
+      {'UserId': userId},
+      (data) {
+        if (data['items'] == null || data['items'].isEmpty) {
+          throw ApiException('Cart not found for user $userId');
+        }
+        
+        final cartInfo = data['items'][0];
+        return CartModel.fromJson(cartInfo);
+      },
+    );
+  }
+
+  static Future<List<CartItemModel>> bulkUpdateItems(
+    List<Map<String, dynamic>> updates
+  ) async {
+    try {
+      return await BaseApiService.put(
+        '/cartItem/bulk-update',
+        {'updates': updates},
+        (data) {
+          if (data['items'] != null) {
+            return (data['items'] as List)
+                .map((item) => CartItemModel.fromJson(item))
+                .toList();
+          }
+          return <CartItemModel>[];
+        },
+      );
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException('Error bulk updating cart items: $e');
     }
   }
 }

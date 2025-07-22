@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace FloraAPI.Controllers
 {
-    [AllowAnonymous]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ProductController : BaseCRUDController<ProductResponse, ProductSearchObject, ProductRequest, ProductRequest>
@@ -26,7 +26,6 @@ namespace FloraAPI.Controllers
         }
 
         [HttpGet("new")]
-        [AllowAnonymous]
         public async Task<ActionResult<List<ProductResponse>>> GetNewProducts()
         {
             var products = await _productService.GetNewProductsAsync();
@@ -35,7 +34,6 @@ namespace FloraAPI.Controllers
         }
 
         [HttpGet("featured")]
-        [AllowAnonymous]
         public async Task<ActionResult<List<ProductResponse>>> GetFeaturedProducts()
         {
             var products = await _productService.GetFeaturedProductsAsync();
@@ -44,7 +42,6 @@ namespace FloraAPI.Controllers
         }
 
         [HttpGet("by-category/{categoryId}")]
-        [AllowAnonymous]
         public async Task<ActionResult<List<ProductResponse>>> GetByCategory(int categoryId)
         {
             var products = await _productService.GetByCategoryIdAsync(categoryId);
@@ -53,7 +50,6 @@ namespace FloraAPI.Controllers
         }
 
         [HttpGet("by-occasion/{name}")]
-        [AllowAnonymous]
         public async Task<ActionResult<List<ProductResponse>>> GetByOccasion(string name)
         {
             var products = await _productService.GetByOccasionAsync(name);

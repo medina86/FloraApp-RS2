@@ -3,12 +3,15 @@ using Flora.Models.Responses;
 using Flora.Models.SearchObjects;
 using Flora.Services.Interfaces;
 using Flora.Services.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security;
 
 namespace FloraAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -43,6 +46,7 @@ namespace FloraAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<ActionResult<UserResponse>> Update(int id, UserRequest request)
         {

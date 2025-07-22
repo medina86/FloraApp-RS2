@@ -42,11 +42,10 @@ class _MainLayoutState extends State<MainLayout> {
       CategoriesScreen(userId: widget.userId),
       FavouritesScreen(userId: widget.userId),
       CartScreen(userId: widget.userId),
-      AccountScreen(userId: widget.userId),
+      AccountScreenWrapper(userId: widget.userId),
     ];
   }
 
-  /* ---------- Bottom‑nav ---------- */
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;

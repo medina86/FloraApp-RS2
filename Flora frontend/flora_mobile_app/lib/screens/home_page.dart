@@ -1,11 +1,10 @@
 import 'package:flora_mobile_app/layouts/constants.dart';
-import 'package:flora_mobile_app/layouts/main_layout.dart'; // DODANO - potrebno za navigaciju
+import 'package:flora_mobile_app/layouts/main_layout.dart'; 
 import 'package:flora_mobile_app/models/product_model.dart';
-import 'package:flora_mobile_app/screens/selected_category_products_screen.dart';
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'categories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int userId;
@@ -28,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<String>> _fetchImageUrls(int productId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/Product/product_image_$productId'),
+      headers: AuthProvider.getHeaders()
     );
     if (response.statusCode == 200) {
       final List<dynamic> imagesJson = json.decode(response.body);
@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchFeaturedProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/Product/featured'));
+    final response = await http.get(Uri.parse('$baseUrl/Product/featured'),headers: AuthProvider.getHeaders());
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Product> products = jsonData
