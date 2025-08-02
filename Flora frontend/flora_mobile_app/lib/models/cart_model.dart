@@ -53,6 +53,7 @@ class CartItemModel {
   final String productName;
   final double price;
   final int quantity;
+  final int? customBouquetId;
   final String? cardMessage;
   final String? specialInstructions;
   final String? imageUrl;
@@ -60,6 +61,7 @@ class CartItemModel {
   CartItemModel({
     required this.id,
     required this.cartId,
+    this.customBouquetId,
     required this.productId,
     required this.productName,
     required this.price,
@@ -74,6 +76,7 @@ class CartItemModel {
       id: json['id'] ?? 0,
       cartId: json['cartId'] ?? 0,
       productId: json['productId'] ?? 0,
+      customBouquetId: json['customBouquetId'],
       productName: json['productName'] ?? 'Unknown Product',
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       quantity: json['quantity'] ?? 1,
@@ -88,6 +91,7 @@ class CartItemModel {
       'id': id,
       'cartId': cartId,
       'productId': productId,
+      'customBouquetId': customBouquetId,
       'productName': productName,
       'price': price,
       'quantity': quantity,

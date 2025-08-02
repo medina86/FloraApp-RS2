@@ -1,45 +1,49 @@
 import 'package:flora_desktop_app/screens/dashboard_screen.dart';
 import 'package:flora_desktop_app/screens/orders_screen.dart';
 import 'package:flora_desktop_app/screens/product_screen.dart';
+import 'package:flora_desktop_app/screens/reservation_screen.dart';
 import 'package:flora_desktop_app/screens/user_screen.dart';
-import 'package:flutter/material.dart';
+import 'package:flora_desktop_app/screens/donation_campaigns_screen.dart';
 import 'package:flutter/material.dart';
 
-// Privremene definicije ako nisu u zasebnim fajlovima
-// U suprotnom, obriši ove klase i dodaj import-e
 /*
-class OrdersPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("Orders Page", style: TextStyle(fontSize: 24)));
-  }
-}
-
-class DonationsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text("Donations Page", style: TextStyle(fontSize: 24)),
-    );
+  class OrdersPage extends StatelessWidget {
+    @override
+    Widget build(BuildContext context) {
+      return Center(child: Text("Orders Page", style: TextStyle(fontSize: 24)));
+    }
   }
 
-class ProductsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("Products Page", style: TextStyle(fontSize: 24)));
-  }
-}
+  class DonationsPage extends StatelessWidget {
+    @override
+    Widget build(BuildContext context) {
+      return Center(
+        child: Text("Donations Page", style: TextStyle(fontSize: 24)),
+      );
+    }
 
-class UsersPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text("Users Page", style: TextStyle(fontSize: 24)));
+  class ProductsPage extends StatelessWidget {
+    @override
+    Widget build(BuildContext context) {
+      return Center(child: Text("Products Page", style: TextStyle(fontSize: 24)));
+    }
   }
-}
-*/
+
+  class UsersPage extends StatelessWidget {
+    @override
+    Widget build(BuildContext context) {
+      return Center(child: Text("Users Page", style: TextStyle(fontSize: 24)));
+    }
+  }
+  */
 
 class AdminMainLayout extends StatefulWidget {
-  const AdminMainLayout({Key? key}) : super(key: key);
+  final Widget? child;
+  const AdminMainLayout({Key? key, this.child}) : super(key: key);
+
+  static AdminMainLayoutState of(BuildContext context) {
+    return context.findAncestorStateOfType<AdminMainLayoutState>()!;
+  }
 
   @override
   State<AdminMainLayout> createState() => AdminMainLayoutState();
@@ -48,6 +52,9 @@ class AdminMainLayout extends StatefulWidget {
 class AdminMainLayoutState extends State<AdminMainLayout> {
   int _selectedIndex = 0;
   late final List<Widget> _pages;
+  Widget? _customChild;
+  // Add a ValueNotifier to track navigation changes
+  final ValueNotifier<int> navigationChangeNotifier = ValueNotifier<int>(0);
 
   final List<Map<String, dynamic>> _menuItems = [
     {"title": "Dashboard", "icon": Icons.dashboard},
@@ -57,7 +64,7 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
     {"title": "Statistics", "icon": Icons.bar_chart},
     {"title": "Reservations", "icon": Icons.event_seat},
     {"title": "Blog", "icon": Icons.article},
-    {"title": "Users", "icon": Icons.people}, 
+    {"title": "Users", "icon": Icons.people},
   ];
 
   @override
@@ -67,35 +74,55 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
       AdminDashboard(
         onNavigateToUsers: () {
           setState(() {
-            _selectedIndex = 7; 
+            _selectedIndex = 7;
           });
         },
         onNavigateToProducts: () {
           setState(() {
-            _selectedIndex = 2; 
+            _selectedIndex = 2;
           });
         },
       ),
       const OrdersPage(),
       ProductsPage(),
-      //DonationsPage(),
-      const Center(child: Text("Statistics Page", style: TextStyle(fontSize: 24))),
-      const Center(child: Text("Reservations Page", style: TextStyle(fontSize: 24))),
+      const DonationCampaignsScreen(),
+      const Center(
+        child: Text("Statistics Page", style: TextStyle(fontSize: 24)),
+      ),
+      ReservationsScreen(),
       const Center(child: Text("Blog Page", style: TextStyle(fontSize: 24))),
-      UsersPage(), // Dodaj UsersPage ovde da bi lista imala 8 elemenata
+      UsersPage(),
     ];
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      _customChild = null;
     });
+
+    navigationChangeNotifier.value++;
   }
 
   void setSelectedIndex(int index) {
     setState(() {
       _selectedIndex = index;
+      _customChild = null;
     });
+
+    navigationChangeNotifier.value++;
+  }
+
+  void setContent(Widget child) {
+    setState(() {
+      _customChild = child;
+    });
+    navigationChangeNotifier.value++;
+  }
+
+  Future<T?> showCustomChild<T>(Widget child) {
+    setContent(child);
+    return Future.value(null);
   }
 
   void _logout() {
@@ -197,7 +224,7 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
           Expanded(
             child: Container(
               color: const Color(0xFFF5F5F5),
-              child: _pages[_selectedIndex],
+              child: _customChild ?? (widget.child ?? _pages[_selectedIndex]),
             ),
           ),
         ],

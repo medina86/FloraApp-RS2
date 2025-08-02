@@ -1,15 +1,15 @@
 import 'package:flora_mobile_app/layouts/constants.dart';
-import 'package:flora_mobile_app/layouts/main_layout.dart'; 
+import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flora_mobile_app/screens/decoration_request_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final int userId;
   const HomeScreen({super.key, required this.userId});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -17,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> featuredProducts = [];
   bool isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -27,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<List<String>> _fetchImageUrls(int productId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/Product/product_image_$productId'),
-      headers: AuthProvider.getHeaders()
+      headers: AuthProvider.getHeaders(),
     );
     if (response.statusCode == 200) {
       final List<dynamic> imagesJson = json.decode(response.body);
@@ -38,17 +37,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchFeaturedProducts() async {
-    final response = await http.get(Uri.parse('$baseUrl/Product/featured'),headers: AuthProvider.getHeaders());
+    final response = await http.get(
+      Uri.parse('$baseUrl/Product/featured'),
+      headers: AuthProvider.getHeaders(),
+    );
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Product> products = jsonData
           .map((item) => Product.fromJson(item))
           .toList();
-
       for (Product product in products) {
         product.imageUrls = await _fetchImageUrls(product.id);
       }
-
       setState(() {
         featuredProducts = products;
         isLoading = false;
@@ -142,7 +142,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (featuredProducts.isEmpty) {
       return const Center(child: Text("No featured products"));
     }
-
     return SizedBox(
       height: 240,
       child: PageView.builder(
@@ -418,70 +417,153 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildScheduleSection() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE91E63).withOpacity(0.7),
-              Color(0xFFE91E63).withOpacity(0.5),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            Positioned(
-              left: 20,
-              bottom: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Schedule an event decoration',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Color(0xFFE91E63),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                    ),
-                    child: Text(
-                      'Schedule now',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFE91E63).withOpacity(0.7),
+                  Color(0xFFE91E63).withOpacity(0.5),
                 ],
               ),
             ),
-          ],
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  bottom: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Schedule an event decoration',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DecorationRequestScreen(
+                                userId: widget.userId,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Color(0xFFE91E63),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(
+                          'Schedule now',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE91E63),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+        // Donations section
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Container(
+            height: 120,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.fromARGB(255, 170, 46, 92).withOpacity(0.7),
+                  Color.fromARGB(255, 170, 46, 92).withOpacity(0.5),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
+                Positioned(
+                  left: 20,
+                  bottom: 20,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Support our donation campaigns',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Otvori donacije koristeći statičku metodu MainLayout-a
+                          MainLayout.openDonations(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Color.fromARGB(255, 170, 46, 92),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: Text(
+                          'Donate now',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 

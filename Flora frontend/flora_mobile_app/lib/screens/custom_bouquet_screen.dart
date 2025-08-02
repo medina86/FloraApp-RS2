@@ -62,7 +62,6 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
       final flowers = await CustomBouquetApiService.getAvailableFlowers();
       setState(() {
         _availableFlowers = flowers;
-        // Inicijalizuj količine na 0 za sve cveće
         for (var flower in flowers) {
           _flowerQuantities[flower.id] = 0;
         }
@@ -80,7 +79,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
 
   void _updateFlowerQuantity(int productId, int newQuantity) {
     setState(() {
-      _flowerQuantities[productId] = newQuantity.clamp(0, 99); // Ograniči količinu
+      _flowerQuantities[productId] = newQuantity.clamp(0, 99); 
     });
   }
 
@@ -92,62 +91,119 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
     });
     return total;
   }
+Future<void> _createBouquet() async {
+  final selectedItems = _flowerQuantities.entries
+      .where((entry) => entry.value > 0)
+      .map((entry) {
+        final product = _availableFlowers.firstWhere((f) => f.id == entry.key);
+        return CustomBouquetItemModel(
+          productId: product.id,
+          productName: product.name, 
+          quantity: entry.value,
+        );
+      })
+      .toList();
 
-  Future<void> _createBouquet() async {
-    final selectedItems = _flowerQuantities.entries
-        .where((entry) => entry.value > 0)
-        .map((entry) {
-          final product = _availableFlowers.firstWhere((f) => f.id == entry.key);
-          return CustomBouquetItemModel(
-            productId: product.id,
-            productName: product.name, // Ime proizvoda za prikaz
-            quantity: entry.value,
-          );
-        })
-        .toList();
-
-    if (selectedItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please choose at least one flower.'), backgroundColor: Colors.orange),
-      );
-      return;
-    }
-
-    setState(() {
-      _isCreatingBouquet = true;
-    });
-
-    try {
-      final createdBouquet = await CustomBouquetApiService.createCustomBouquet(
-        color: _selectedColor,
-        cardMessage: _cardMessageController.text.trim().isEmpty ? null : _cardMessageController.text.trim(),
-        specialInstructions: _specialInstructionsController.text.trim().isEmpty ? null : _specialInstructionsController.text.trim(),
-        totalPrice: _calculateTotalPrice(),
-        userId: widget.userId,
-        items: selectedItems,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Bouquet #${createdBouquet.id} created successfully!'), backgroundColor: Color.fromARGB(255, 170, 46, 92)),
-      );
-      // Resetuj formu nakon uspešnog kreiranja
-      setState(() {
-        _selectedColor = 'Pink';
-        _flowerQuantities = {for (var flower in _availableFlowers) flower.id: 0};
-        _cardMessageController.clear();
-        _specialInstructionsController.clear();
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating bouquet: $e'), backgroundColor: Colors.red),
-      );
-    } finally {
-      setState(() {
-        _isCreatingBouquet = false;
-      });
-    }
+  if (selectedItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please choose at least one flower.'), 
+        backgroundColor: Colors.orange
+      ),
+    );
+    return;
   }
 
+  setState(() {
+    _isCreatingBouquet = true;
+  });
+
+  try {
+    print('🔸 Step 1: Creating custom bouquet...');
+    final createdBouquet = await CustomBouquetApiService.createCustomBouquet(
+      color: _selectedColor,
+      cardMessage: _cardMessageController.text.trim().isEmpty 
+          ? null 
+          : _cardMessageController.text.trim(),
+      specialInstructions: _specialInstructionsController.text.trim().isEmpty 
+          ? null 
+          : _specialInstructionsController.text.trim(),
+      totalPrice: _calculateTotalPrice(),
+      userId: widget.userId,
+      items: selectedItems,
+    );
+
+    print('✅ Step 1 Complete: Custom bouquet created with ID: ${createdBouquet.id}');
+
+    print('🔸 Step 2: Getting cart ID for user ${widget.userId}...');
+    final cartId = await CustomBouquetApiService.getCartIdByUser(widget.userId);
+
+    if (cartId == null) {
+      throw Exception('No cart found for user ${widget.userId}');
+    }
+
+    print('✅ Step 2 Complete: Cart ID found: $cartId');
+
+    print('🔸 Step 3: Adding custom bouquet to cart...');
+    final addedToCart = await CustomBouquetApiService.addCustomBouquetToCart(
+      cartId: cartId,
+      customBouquetId: createdBouquet.id!,
+      quantity: 1, 
+      cardMessage: _cardMessageController.text.trim().isEmpty 
+          ? null 
+          : _cardMessageController.text.trim(),
+      specialInstructions: _specialInstructionsController.text.trim().isEmpty 
+          ? null 
+          : _specialInstructionsController.text.trim(),
+    );
+
+    if (!addedToCart) {
+      throw Exception('Failed to add custom bouquet to cart');
+    }
+
+    print('✅ Step 3 Complete: Custom bouquet added to cart successfully!');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Bouquet #${createdBouquet.id} created and added to cart successfully!'), 
+        backgroundColor: Color.fromARGB(255, 170, 46, 92),
+        duration: Duration(seconds: 3),
+      ),
+    );
+
+    // Reset form
+    setState(() {
+      _selectedColor = 'Pink';
+      _flowerQuantities = {for (var flower in _availableFlowers) flower.id: 0};
+      _cardMessageController.clear();
+      _specialInstructionsController.clear();
+    });
+
+  } catch (e) {
+    print('🔴 Error in _createBouquet: $e');
+    
+    String errorMessage;
+    if (e.toString().contains('404')) {
+      errorMessage = 'API endpoint not found. Please check if CustomBouquet API is available.';
+    } else if (e.toString().contains('No cart found')) {
+      errorMessage = 'No cart found for your account. Please check your account settings.';
+    } else {
+      errorMessage = 'Error: ${e.toString()}';
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage), 
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 5),
+      ),
+    );
+  } finally {
+    setState(() {
+      _isCreatingBouquet = false;
+    });
+  }
+}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,7 +214,6 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Color.fromARGB(255, 170, 46, 92)),
           onPressed: () {
-            // Implementiraj otvaranje drawer-a ili slično
           },
         ),
         title: const Text(

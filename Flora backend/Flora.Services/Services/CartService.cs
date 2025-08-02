@@ -20,17 +20,19 @@ namespace Flora.Services.Services
         protected override IQueryable<Cart> ApplyFilter(IQueryable<Cart> query, CartSearchObject search)
         {
             query = query
-       .Include(c => c.Items)
-           .ThenInclude(i => i.Product)
-               .ThenInclude(p => p.Images);
-            if (search.UserId.HasValue)
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p.Images)
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.CustomBouquet); // Dodano za CustomBouquet
+
+            if (search?.UserId.HasValue == true)
             {
                 query = query.Where(c => c.UserId == search.UserId.Value);
             }
 
             return query;
         }
-        
 
         protected override CartResponse MapToResponse(Cart entity)
         {
@@ -39,19 +41,40 @@ namespace Flora.Services.Services
                 Id = entity.Id,
                 UserId = entity.UserId,
                 CreatedAt = entity.CreatedAt,
-                TotalAmount = entity.Items?.Sum(i => (i.Product?.Price ?? 0) * i.Quantity) ?? 0,
+                TotalAmount = entity.Items?.Sum(i => GetItemPrice(i) * i.Quantity) ?? 0,
                 Items = entity.Items?.Select(i => new CartItemResponse
                 {
                     Id = i.Id,
-                    ProductId = i.Product.Id,
-                    ProductName = i.Product.Name,
-                    Price = i.Product.Price,
+                    ProductId = i.ProductId?? 0, 
+                    ProductName = " ",
+                    Price = GetItemPrice(i),
                     Quantity = i.Quantity,
                     CardMessage = i.CardMessage,
                     SpecialInstructions = i.SpecialInstructions,
-                    ImageUrl = i.Product?.Images?.FirstOrDefault()?.ImageUrl
+                    ImageUrl = GetItemImageUrl(i)
                 }).ToList() ?? new List<CartItemResponse>()
             };
+        }
+
+        
+
+        private decimal GetItemPrice(CartItem item)
+        {
+            if (item.Product != null)
+                return item.Product.Price;
+
+            if (item.CustomBouquet != null)
+                return item.CustomBouquet.TotalPrice;
+
+            return 0;
+        }
+
+        private string GetItemImageUrl(CartItem item)
+        {
+            if (item.Product?.Images != null)
+                return item.Product.Images.FirstOrDefault()?.ImageUrl;
+
+            return null;
         }
     }
 }

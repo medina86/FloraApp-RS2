@@ -16,5 +16,6 @@ namespace Flora.Models.Responses
         public string? CardMessage { get; set; }
         public string? SpecialInstructions { get; set; }
         public string? ImageUrl { get; set; }
+
     }
 }

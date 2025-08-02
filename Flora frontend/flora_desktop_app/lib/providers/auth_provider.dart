@@ -10,6 +10,9 @@ class AuthProvider {
     if (username != null && password != null) {
       final credentials = base64Encode(utf8.encode('$username:$password'));
       headers['Authorization'] = 'Basic $credentials';
+      print('Debug - Auth Headers: ${headers['Authorization']}'); // Debug print
+    } else {
+      print('Debug - No credentials set in AuthProvider'); // Debug print
     }
 
     return headers;

@@ -32,13 +32,15 @@ namespace Flora.Services.Services
                 .Include(c => c.Items)
                     .ThenInclude(ci => ci.Product)
                         .ThenInclude(p => p.Images)
+                .Include(c => c.Items)
+                    .ThenInclude(ci => ci.CustomBouquet) // Dodano za CustomBouquet
                 .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserId == request.UserId);
 
             if (cart == null || !cart.Items.Any())
                 throw new Exception("Cart is invalid or empty.");
 
             var shippingAddress = _mapper.Map<ShippingAddress>(request.ShippingAddress);
-            
+
             _context.ShippingAddresses.Add(shippingAddress);
             await _context.SaveChangesAsync();
 
@@ -48,7 +50,7 @@ namespace Flora.Services.Services
                 OrderDate = DateTime.UtcNow,
                 Status = OrderStatus.Pending,
                 ShippingAddressId = shippingAddress.Id,
-                TotalAmount = cart.Items.Sum(item => (item.Product?.Price ?? 0) * item.Quantity)
+                TotalAmount = cart.Items.Sum(item => GetCartItemPrice(item) * item.Quantity)
             };
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
@@ -58,9 +60,10 @@ namespace Flora.Services.Services
                 var orderDetail = new OrderDetail
                 {
                     OrderId = order.Id,
-                    ProductId = cartItem.ProductId,
+                    ProductId = cartItem.ProductId, 
+                    CustomBouquetId = cartItem.CustomBouquetId, 
                     Quantity = cartItem.Quantity,
-                    PriceAtPurchase = cartItem.Product?.Price ?? 0,
+                    PriceAtPurchase = GetCartItemPrice(cartItem),
                     CardMessage = cartItem.CardMessage,
                     SpecialInstructions = cartItem.SpecialInstructions
                 };
@@ -109,6 +112,8 @@ namespace Flora.Services.Services
                                     .Include(o => o.OrderDetails)
                                         .ThenInclude(od => od.Product)
                                             .ThenInclude(p => p.Images)
+                                    .Include(o => o.OrderDetails)
+                                        .ThenInclude(od => od.customBouquet) 
                                     .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -135,6 +140,8 @@ namespace Flora.Services.Services
                                   .Include(o => o.OrderDetails)
                                       .ThenInclude(od => od.Product)
                                           .ThenInclude(p => p.Images)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.customBouquet) 
                                   .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -156,6 +163,8 @@ namespace Flora.Services.Services
                                   .Include(o => o.OrderDetails)
                                       .ThenInclude(od => od.Product)
                                           .ThenInclude(p => p.Images)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.customBouquet) 
                                   .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -177,6 +186,8 @@ namespace Flora.Services.Services
                                   .Include(o => o.OrderDetails)
                                       .ThenInclude(od => od.Product)
                                           .ThenInclude(p => p.Images)
+                                  .Include(o => o.OrderDetails)
+                                      .ThenInclude(od => od.customBouquet) 
                                   .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -197,12 +208,15 @@ namespace Flora.Services.Services
                 .Include(o => o.ShippingAddress)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                        .ThenInclude(p => p.Images);
-            if (search.UserId.HasValue)
+                        .ThenInclude(p => p.Images)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.customBouquet); 
+
+            if (search?.UserId.HasValue == true)
             {
                 query = query.Where(o => o.UserId == search.UserId.Value);
             }
-            if (!string.IsNullOrEmpty(search.Status))
+            if (!string.IsNullOrEmpty(search?.Status))
             {
                 if (Enum.TryParse<OrderStatus>(search.Status, true, out var parsedStatus))
                     query = query.Where(o => o.Status == parsedStatus);
@@ -223,15 +237,46 @@ namespace Flora.Services.Services
                 OrderDetails = entity.OrderDetails!.Select(od => new OrderDetailResponse
                 {
                     Id = od.Id,
-                    ProductId = od.ProductId,
-                    ProductName = od.Product?.Name,
-                    ProductImageUrl = od.Product?.Images?.FirstOrDefault()?.ImageUrl,
+                    ProductId = od.ProductId, 
+                    CustomBouquetId = od.CustomBouquetId,
+                    ProductName = GetOrderDetailName(od),
+                    ProductImageUrl = GetOrderDetailImageUrl(od),
                     Quantity = od.Quantity,
                     PriceAtPurchase = od.PriceAtPurchase,
                     CardMessage = od.CardMessage,
                     SpecialInstructions = od.SpecialInstructions
                 }).ToList()
             };
+        }
+
+        private decimal GetCartItemPrice(CartItem item)
+        {
+            if (item.Product != null)
+                return item.Product.Price;
+
+            if (item.CustomBouquet != null)
+                return item.CustomBouquet.TotalPrice;
+
+            return item.Price; 
+        }
+
+        private string GetOrderDetailName(OrderDetail orderDetail)
+        {
+            if (orderDetail.Product != null)
+                return orderDetail.Product.Name;
+
+            if (orderDetail.customBouquet != null)
+                return "Custom Bouquet";
+
+            return "Unknown Item";
+        }
+
+        private string GetOrderDetailImageUrl(OrderDetail orderDetail)
+        {
+            if (orderDetail.Product?.Images != null)
+                return orderDetail.Product.Images.FirstOrDefault()?.ImageUrl;
+
+            return null;
         }
     }
 }

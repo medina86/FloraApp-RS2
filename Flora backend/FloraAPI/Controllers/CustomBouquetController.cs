@@ -9,7 +9,7 @@ namespace FloraAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class CustomBouquetController : BaseCRUDController<
         CustomBouquetResponse, CustomBouquetSearchObject, CustomBouquetRequest, CustomBouquetRequest>
     {

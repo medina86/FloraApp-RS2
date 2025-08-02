@@ -55,13 +55,16 @@ namespace Flora.Services.Migrations
                     b.Property<int>("CartId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("CustomBouquetId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int?>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<string>("ProductName")
@@ -76,6 +79,8 @@ namespace Flora.Services.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CartId");
+
+                    b.HasIndex("CustomBouquetId");
 
                     b.HasIndex("ProductId");
 
@@ -162,6 +167,143 @@ namespace Flora.Services.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("CustomBouquetItems");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Budget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfGuests")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberOfTables")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SpecialRequests")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ThemeOrColors")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VenueType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DecorationRequests");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationSuggestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DecorationRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecorationRequestId");
+
+                    b.ToTable("DecorationSuggestions");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.Donation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("Amount")
+                        .HasColumnType("float");
+
+                    b.Property<int?>("CampaignId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DonorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.ToTable("Donations");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DonationCampaign", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DonationCampaigns");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Favorite", b =>
@@ -266,13 +408,16 @@ namespace Flora.Services.Migrations
                     b.Property<string>("CardMessage")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("CustomBouquetId")
+                        .HasColumnType("int");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<decimal>("PriceAtPurchase")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int?>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
@@ -282,6 +427,8 @@ namespace Flora.Services.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CustomBouquetId");
 
                     b.HasIndex("OrderId");
 
@@ -527,13 +674,17 @@ namespace Flora.Services.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Flora.Services.Database.CustomBouquet", "CustomBouquet")
+                        .WithMany()
+                        .HasForeignKey("CustomBouquetId");
+
                     b.HasOne("Flora.Services.Database.Product", "Product")
                         .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProductId");
 
                     b.Navigation("Cart");
+
+                    b.Navigation("CustomBouquet");
 
                     b.Navigation("Product");
                 });
@@ -568,6 +719,37 @@ namespace Flora.Services.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Flora.Services.Database.DecorationRequest", b =>
+                {
+                    b.HasOne("Flora.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationSuggestion", b =>
+                {
+                    b.HasOne("Flora.Services.Database.DecorationRequest", "DecorationRequest")
+                        .WithMany("Suggestions")
+                        .HasForeignKey("DecorationRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DecorationRequest");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.Donation", b =>
+                {
+                    b.HasOne("Flora.Services.Database.DonationCampaign", "Campaign")
+                        .WithMany("Donations")
+                        .HasForeignKey("CampaignId");
+
+                    b.Navigation("Campaign");
+                });
+
             modelBuilder.Entity("Flora.Services.Database.Favorite", b =>
                 {
                     b.HasOne("Flora.Services.Database.Product", "Product")
@@ -600,6 +782,10 @@ namespace Flora.Services.Migrations
 
             modelBuilder.Entity("Flora.Services.Database.OrderDetail", b =>
                 {
+                    b.HasOne("Flora.Services.Database.CustomBouquet", "customBouquet")
+                        .WithMany()
+                        .HasForeignKey("CustomBouquetId");
+
                     b.HasOne("Flora.Services.Database.Order", "Order")
                         .WithMany("OrderDetails")
                         .HasForeignKey("OrderId")
@@ -608,13 +794,13 @@ namespace Flora.Services.Migrations
 
                     b.HasOne("Flora.Services.Database.Product", "Product")
                         .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProductId");
 
                     b.Navigation("Order");
 
                     b.Navigation("Product");
+
+                    b.Navigation("customBouquet");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Product", b =>
@@ -670,6 +856,16 @@ namespace Flora.Services.Migrations
             modelBuilder.Entity("Flora.Services.Database.CustomBouquet", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationRequest", b =>
+                {
+                    b.Navigation("Suggestions");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DonationCampaign", b =>
+                {
+                    b.Navigation("Donations");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Occasion", b =>

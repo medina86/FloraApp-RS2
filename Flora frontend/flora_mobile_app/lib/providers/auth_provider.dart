@@ -1,8 +1,10 @@
 import 'dart:convert';
+import '../models/user_model.dart';
 
 class AuthProvider {
   static String? username;
   static String? password;
+  static UserModel? _currentUser;
 
   static Map<String, String> getHeaders() {
     final headers = <String, String>{'Content-Type': 'application/json'};
@@ -20,10 +22,19 @@ class AuthProvider {
   static void logout() {
     username = null;
     password = null;
+    _currentUser = null;
   }
 
   static void setCredentials(String user, String pass) {
     username = user;
     password = pass;
+  }
+
+  static UserModel? getUser() {
+    return _currentUser;
+  }
+
+  static void setUser(UserModel user) {
+    _currentUser = user;
   }
 }

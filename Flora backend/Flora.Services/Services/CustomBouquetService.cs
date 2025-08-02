@@ -91,7 +91,7 @@ namespace Flora.Services.Services
                 CardMessage = entity.CardMessage,
                 SpecialInstructions = entity.SpecialInstructions,
                 TotalPrice = entity.TotalPrice,
-                Items = entity.Items.Select(i => new CustomBouquetItemResponse
+                Items = entity.Items.Where(i => i.Product != null).Select(i => new CustomBouquetItemResponse
                 {
                     ProductId = i.ProductId,
                     ProductName = i.Product.Name ?? "",

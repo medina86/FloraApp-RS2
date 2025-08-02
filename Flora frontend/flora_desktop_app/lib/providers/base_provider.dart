@@ -4,14 +4,16 @@ import 'package:http/http.dart' as http;
 import 'auth_provider.dart';
 
 abstract class BaseApiService {
-
   static Map<String, String> get _headers {
     final headers = <String, String>{'Content-Type': 'application/json'};
-    
+
     if (AuthProvider.isAuthenticated) {
       headers.addAll(AuthProvider.getHeaders());
+      print('Debug - BaseApiService headers: $headers');
+    } else {
+      print('Debug - BaseApiService: Not authenticated');
     }
-    
+
     return headers;
   }
 
@@ -33,9 +35,9 @@ abstract class BaseApiService {
         Uri.parse('$baseUrl$endpoint'),
         headers: _headers,
       );
-      
+
       _handleResponse(response, 'GET $endpoint');
-      
+
       final data = json.decode(response.body);
       return parser(data);
     } catch (e) {
@@ -44,9 +46,9 @@ abstract class BaseApiService {
   }
 
   static Future<T> post<T>(
-    String endpoint, 
-    Map<String, dynamic> body, 
-    T Function(dynamic) parser
+    String endpoint,
+    Map<String, dynamic> body,
+    T Function(dynamic) parser,
   ) async {
     try {
       final response = await http.post(
@@ -54,13 +56,13 @@ abstract class BaseApiService {
         headers: _headers,
         body: json.encode(body),
       );
-      
+
       _handleResponse(response, 'POST $endpoint');
-      
+
       if (response.body.isEmpty) {
         return parser(null);
       }
-      
+
       final data = json.decode(response.body);
       return parser(data);
     } catch (e) {
@@ -69,21 +71,21 @@ abstract class BaseApiService {
   }
 
   static Future<T> postEmpty<T>(
-    String endpoint, 
-    T Function(dynamic) parser
+    String endpoint,
+    T Function(dynamic) parser,
   ) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl$endpoint'),
         headers: _headers,
       );
-      
+
       _handleResponse(response, 'POST $endpoint');
-      
+
       if (response.body.isEmpty) {
         return parser(null);
       }
-      
+
       final data = json.decode(response.body);
       return parser(data);
     } catch (e) {
@@ -92,9 +94,9 @@ abstract class BaseApiService {
   }
 
   static Future<T> put<T>(
-    String endpoint, 
-    Map<String, dynamic> body, 
-    T Function(dynamic) parser
+    String endpoint,
+    Map<String, dynamic> body,
+    T Function(dynamic) parser,
   ) async {
     try {
       final response = await http.put(
@@ -102,9 +104,9 @@ abstract class BaseApiService {
         headers: _headers,
         body: json.encode(body),
       );
-      
+
       _handleResponse(response, 'PUT $endpoint');
-      
+
       final data = json.decode(response.body);
       return parser(data);
     } catch (e) {
@@ -118,7 +120,7 @@ abstract class BaseApiService {
         Uri.parse('$baseUrl$endpoint'),
         headers: _headers,
       );
-      
+
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (e) {
       return false;
@@ -126,21 +128,21 @@ abstract class BaseApiService {
   }
 
   static Future<T> deleteWithResponse<T>(
-    String endpoint, 
-    T Function(dynamic) parser
+    String endpoint,
+    T Function(dynamic) parser,
   ) async {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl$endpoint'),
         headers: _headers,
       );
-      
+
       _handleResponse(response, 'DELETE $endpoint');
-      
+
       if (response.body.isEmpty) {
         return parser(null);
       }
-      
+
       final data = json.decode(response.body);
       return parser(data);
     } catch (e) {
@@ -150,18 +152,20 @@ abstract class BaseApiService {
 
   static String buildQueryString(Map<String, dynamic> params) {
     if (params.isEmpty) return '';
-    
-    final queryParams = params.entries.map((e) {
-      return '${Uri.encodeComponent(e.key.toString())}=${Uri.encodeComponent(e.value.toString())}';
-    }).join('&');
-    
+
+    final queryParams = params.entries
+        .map((e) {
+          return '${Uri.encodeComponent(e.key.toString())}=${Uri.encodeComponent(e.value.toString())}';
+        })
+        .join('&');
+
     return '?$queryParams';
   }
 
   static Future<T> getWithParams<T>(
-    String endpoint, 
+    String endpoint,
     Map<String, dynamic> params,
-    T Function(dynamic) parser
+    T Function(dynamic) parser,
   ) async {
     final queryString = buildQueryString(params);
     return get('$endpoint$queryString', parser);

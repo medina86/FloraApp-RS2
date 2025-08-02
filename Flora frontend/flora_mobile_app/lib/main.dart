@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
+import 'package:flora_mobile_app/models/user_model.dart';
 import 'package:flora_mobile_app/screens/register_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -65,35 +66,45 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('Successful login: $data');
-        
-        // Set credentials ONLY after successful login verification
+
         AuthProvider.username = username;
         AuthProvider.password = password;
-        
+
+        // Create and set user model from response data
+        final user = UserModel(
+          id: data['id'],
+          firstName: data['firstName'] ?? '',
+          lastName: data['lastName'] ?? '',
+          email: data['email'] ?? '',
+          phoneNumber: data['phoneNumber'],
+          profileImageUrl: data['profileImageUrl'],
+        );
+        AuthProvider.setUser(user);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => MainLayout(userId: data['id'])),
         );
       } else {
-        // Clear any previously set credentials on failed login
         AuthProvider.username = null;
         AuthProvider.password = null;
-        
+
         String errorMessage = 'Login nije uspio';
         if (response.statusCode == 401) {
           errorMessage = 'Pogrešno korisničko ime ili lozinka';
         } else if (response.statusCode == 500) {
           errorMessage = 'Greška na serveru. Pokušajte ponovo.';
         }
-        
+
         _showErrorDialog(errorMessage);
       }
     } catch (e) {
-      // Clear credentials on any error
       AuthProvider.username = null;
       AuthProvider.password = null;
-      
-      _showErrorDialog('Greška prilikom spajanja na server. Provjerite internetsku konekciju.');
+
+      _showErrorDialog(
+        'Greška prilikom spajanja na server. Provjerite internetsku konekciju.',
+      );
       print('Login error: $e');
     } finally {
       setState(() {
@@ -121,9 +132,7 @@ class _LoginPageState extends State<LoginPage> {
   void _handleRegister() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const RegisterPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const RegisterPage()),
     );
   }
 
@@ -206,7 +215,9 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin, // Disable when loading
+                    onPressed: _isLoading
+                        ? null
+                        : _handleLogin, // Disable when loading
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromRGBO(165, 53, 131, 1),
                       foregroundColor: Colors.white,
@@ -219,22 +230,26 @@ class _LoginPageState extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: _isLoading 
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text("Login"),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text("Login"),
                   ),
                 ),
                 const SizedBox(height: 20),
                 const Text("Don't have an account?"),
                 TextButton(
-                  onPressed: _isLoading ? null : _handleRegister, // Disable when loading
+                  onPressed: _isLoading
+                      ? null
+                      : _handleRegister, // Disable when loading
                   child: const Text("Register"),
                 ),
               ],

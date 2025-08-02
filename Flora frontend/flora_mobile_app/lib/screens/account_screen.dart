@@ -1,7 +1,9 @@
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/providers/user_provider.dart';
 import 'package:flora_mobile_app/screens/account_edit_screen.dart';
+import 'package:flora_mobile_app/screens/my_events_screen.dart';
 import 'package:flora_mobile_app/screens/my_orders_screen.dart';
+import 'package:flora_mobile_app/screens/donation_campaigns_screen.dart';
 import 'package:flora_mobile_app/widgets/account_menu.dart';
 import 'package:flora_mobile_app/widgets/faq_dialog.dart';
 import 'package:flora_mobile_app/widgets/profile_image_widget.dart';
@@ -42,11 +44,11 @@ class _AccountScreenState extends State<AccountScreen> {
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (picked != null && mounted) {
       await context.read<UserProvider>().uploadProfileImage(
-        widget.userId, 
-        picked.path
+        widget.userId,
+        picked.path,
       );
     }
   }
@@ -98,15 +100,19 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  static Future<void> navigateToMyOrders(BuildContext context, int userId) async {
+  static Future<void> navigateToMyOrders(
+    BuildContext context,
+    int userId,
+  ) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => MyOrdersScreen(userId: userId),
-      ),
+      MaterialPageRoute(builder: (context) => MyOrdersScreen(userId: userId)),
     );
   }
 
-  static Future<bool?> navigateToEditProfile(BuildContext context, int userId) async {
+  static Future<bool?> navigateToEditProfile(
+    BuildContext context,
+    int userId,
+  ) async {
     return await Navigator.push(
       context,
       MaterialPageRoute(
@@ -117,9 +123,16 @@ class _AccountScreenState extends State<AccountScreen> {
 
   static void showLogoutSnackBar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Log out functionality not implemented.'),
-      ),
+      const SnackBar(content: Text('Log out functionality not implemented.')),
+    );
+  }
+
+  static Future<void> navigateToMyEvents(
+    BuildContext context,
+    int userId,
+  ) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyEventsScreen(userId: userId)),
     );
   }
 
@@ -131,33 +144,41 @@ class _AccountScreenState extends State<AccountScreen> {
           icon: Icons.shopping_bag,
           onTap: () => navigateToMyOrders(context, widget.userId),
         ),
-        const AccountMenuItem(
+        AccountMenuItem(
           label: "My events",
           icon: Icons.event,
+          onTap: () => navigateToMyEvents(context, widget.userId),
         ),
         AccountMenuItem(
           label: "Edit profile information",
           icon: Icons.edit,
           onTap: () async {
-            final result = await navigateToEditProfile(
-              context, 
-              widget.userId
-            );
+            final result = await navigateToEditProfile(context, widget.userId);
             if (result == true && mounted) {
               context.read<UserProvider>().loadUser(widget.userId);
             }
           },
         ),
-        const AccountMenuItem(
+        AccountMenuItem(
           label: "Donations",
           icon: Icons.favorite,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DonationCampaignsScreen(
+                userId: widget.userId,
+                fromHomeScreen: false,
+                onBack: () => Navigator.pop(context),
+              ),
+            ),
+          ),
         ),
         AccountMenuItem(
           label: "FAQ",
           icon: Icons.question_answer,
           onTap: () => FAQDialog.show(context),
         ),
-        const AccountMenuItem(
+        AccountMenuItem(
           label: "Contact us (0616813321)",
           icon: Icons.contact_phone,
         ),

@@ -7,7 +7,7 @@ class AccountMenuItem extends StatelessWidget {
   final VoidCallback? onTap;
   final Color iconColor;
 
-  const AccountMenuItem({
+   AccountMenuItem({
     Key? key,
     required this.label,
     required this.icon,

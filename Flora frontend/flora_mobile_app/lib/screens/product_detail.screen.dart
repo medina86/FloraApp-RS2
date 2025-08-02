@@ -1,18 +1,66 @@
+import 'package:flora_mobile_app/models/custom_bouquet_model.dart';
 import 'package:flora_mobile_app/providers/cart_api.dart';
+import 'package:flora_mobile_app/providers/custom_bouquet_provider.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 
+
+
+class CustomBouquetModel {
+  final int id;
+  final String color;
+  final String? cardMessage;
+  final String? specialInstructions;
+  final double totalPrice;
+  final List<CustomBouquetItemModel> items;
+
+  CustomBouquetModel({
+    required this.id,
+    required this.color,
+    this.cardMessage,
+    this.specialInstructions,
+    required this.totalPrice,
+    required this.items,
+  });
+
+  factory CustomBouquetModel.fromJson(Map<String, dynamic> json) {
+    return CustomBouquetModel(
+      id: json['id'] as int,
+      color: json['color'] as String,
+      cardMessage: json['cardMessage'] as String?,
+      specialInstructions: json['specialInstructions'] as String?,
+      totalPrice: (json['totalPrice'] as num).toDouble(),
+      items: (json['items'] as List)
+          .map((item) => CustomBouquetItemModel.fromJson(item as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'color': color,
+      'cardMessage': cardMessage,
+      'specialInstructions': specialInstructions,
+      'totalPrice': totalPrice,
+      'items': items.map((item) => item.toJson()).toList(),
+    };
+  }
+}
+
 class ProductDetailScreen extends StatefulWidget {
-  final Product product;
+  final Product? product;
+  final CustomBouquetModel? customBouquet;
   final int userId;
   final VoidCallback? onBack;      
   final VoidCallback? onOpenCart;   
 
   const ProductDetailScreen({
     Key? key,
-    required this.product,
+    this.product,
+    this.customBouquet,
     required this.userId,
     this.onBack,                    
     this.onOpenCart,               
@@ -27,6 +75,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _showSpecialInstructions = false;
   bool _isFavorite = false;
   bool _isLoadingFavorite = false;
+  bool get _isCustomBouquet => widget.customBouquet != null;
 
   final TextEditingController _cardMessageController = TextEditingController();
   final TextEditingController _specialInstructionsController = TextEditingController();
@@ -35,13 +84,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void initState() {
     super.initState();
     _checkAuthAndInitialize();
+    _initializeControllers();
   }
+
+  void _initializeControllers() {
+    if (_isCustomBouquet) {
+      _cardMessageController.text = widget.customBouquet!.cardMessage ?? '';
+      _specialInstructionsController.text = widget.customBouquet!.specialInstructions ?? '';
+     
+      _showCardMessage = widget.customBouquet!.cardMessage?.isNotEmpty ?? false;
+      _showSpecialInstructions = widget.customBouquet!.specialInstructions?.isNotEmpty ?? false;
+    }
+  }
+
   void _checkAuthAndInitialize() {
     if (!AuthProvider.isAuthenticated) {
       _showAuthError();
       return;
     }
-    _checkIfFavorite();
+    if (!_isCustomBouquet) {
+      _checkIfFavorite();
+    }
   }
 
   void _showAuthError() {
@@ -54,15 +117,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _checkIfFavorite() async {
-    if (!AuthProvider.isAuthenticated) {
-      _showAuthError();
+    if (!AuthProvider.isAuthenticated || _isCustomBouquet) {
       return;
     }
 
     try {
       final favoriteIds = await FavoriteApiService.getFavoriteProductIds(widget.userId);
       setState(() {
-        _isFavorite = favoriteIds.contains(widget.product.id);
+        _isFavorite = favoriteIds.contains(widget.product!.id);
       });
     } catch (e) {
       if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
@@ -73,7 +135,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    if (_isLoadingFavorite) return;
+    if (_isLoadingFavorite || _isCustomBouquet) return;
 
     if (!AuthProvider.isAuthenticated) {
       _showAuthError();
@@ -96,7 +158,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${widget.product.name} removed from favorites'),
+              content: Text('${widget.product!.name} removed from favorites'),
               backgroundColor: const Color(0xFFE91E63),
             ),
           );
@@ -104,7 +166,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       } else {
         success = await FavoriteApiService.addToFavorites(
           widget.userId, 
-          widget.product.id
+          widget.product!.id
         );
         if (success) {
           setState(() {
@@ -112,7 +174,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${widget.product.name} added to favorites'),
+              content: Text('${widget.product!.name} added to favorites'),
               backgroundColor: const Color(0xFFE91E63),
             ),
           );
@@ -167,27 +229,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         return;
       }
 
-      final success = await CartApiService.addToCart(
-        cartId: cartId,
-        productId: widget.product.id,
-        quantity: 1,
-        cardMessage: _cardMessageController.text.trim(),
-        specialInstructions: _specialInstructionsController.text.trim(),
-      );
+      bool success;
+      if (_isCustomBouquet) {
+        // For custom bouquet, you might need a different API call
+        // This is just an example - adjust according to your API
+        success = await CustomBouquetApiService.addCustomBouquetToCart(
+          cartId: cartId,
+          customBouquetId: widget.customBouquet!.id,
+          cardMessage: _cardMessageController.text.trim(),
+          specialInstructions: _specialInstructionsController.text.trim(),
+        );
+      } else {
+        success = await CartApiService.addToCart(
+          cartId: cartId,
+          productId: widget.product!.id,
+          quantity: 1,
+          cardMessage: _cardMessageController.text.trim(),
+          specialInstructions: _specialInstructionsController.text.trim(),
+        );
+      }
 
       if (success) {
+        final productName = _isCustomBouquet ? 'Custom Bouquet' : widget.product!.name;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${widget.product.name} added to cart!'),
+            content: Text('$productName added to cart!'),
             backgroundColor: const Color(0xFFE91E63),
           ),
         );
-        _cardMessageController.clear();
-        _specialInstructionsController.clear();
-        setState(() {
-          _showCardMessage = false;
-          _showSpecialInstructions = false;
-        });
+        if (!_isCustomBouquet) {
+          _cardMessageController.clear();
+          _specialInstructionsController.clear();
+          setState(() {
+            _showCardMessage = false;
+            _showSpecialInstructions = false;
+          });
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -214,10 +291,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = (widget.product.imageUrls.isNotEmpty)
-        ? widget.product.imageUrls.first
-        : 'https://via.placeholder.com/400';
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
@@ -229,126 +302,67 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Product Image
-                    Container(
-                      height: 300,
-                      width: double.infinity,
-                      margin: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[200],
-                              child: const Icon(
-                                Icons.image_not_supported,
-                                size: 50,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 20),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.product.name,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFE91E63),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Product Description
-                          Text(
-                            widget.product.description,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 15),
-                          // Price
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${widget.product.price.toStringAsFixed(2)} KM',
-                                style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFE91E63),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    if (_isCustomBouquet) 
+                      _buildCustomBouquetImage()
+                    else 
+                      _buildProductImage(),
+                    _buildProductInfo(),
                     const SizedBox(height: 20),
-                    _buildExpandableSection(
-                      'Add card message',
-                      _showCardMessage,
-                      () => setState(() => _showCardMessage = !_showCardMessage),
-                      _showCardMessage
-                          ? TextField(
-                              controller: _cardMessageController,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                hintText: 'Enter your message here...',
-                                border: OutlineInputBorder(),
-                              ),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildExpandableSection(
-                      'Special instructions',
-                      _showSpecialInstructions,
-                      () => setState(() => _showSpecialInstructions = !_showSpecialInstructions),
-                      _showSpecialInstructions
-                          ? TextField(
-                              controller: _specialInstructionsController,
-                              maxLines: 3,
-                              decoration: const InputDecoration(
-                                hintText: 'Any special requests...',
-                                border: OutlineInputBorder(),
-                              ),
-                            )
-                          : null,
-                    ),
+                    if (_isCustomBouquet) 
+                      _buildCustomBouquetItems()
+                    else ...[
+                      _buildExpandableSection(
+                        'Add card message',
+                        _showCardMessage,
+                        () => setState(() => _showCardMessage = !_showCardMessage),
+                        _showCardMessage
+                            ? TextField(
+                                controller: _cardMessageController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(
+                                  hintText: 'Enter your message here...',
+                                  border: OutlineInputBorder(),
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                      _buildExpandableSection(
+                        'Special instructions',
+                        _showSpecialInstructions,
+                        () => setState(() => _showSpecialInstructions = !_showSpecialInstructions),
+                        _showSpecialInstructions
+                            ? TextField(
+                                controller: _specialInstructionsController,
+                                maxLines: 3,
+                                decoration: const InputDecoration(
+                                  hintText: 'Any special requests...',
+                                  border: OutlineInputBorder(),
+                                ),
+                              )
+                            : null,
+                      ),
+                    ],
+                    if (_isCustomBouquet) ...[
+                      _buildCustomBouquetExpandableSection(
+                        'Card message',
+                        _showCardMessage,
+                        () => setState(() => _showCardMessage = !_showCardMessage),
+                        _cardMessageController.text.isNotEmpty 
+                            ? _buildReadOnlyText(_cardMessageController.text)
+                            : const Text('No card message', style: TextStyle(color: Colors.grey)),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildCustomBouquetExpandableSection(
+                        'Special instructions',
+                        _showSpecialInstructions,
+                        () => setState(() => _showSpecialInstructions = !_showSpecialInstructions),
+                        _specialInstructionsController.text.isNotEmpty 
+                            ? _buildReadOnlyText(_specialInstructionsController.text)
+                            : const Text('No special instructions', style: TextStyle(color: Colors.grey)),
+                      ),
+                    ],
                     const SizedBox(height: 30),
-
                     Container(
                       width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -382,6 +396,323 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildProductImage() {
+    final imageUrl = (widget.product!.imageUrls.isNotEmpty)
+        ? widget.product!.imageUrls.first
+        : 'https://via.placeholder.com/400';
+
+    return Container(
+      height: 300,
+      width: double.infinity,
+      margin: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey[200],
+              child: const Icon(
+                Icons.image_not_supported,
+                size: 50,
+                color: Colors.grey,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomBouquetImage() {
+    return Container(
+      height: 300,
+      width: double.infinity,
+      margin: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _getColorFromString(widget.customBouquet!.color).withOpacity(0.3),
+            _getColorFromString(widget.customBouquet!.color).withOpacity(0.6),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: _getColorFromString(widget.customBouquet!.color).withOpacity(0.2),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.local_florist,
+                size: 80,
+                color: _getColorFromString(widget.customBouquet!.color),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Custom Bouquet',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _getColorFromString(widget.customBouquet!.color),
+                ),
+              ),
+              Text(
+                widget.customBouquet!.color.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _getColorFromString(widget.customBouquet!.color).withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProductInfo() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isCustomBouquet ? 'Custom Bouquet' : widget.product!.name,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFE91E63),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (_isCustomBouquet) ...[
+            Text(
+              'Color: ${widget.customBouquet!.color}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFE91E63),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Contains ${widget.customBouquet!.items.length} different flowers',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+          ] else
+            Text(
+              widget.product!.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_isCustomBouquet ? widget.customBouquet!.totalPrice : widget.product!.price} KM',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFE91E63),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomBouquetItems() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Bouquet Contents',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFE91E63),
+            ),
+          ),
+          const SizedBox(height: 15),
+          ...widget.customBouquet!.items.map((item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.productName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE91E63).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${item.quantity}x',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE91E63),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadOnlyText(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 14),
+      ),
+    );
+  }
+
+  Widget _buildCustomBouquetExpandableSection(String title, bool isExpanded, VoidCallback onTap, Widget content) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            title: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFE91E63),
+              ),
+            ),
+            trailing: Icon(
+              isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: const Color(0xFFE91E63),
+            ),
+            onTap: onTap,
+          ),
+          if (isExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: content,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Color _getColorFromString(String colorName) {
+    switch (colorName.toLowerCase()) {
+      case 'red':
+        return Colors.red;
+      case 'pink':
+        return Colors.pink;
+      case 'purple':
+        return Colors.purple;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'orange':
+        return Colors.orange;
+      case 'white':
+        return Colors.grey[600]!;
+      case 'green':
+        return Colors.green;
+      default:
+        return const Color(0xFFE91E63);
+    }
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -419,7 +750,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
-          // Flora Title
           const Text(
             'Flora',
             style: TextStyle(
@@ -430,7 +760,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           GestureDetector(
-            onTap: AuthProvider.isAuthenticated ? _toggleFavorite : null,
+            onTap: (!_isCustomBouquet && AuthProvider.isAuthenticated) ? _toggleFavorite : null,
             child: Container(
               width: 40,
               height: 40,
@@ -445,21 +775,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ],
               ),
-              child: _isLoadingFavorite
-                  ? const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFFE91E63),
-                      ),
-                    )
-                  : Icon(
-                      _isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: AuthProvider.isAuthenticated 
-                          ? const Color(0xFFE91E63) 
-                          : Colors.grey,
-                      size: 24,
-                    ),
+              child: _isCustomBouquet 
+                ? Icon(
+                    Icons.palette,
+                    color: _getColorFromString(widget.customBouquet!.color),
+                    size: 24,
+                  )
+                : (_isLoadingFavorite
+                    ? const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Color(0xFFE91E63),
+                        ),
+                      )
+                    : Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: AuthProvider.isAuthenticated 
+                            ? const Color(0xFFE91E63) 
+                            : Colors.grey,
+                        size: 24,
+                      )),
             ),
           ),
         ],

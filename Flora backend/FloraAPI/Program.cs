@@ -34,6 +34,11 @@ builder.Services.AddTransient<ICartItemService,CartItemService>();
 builder.Services.AddTransient<ICartService, CartService>();
 builder.Services.AddTransient<IOrderService,OrderService>();
 builder.Services.AddTransient<ICustomBouquetService, CustomBouquetService>();
+builder.Services.AddTransient<IDecorationRequestService, DecorationRequestService>();
+builder.Services.AddTransient<IDecorationSuggestionService, DecorationSuggestionService>();
+builder.Services.AddTransient<IDonationCampaignService, DonationCampaignService>();
+builder.Services.AddTransient<IDonationService, DonationService>();
+
 
 builder.Services.AddControllers();
 

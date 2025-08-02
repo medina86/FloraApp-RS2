@@ -24,6 +24,11 @@ namespace Flora.Services.Database
         public DbSet<Order>Orders { get; set; }
         public DbSet<CustomBouquetItem> CustomBouquetItems { get; set; }
         public DbSet<CustomBouquet>CustomBouquets { get; set; }
+        public DbSet<DecorationRequest> DecorationRequests { get; set; }
+        public DbSet<DecorationSuggestion> DecorationSuggestions { get; set; }
+        public DbSet<Donation>Donations { get; set; }
+        public DbSet<DonationCampaign>DonationCampaigns { get; set; }
+
 
 
 

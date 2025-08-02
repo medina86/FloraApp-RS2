@@ -115,36 +115,40 @@ class CartApiService {
       throw ApiException('Error getting cartId: $e');
     }
   }
+static Future<bool> addToCart({
+  required int cartId,
+  int? productId,
+  int? customBouquetId,
+  required int quantity,
+  String cardMessage = '',
+  String specialInstructions = '',
+}) async {
+  try {
+    final body = {
+      'cartId': cartId,
+      'quantity': quantity,
+      'cardMessage': cardMessage,
+      'specialInstructions': specialInstructions,
+    };
 
-  static Future<bool> addToCart({
-    required int cartId,
-    required int productId,
-    required int quantity,
-    String cardMessage = '',
-    String specialInstructions = '',
-  }) async {
-    try {
-      await BaseApiService.post(
-        '/cartItem',
-        {
-          'cartId': cartId,
-          'productId': productId,
-          'quantity': quantity,
-          'cardMessage': cardMessage,
-          'specialInstructions': specialInstructions,
-        },
-        (data) => data,
-      );
-      return true;
-    } catch (e) {
-      if (e is ApiException) {
-        print('API Error adding to cart: $e');
-        return false;
-      }
-      throw ApiException('Error adding to cart: $e');
+    if (productId != null) {
+      body['productId'] = productId;
+    } else if (customBouquetId != null) {
+      body['customBouquetId'] = customBouquetId;
+    } else {
+      throw ApiException('Either productId or customBouquetId must be provided');
     }
-  }
 
+    await BaseApiService.post('/cartItem', body, (data) => data);
+    return true;
+  } catch (e) {
+    if (e is ApiException) {
+      print('API Error adding to cart: $e');
+      return false;
+    }
+    throw ApiException('Error adding to cart: $e');
+  }
+}
   static Future<CartModel> getCartByUserWithParams(int userId) async {
     return await BaseApiService.getWithParams(
       '/cart',
@@ -181,4 +185,6 @@ class CartApiService {
       throw ApiException('Error bulk updating cart items: $e');
     }
   }
+
+  
 }

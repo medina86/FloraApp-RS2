@@ -57,7 +57,7 @@ namespace FloraAPI.Controllers
 
             return updatedUser;
         }
-
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
@@ -74,6 +74,7 @@ namespace FloraAPI.Controllers
             var user = await _userService.AuthenticateAsync(request);
             return Ok(user);
         }
+        [Authorize]
         [HttpPost("{id}/upload-image")]
         public async Task<IActionResult> UploadProfileImage(int id, IFormFile file)
         {
