@@ -7,7 +7,16 @@ import 'package:flora_mobile_app/screens/product_by_occasion.dart';
 import 'package:flora_mobile_app/screens/product_detail.screen.dart';
 import 'package:flora_mobile_app/screens/selected_category_products_screen.dart';
 import 'package:flora_mobile_app/screens/donation_campaigns_screen.dart';
+import 'package:flora_mobile_app/screens/blog_list_screen.dart';
+import 'package:flora_mobile_app/screens/blog_post_detail_screen.dart';
+import 'package:flora_mobile_app/screens/decoration_request_screen.dart';
+import 'package:flora_mobile_app/screens/my_orders_screen.dart';
+import 'package:flora_mobile_app/screens/my_events_screen.dart';
+import 'package:flora_mobile_app/screens/suggested_decoration_screen.dart';
+import 'package:flora_mobile_app/screens/custom_bouquet_screen.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
+import 'package:flora_mobile_app/widgets/global_app_header.dart';
+import 'package:flora_mobile_app/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
 
 class MainLayout extends StatefulWidget {
@@ -22,6 +31,72 @@ class MainLayout extends StatefulWidget {
     if (mainLayout != null) {
       mainLayout.openDonationsScreen();
     }
+  }
+
+  static void openBlog(BuildContext context) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openBlogScreen();
+    }
+  }
+
+  static void openBlogPost(BuildContext context, int blogPostId) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openBlogPostScreen(blogPostId);
+    }
+  }
+
+  static void openDecorationRequest(BuildContext context) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openDecorationRequestScreen();
+    }
+  }
+
+  static void openMyOrders(BuildContext context) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openMyOrdersScreen();
+    }
+  }
+
+  static void openMyEvents(BuildContext context) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openMyEventsScreen();
+    }
+  }
+
+  static void openDecorationSuggestions(
+    BuildContext context,
+    DecorationRequest eventRequest,
+  ) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openDecorationSuggestionsScreen(eventRequest);
+    }
+  }
+
+  static void openCustomBouquets(BuildContext context) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => MainLayout(
+              userId:
+                  (context.findAncestorStateOfType<_MainLayoutState>()
+                          as _MainLayoutState)
+                      .widget
+                      .userId,
+            ),
+          ),
+        )
+        .then((_) {
+          final mainLayout = of(context);
+          if (mainLayout != null) {
+            mainLayout.openCustomBouquetScreen();
+          }
+        });
   }
 
   @override
@@ -130,6 +205,113 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
+  void openBlogScreen() {
+    setState(() {
+      final blogScreen = BlogListScreen(
+        fromHomeScreen: true,
+        onBack: goBackToHome,
+      );
+
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = null;
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = null;
+
+      _selectedOccasionScreen = blogScreen;
+    });
+  }
+
+  void openDecorationRequestScreen() {
+    setState(() {
+      final decorationRequestScreen = DecorationRequestScreen(
+        userId: widget.userId,
+      );
+
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = null;
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = null;
+
+      _selectedOccasionScreen = decorationRequestScreen;
+    });
+  }
+
+  void openMyOrdersScreen() {
+    setState(() {
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = MyOrdersScreen(userId: widget.userId);
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = "My Orders"; // Set screen name for header
+    });
+  }
+
+  void openMyEventsScreen() {
+    setState(() {
+      // Set the screen directly without wrapping in a Scaffold
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = MyEventsScreen(userId: widget.userId);
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = "My Events"; // Set screen name for header
+    });
+  }
+
+  void openDecorationSuggestionsScreen(DecorationRequest eventRequest) {
+    setState(() {
+      final suggestionsScreen = DecorationSuggestionsScreen(
+        eventRequest: eventRequest,
+      );
+
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = null;
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = null;
+
+      _selectedOccasionScreen = suggestionsScreen;
+    });
+  }
+
+  void openCustomBouquetScreen() {
+    setState(() {
+      // Set the screen directly without wrapping in a Scaffold
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = CreateCustomBouquetScreen(
+        userId: widget.userId,
+      );
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = "Custom Bouquet"; // Set screen name for header
+    });
+  }
+
+  void openBlogPostScreen(int blogPostId) {
+    setState(() {
+      final blogPostScreen = BlogPostDetailScreen(
+        postId: blogPostId,
+        onBack: openBlogScreen,
+      );
+
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = null;
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = null;
+
+      _selectedOccasionScreen = blogPostScreen;
+    });
+  }
+
   void goBackToProductsList() {
     setState(() => _selectedProductScreen = null);
   }
@@ -147,6 +329,7 @@ class _MainLayoutState extends State<MainLayout> {
     });
   }
 
+  // Enhanced back navigation method to handle all screens properly
   void goBackToHome() {
     setState(() {
       _selectedProductScreen = null;
@@ -155,7 +338,8 @@ class _MainLayoutState extends State<MainLayout> {
       _currentCategoryId = null;
       _currentCategoryName = null;
       _currentOccasionName = null;
-      _selectedIndex = 0;
+      _selectedIndex = 0; // Always go back to home tab
+      _openedFromHome = false;
     });
   }
 
@@ -182,8 +366,52 @@ class _MainLayoutState extends State<MainLayout> {
       currentScreen = _pages[_selectedIndex];
     }
 
+    final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
+
     return Scaffold(
-      body: currentScreen,
+      key: scaffoldKey,
+      backgroundColor: Colors.white,
+      appBar: GlobalAppHeader(
+        scaffoldKey: scaffoldKey,
+        showBackButton:
+            _selectedProductScreen != null ||
+            _selectedCategoryScreen != null ||
+            _selectedOccasionScreen != null,
+        onBackPressed: () {
+          if (_selectedProductScreen != null) {
+            goBackToProductsList();
+          } else if (_selectedCategoryScreen != null) {
+            goBackToCategories();
+          } else if (_selectedOccasionScreen != null) {
+            goBackToHome();
+          }
+        },
+        // Pass the correct title based on current screen
+        title: _currentOccasionName != null
+            ? _currentOccasionName!
+            : _currentCategoryName != null
+            ? _currentCategoryName!
+            : _selectedIndex == 0
+            ? 'Home'
+            : _selectedIndex == 1
+            ? 'Shop'
+            : _selectedIndex == 2
+            ? 'Favorites'
+            : _selectedIndex == 3
+            ? 'Cart'
+            : _selectedIndex == 4
+            ? 'Account'
+            : 'Flora',
+        notificationCount: 0,
+      ),
+      drawer: AppDrawer(
+        userId: widget.userId,
+        onNavigate: (index) {
+          _onItemTapped(index);
+          scaffoldKey.currentState?.closeDrawer();
+        },
+      ),
+      body: Material(color: Colors.white, child: currentScreen),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

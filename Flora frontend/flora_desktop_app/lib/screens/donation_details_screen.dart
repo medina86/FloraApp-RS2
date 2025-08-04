@@ -23,6 +23,12 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
   bool _isLoading = true;
   List<Donation> _donations = [];
 
+  // Metoda za računanje ukupno doniranog iznosa
+  double _calculateTotalDonated() {
+    if (_donations.isEmpty) return 0.0;
+    return _donations.fold(0.0, (sum, donation) => sum + donation.amount);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -32,30 +38,123 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
   Future<void> _fetchDonations() async {
     if (!mounted) return;
 
+    setState(() {
+      _isLoading = true;
+    });
+
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/Donation?campaignId=${widget.campaign.id}'),
-        headers: AuthProvider.getHeaders(),
-      );
+      final campaignId = widget.campaign.id;
+
+      final uri = Uri.parse(
+        '$baseUrl/Donation',
+      ).replace(queryParameters: {'campaignId': campaignId.toString()});
+
+      final response = await http.get(uri, headers: AuthProvider.getHeaders());
+
+      print('Fetching donations for campaign ID: $campaignId');
+      print('API URL: ${uri.toString()}');
 
       if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print('API Response Data: $data');
+
         if (data is Map && data.containsKey('items')) {
+          final items = data['items'] as List;
+         
+          bool allMatchCampaignId = true;
+          for (var item in items) {
+            if (item['campaignId'] != widget.campaign.id) {
+              print(
+                'Found donation with mismatched campaignId: ${item['campaignId']} (expected ${widget.campaign.id})',
+              );
+              allMatchCampaignId = false;
+            }
+          }
+
+          if (!allMatchCampaignId) {
+            print('WARNING: Some donations do not match the campaign ID!');
+          } else {
+            print('All donations match the campaign ID ${widget.campaign.id}');
+          }
+
+          List<Donation> donations = [];
+          for (var item in items) {
+            try {
+              
+              if (item['campaignId'] == widget.campaign.id) {
+                donations.add(Donation.fromJson(item));
+              }
+            } catch (e) {
+              print('Error parsing donation: $e in item: $item');
+            }
+          }
+
+          if (donations.isEmpty && items.isNotEmpty) {
+            print(
+              'WARNING: Frontend filter removed all donations because they didn\'t match campaign ID ${widget.campaign.id}',
+            );
+            print('This suggests your backend is not filtering correctly');
+          }
+
           setState(() {
-            _donations = (data['items'] as List)
-                .map((item) => Donation.fromJson(item))
-                .toList();
+            _donations = donations;
             _isLoading = false;
           });
+
+         
+          if (donations.length != items.length && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Filtered ${items.length - donations.length} donations that didn\'t match this campaign',
+                ),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          print('Unexpected data format: $data');
+          setState(() {
+            _isLoading = false;
+            _donations = [];
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Failed to parse donation data. Please try again.',
+                ),
+              ),
+            );
+          }
         }
       } else {
-        print('Failed to load donations: ${response.statusCode}');
+        print(
+          'Failed to load donations: ${response.statusCode} - ${response.body}',
+        );
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load donations: ${response.statusCode}'),
+            ),
+          );
+        }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (mounted) {
         print('Error loading donations: $e');
+        print('Stack trace: $stackTrace');
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -78,9 +177,7 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
                   if (adminLayoutState != null) {
                     adminLayoutState.setSelectedIndex(
                       3,
-                    ); // This will show the DonationCampaignsScreen
-
-                    // Give the navigation time to update
+                    ); 
                     await Future.delayed(const Duration(milliseconds: 300));
                   }
                 },
@@ -183,7 +280,7 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Total amount',
+                        'Target amount',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 16,
@@ -199,6 +296,24 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
                           fontSize: 32,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Collected so far',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${_calculateTotalDonated().toStringAsFixed(2)} KM',
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -209,9 +324,9 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Donations List',
-                style: TextStyle(
+              Text(
+                'Donations for "${widget.campaign.title}"',
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF666666),
@@ -234,6 +349,43 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
           const SizedBox(height: 16),
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.pink))
+          else if (_donations.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No donations found for "${widget.campaign.title}"',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: _fetchDonations,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.pink,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           else
             Expanded(
               child: Card(

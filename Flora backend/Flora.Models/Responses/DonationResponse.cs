@@ -14,8 +14,10 @@ namespace Flora.Models.Responses
         public decimal Amount { get; set; }
         public string Purpose { get; set; } = string.Empty;
         public DateTime Date { get; set; }
-
+        public int UserId {  get; set; }
         public int CampaignId { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string PaymentUrl { get;set; } = string.Empty;
         public string CampaignTitle { get; set; } = string.Empty;
     }
 

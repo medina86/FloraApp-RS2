@@ -5,7 +5,11 @@ import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flora_mobile_app/screens/decoration_request_screen.dart';
+import 'package:flora_mobile_app/models/blog_post.dart';
+import 'package:flora_mobile_app/providers/blog_api.dart';
+import 'package:flora_mobile_app/helpers/image_loader.dart';
+import 'package:flora_mobile_app/providers/blog_provider_enhanced.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   final int userId;
@@ -16,11 +20,15 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> featuredProducts = [];
+  BlogPost? latestBlogPost;
   bool isLoading = true;
+  bool isLoadingBlog = true;
+
   @override
   void initState() {
     super.initState();
     _fetchFeaturedProducts();
+    _fetchLatestBlogPost();
   }
 
   Future<List<String>> _fetchImageUrls(int productId) async {
@@ -61,15 +69,55 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _fetchLatestBlogPost() async {
+    try {
+      setState(() {
+        isLoadingBlog = true;
+      });
+
+      // Get all blog posts and take the most recent one
+      final posts = await BlogApiService.getBlogPosts();
+
+      if (posts.isNotEmpty) {
+        // Sort by created date descending to get the most recent post
+        posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+        if (mounted) {
+          setState(() {
+            latestBlogPost = posts.first;
+            isLoadingBlog = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            latestBlogPost = null;
+            isLoadingBlog = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading latest blog post: $e');
+      if (mounted) {
+        setState(() {
+          latestBlogPost = null;
+          isLoadingBlog = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // The header is now provided by MainLayout's GlobalAppHeader
+    // We don't need our own header anymore
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildHeader(context),
+              // Removed _buildHeader(context) as it's now in the GlobalAppHeader
               _buildSearchBar(),
               _buildFeaturedSection(),
               _buildBrowseByCategory(context),
@@ -458,14 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => DecorationRequestScreen(
-                                userId: widget.userId,
-                              ),
-                            ),
-                          );
+                          MainLayout.openDecorationRequest(context);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -534,7 +575,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          // Otvori donacije koristeći statičku metodu MainLayout-a
+                          // Open donations using the static method of MainLayout
                           MainLayout.openDonations(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -583,19 +624,54 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFE91E63),
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, color: Color(0xFFE91E63), size: 16),
+              TextButton(
+                onPressed: () {
+                  MainLayout.openBlog(context);
+                },
+                child: Row(
+                  children: [
+                    Text(
+                      'View all',
+                      style: TextStyle(color: Color(0xFFE91E63)),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: Color(0xFFE91E63),
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           SizedBox(height: 15),
-          _buildBlogItem('08-11-2021', 'Seasonal Picks'),
-          SizedBox(height: 10),
-          _buildBlogItem('08-11-2021', 'What\'s Blooming Now'),
+
+          if (isLoadingBlog)
+            Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(color: Color(0xFFE91E63)),
+            )
+          else if (latestBlogPost != null)
+            InkWell(
+              onTap: () {
+                MainLayout.openBlogPost(context, latestBlogPost!.id);
+              },
+              child: _buildLatestBlogItem(latestBlogPost!),
+            )
+          else
+            Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: Text('No blog posts available'),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildBlogItem(String date, String title) {
+  Widget _buildLatestBlogItem(BlogPost blog) {
     return Container(
       padding: EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -611,24 +687,68 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          Container(width: 60, height: 60),
+          // Blog image s univerzalnim ImageLoader-om i BlogProviderEnhanced za URL
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: blog.imageUrls.isNotEmpty
+                ? ImageLoader.loadImage(
+                    url:
+                        BlogProviderEnhanced.getValidImageUrl(blog.imageUrls) ??
+                        '',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorWidget: Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey[200],
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        size: 30,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 80,
+                    height: 80,
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.image,
+                      size: 30,
+                      color: Colors.grey,
+                    ),
+                  ),
+          ),
+
           SizedBox(width: 15),
+
+          // Blog text content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  date,
+                  DateFormat('dd.MM.yyyy').format(blog.createdAt),
                   style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
                 SizedBox(height: 5),
                 Text(
-                  title,
+                  blog.title,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFFE91E63),
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 5),
+                Text(
+                  blog.content,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[800]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

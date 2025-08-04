@@ -2,11 +2,9 @@ import 'package:flora_mobile_app/models/custom_bouquet_model.dart';
 import 'package:flora_mobile_app/providers/cart_api.dart';
 import 'package:flora_mobile_app/providers/custom_bouquet_provider.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
-import 'package:flora_mobile_app/providers/auth_provider.dart'; 
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
-
-
 
 class CustomBouquetModel {
   final int id;
@@ -33,7 +31,10 @@ class CustomBouquetModel {
       specialInstructions: json['specialInstructions'] as String?,
       totalPrice: (json['totalPrice'] as num).toDouble(),
       items: (json['items'] as List)
-          .map((item) => CustomBouquetItemModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                CustomBouquetItemModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList(),
     );
   }
@@ -54,16 +55,16 @@ class ProductDetailScreen extends StatefulWidget {
   final Product? product;
   final CustomBouquetModel? customBouquet;
   final int userId;
-  final VoidCallback? onBack;      
-  final VoidCallback? onOpenCart;   
+  final VoidCallback? onBack;
+  final VoidCallback? onOpenCart;
 
   const ProductDetailScreen({
     Key? key,
     this.product,
     this.customBouquet,
     required this.userId,
-    this.onBack,                    
-    this.onOpenCart,               
+    this.onBack,
+    this.onOpenCart,
   }) : super(key: key);
 
   @override
@@ -78,7 +79,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool get _isCustomBouquet => widget.customBouquet != null;
 
   final TextEditingController _cardMessageController = TextEditingController();
-  final TextEditingController _specialInstructionsController = TextEditingController();
+  final TextEditingController _specialInstructionsController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -90,10 +92,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _initializeControllers() {
     if (_isCustomBouquet) {
       _cardMessageController.text = widget.customBouquet!.cardMessage ?? '';
-      _specialInstructionsController.text = widget.customBouquet!.specialInstructions ?? '';
-     
+      _specialInstructionsController.text =
+          widget.customBouquet!.specialInstructions ?? '';
+
       _showCardMessage = widget.customBouquet!.cardMessage?.isNotEmpty ?? false;
-      _showSpecialInstructions = widget.customBouquet!.specialInstructions?.isNotEmpty ?? false;
+      _showSpecialInstructions =
+          widget.customBouquet!.specialInstructions?.isNotEmpty ?? false;
     }
   }
 
@@ -122,12 +126,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     try {
-      final favoriteIds = await FavoriteApiService.getFavoriteProductIds(widget.userId);
+      final favoriteIds = await FavoriteApiService.getFavoriteProductIds(
+        widget.userId,
+      );
       setState(() {
         _isFavorite = favoriteIds.contains(widget.product!.id);
       });
     } catch (e) {
-      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
         AuthProvider.logout();
         _showAuthError();
       }
@@ -150,7 +157,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       bool success;
       if (_isFavorite) {
         success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
-          widget.userId, 
+          widget.userId,
         );
         if (success) {
           setState(() {
@@ -165,8 +172,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         }
       } else {
         success = await FavoriteApiService.addToFavorites(
-          widget.userId, 
-          widget.product!.id
+          widget.userId,
+          widget.product!.id,
         );
         if (success) {
           setState(() {
@@ -184,23 +191,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to ${_isFavorite ? 'remove from' : 'add to'} favorites'),
+            content: Text(
+              'Failed to ${_isFavorite ? 'remove from' : 'add to'} favorites',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       print('Error toggling favorite: $e');
-    
-      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
         AuthProvider.logout();
         _showAuthError();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -250,7 +257,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
 
       if (success) {
-        final productName = _isCustomBouquet ? 'Custom Bouquet' : widget.product!.name;
+        final productName = _isCustomBouquet
+            ? 'Custom Bouquet'
+            : widget.product!.name;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('$productName added to cart!'),
@@ -275,7 +284,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
     } catch (e) {
       print('Error adding to cart: $e');
-      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
         AuthProvider.logout();
         _showAuthError();
       } else {
@@ -296,25 +306,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            // Removed duplicate header
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_isCustomBouquet) 
+                    if (_isCustomBouquet)
                       _buildCustomBouquetImage()
-                    else 
+                    else
                       _buildProductImage(),
                     _buildProductInfo(),
                     const SizedBox(height: 20),
-                    if (_isCustomBouquet) 
+                    if (_isCustomBouquet)
                       _buildCustomBouquetItems()
                     else ...[
                       _buildExpandableSection(
                         'Add card message',
                         _showCardMessage,
-                        () => setState(() => _showCardMessage = !_showCardMessage),
+                        () => setState(
+                          () => _showCardMessage = !_showCardMessage,
+                        ),
                         _showCardMessage
                             ? TextField(
                                 controller: _cardMessageController,
@@ -330,7 +342,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       _buildExpandableSection(
                         'Special instructions',
                         _showSpecialInstructions,
-                        () => setState(() => _showSpecialInstructions = !_showSpecialInstructions),
+                        () => setState(
+                          () => _showSpecialInstructions =
+                              !_showSpecialInstructions,
+                        ),
                         _showSpecialInstructions
                             ? TextField(
                                 controller: _specialInstructionsController,
@@ -347,19 +362,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       _buildCustomBouquetExpandableSection(
                         'Card message',
                         _showCardMessage,
-                        () => setState(() => _showCardMessage = !_showCardMessage),
-                        _cardMessageController.text.isNotEmpty 
+                        () => setState(
+                          () => _showCardMessage = !_showCardMessage,
+                        ),
+                        _cardMessageController.text.isNotEmpty
                             ? _buildReadOnlyText(_cardMessageController.text)
-                            : const Text('No card message', style: TextStyle(color: Colors.grey)),
+                            : const Text(
+                                'No card message',
+                                style: TextStyle(color: Colors.grey),
+                              ),
                       ),
                       const SizedBox(height: 10),
                       _buildCustomBouquetExpandableSection(
                         'Special instructions',
                         _showSpecialInstructions,
-                        () => setState(() => _showSpecialInstructions = !_showSpecialInstructions),
-                        _specialInstructionsController.text.isNotEmpty 
-                            ? _buildReadOnlyText(_specialInstructionsController.text)
-                            : const Text('No special instructions', style: TextStyle(color: Colors.grey)),
+                        () => setState(
+                          () => _showSpecialInstructions =
+                              !_showSpecialInstructions,
+                        ),
+                        _specialInstructionsController.text.isNotEmpty
+                            ? _buildReadOnlyText(
+                                _specialInstructionsController.text,
+                              )
+                            : const Text(
+                                'No special instructions',
+                                style: TextStyle(color: Colors.grey),
+                              ),
                       ),
                     ],
                     const SizedBox(height: 30),
@@ -367,10 +395,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       width: double.infinity,
                       margin: const EdgeInsets.symmetric(horizontal: 20),
                       child: ElevatedButton(
-                        onPressed: AuthProvider.isAuthenticated ? _addToCart : null,
+                        onPressed: AuthProvider.isAuthenticated
+                            ? _addToCart
+                            : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AuthProvider.isAuthenticated 
-                              ? const Color(0xFFE91E63) 
+                          backgroundColor: AuthProvider.isAuthenticated
+                              ? const Color(0xFFE91E63)
                               : Colors.grey,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
@@ -378,7 +408,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ),
                         ),
                         child: Text(
-                          AuthProvider.isAuthenticated ? 'ADD TO CART' : 'LOGIN REQUIRED',
+                          AuthProvider.isAuthenticated
+                              ? 'ADD TO CART'
+                              : 'LOGIN REQUIRED',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -464,7 +496,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(20),
         child: Container(
           decoration: BoxDecoration(
-            color: _getColorFromString(widget.customBouquet!.color).withOpacity(0.2),
+            color: _getColorFromString(
+              widget.customBouquet!.color,
+            ).withOpacity(0.2),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -488,7 +522,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: _getColorFromString(widget.customBouquet!.color).withOpacity(0.8),
+                  color: _getColorFromString(
+                    widget.customBouquet!.color,
+                  ).withOpacity(0.8),
                 ),
               ),
             ],
@@ -598,38 +634,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           const SizedBox(height: 15),
-          ...widget.customBouquet!.items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    item.productName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+          ...widget.customBouquet!.items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.productName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE91E63).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${item.quantity}x',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFE91E63),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE91E63).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${item.quantity}x',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFE91E63),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )).toList(),
+              )
+              .toList(),
         ],
       ),
     );
@@ -644,14 +687,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 14),
-      ),
+      child: Text(text, style: const TextStyle(fontSize: 14)),
     );
   }
 
-  Widget _buildCustomBouquetExpandableSection(String title, bool isExpanded, VoidCallback onTap, Widget content) {
+  Widget _buildCustomBouquetExpandableSection(
+    String title,
+    bool isExpanded,
+    VoidCallback onTap,
+    Widget content,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
@@ -760,7 +805,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           GestureDetector(
-            onTap: (!_isCustomBouquet && AuthProvider.isAuthenticated) ? _toggleFavorite : null,
+            onTap: (!_isCustomBouquet && AuthProvider.isAuthenticated)
+                ? _toggleFavorite
+                : null,
             child: Container(
               width: 40,
               height: 40,
@@ -775,27 +822,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                 ],
               ),
-              child: _isCustomBouquet 
-                ? Icon(
-                    Icons.palette,
-                    color: _getColorFromString(widget.customBouquet!.color),
-                    size: 24,
-                  )
-                : (_isLoadingFavorite
-                    ? const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFFE91E63),
-                        ),
-                      )
-                    : Icon(
-                        _isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: AuthProvider.isAuthenticated 
-                            ? const Color(0xFFE91E63) 
-                            : Colors.grey,
-                        size: 24,
-                      )),
+              child: _isCustomBouquet
+                  ? Icon(
+                      Icons.palette,
+                      color: _getColorFromString(widget.customBouquet!.color),
+                      size: 24,
+                    )
+                  : (_isLoadingFavorite
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFFE91E63),
+                            ),
+                          )
+                        : Icon(
+                            _isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: AuthProvider.isAuthenticated
+                                ? const Color(0xFFE91E63)
+                                : Colors.grey,
+                            size: 24,
+                          )),
             ),
           ),
         ],
@@ -803,7 +852,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  Widget _buildExpandableSection(String title, bool isExpanded, VoidCallback onTap, Widget? content) {
+  Widget _buildExpandableSection(
+    String title,
+    bool isExpanded,
+    VoidCallback onTap,
+    Widget? content,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(

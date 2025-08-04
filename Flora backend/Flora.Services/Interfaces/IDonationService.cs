@@ -12,6 +12,10 @@ namespace Flora.Services.Interfaces
     public interface IDonationService
     : ICRUDService<DonationResponse, DonationSearchObject, DonationRequest, DonationRequest>
     {
+        Task<DonationResponse> InitiateDonationAsync(DonationPayPalRequest request);
+        Task<DonationResponse> CreatePayPalDonationAsync(DonationPayPalRequest request);
+        Task<DonationResponse> ConfirmDonationPaymentAsync(int donationId, string paymentId);
+
     }
 
 }

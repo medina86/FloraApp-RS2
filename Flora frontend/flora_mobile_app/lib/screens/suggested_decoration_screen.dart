@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
-import 'package:flora_mobile_app/screens/decoration_request_screen.dart'; 
-import 'package:http/http.dart' as http; 
-import 'dart:convert'; 
+import 'package:flora_mobile_app/screens/decoration_request_screen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 
 class DecorationSuggestion {
-  final int id; 
+  final int id;
   final int decorationRequestId;
-  final String description; 
+  final String description;
   final String imageUrl;
 
   DecorationSuggestion({
@@ -28,17 +28,19 @@ class DecorationSuggestion {
   }
 }
 
-
 class DecorationSuggestionsScreen extends StatefulWidget {
   final DecorationRequest eventRequest;
 
-  const DecorationSuggestionsScreen({Key? key, required this.eventRequest}) : super(key: key);
+  const DecorationSuggestionsScreen({Key? key, required this.eventRequest})
+    : super(key: key);
 
   @override
-  State<DecorationSuggestionsScreen> createState() => _DecorationSuggestionsScreenState();
+  State<DecorationSuggestionsScreen> createState() =>
+      _DecorationSuggestionsScreenState();
 }
 
-class _DecorationSuggestionsScreenState extends State<DecorationSuggestionsScreen> {
+class _DecorationSuggestionsScreenState
+    extends State<DecorationSuggestionsScreen> {
   List<DecorationSuggestion> _suggestions = [];
   bool _isLoading = true;
   String? _error;
@@ -56,9 +58,10 @@ class _DecorationSuggestionsScreenState extends State<DecorationSuggestionsScree
     });
 
     try {
-     
       final response = await http.get(
-        Uri.parse('$baseUrl/DecorationSuggestion?DecorationRequestId=${widget.eventRequest.id}'),
+        Uri.parse(
+          '$baseUrl/DecorationSuggestion?DecorationRequestId=${widget.eventRequest.id}',
+        ),
         headers: AuthProvider.getHeaders(),
       );
 
@@ -87,7 +90,9 @@ class _DecorationSuggestionsScreenState extends State<DecorationSuggestionsScree
         setState(() {
           _error = 'Failed to load suggestions: ${response.statusCode}';
         });
-        print('Failed to load suggestions: ${response.statusCode} ${response.body}');
+        print(
+          'Failed to load suggestions: ${response.statusCode} ${response.body}',
+        );
       }
     } catch (e) {
       setState(() {
@@ -105,152 +110,125 @@ class _DecorationSuggestionsScreenState extends State<DecorationSuggestionsScree
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.floralPink,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white), 
-          onPressed: () {
-            Navigator.pop(context); 
-          },
-        ),
         title: const Text(
-          'Flora',
+          'Decoration Suggestions',
           style: TextStyle(
-            fontFamily: 'DancingScript',
-            fontSize: 28,
+            color: AppColors.floralPink,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        centerTitle: true,
+        automaticallyImplyLeading: false, // MainLayout handles the back button
       ),
       body: Container(
         color: Colors.white,
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.floralPink))
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.floralPink),
+              )
             : _error != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_error!, style: const TextStyle(color: Colors.red)),
-                        ElevatedButton(
-                          onPressed: _fetchSuggestions,
-                          child: const Text('Retry'),
-                        ),
-                      ],
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                    ElevatedButton(
+                      onPressed: _fetchSuggestions,
+                      child: const Text('Retry'),
                     ),
-                  )
-                : _suggestions.isEmpty
-                    ? Center(
-                        child: Text(
-                          'Nema predloga za ovaj događaj.',
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'My events',
-                              
+                  ],
+                ),
+              )
+            : _suggestions.isEmpty
+            ? Center(child: Text('Nema predloga za ovaj događaj.'))
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('My events'),
+                    const SizedBox(height: 8),
+                    Text(widget.eventRequest.eventType),
+                    const SizedBox(height: 20),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _suggestions.length,
+                      itemBuilder: (context, index) {
+                        final suggestion = _suggestions[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              widget.eventRequest.eventType,
-                              
-                            ),
-                            const SizedBox(height: 20),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _suggestions.length,
-                              itemBuilder: (context, index) {
-                                final suggestion = _suggestions[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: Card(
-                                    elevation: 2,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(8.0),
-                                            child: Image.network(
-                                              suggestion.imageUrl,
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error, stackTrace) => Container(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Row(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Image.network(
+                                      suggestion.imageUrl,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
                                                 width: 80,
                                                 height: 80,
                                                 color: Colors.grey[200],
-                                                child: const Icon(Icons.broken_image, color: Colors.grey),
+                                                child: const Icon(
+                                                  Icons.broken_image,
+                                                  color: Colors.grey,
+                                                ),
                                               ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Text(
-                                              suggestion.description, 
-                                              
-                                            ),
-                                          ),
-                                        ],
-                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 30),
-                            Center(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.floralPink,
-                                  padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30.0),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'DONE',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                                  const SizedBox(width: 16),
+                                  Expanded(child: Text(suggestion.description)),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 20),
-                          ],
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 30),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.floralPink,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 60,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'DONE',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppColors.floralPink,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white.withOpacity(0.7),
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Shop'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Cart'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
-        ],
-        currentIndex: 0,
-        onTap: (index) {
-        },
-      ),
+      // Removed custom BottomNavigationBar - using the one from MainLayout
     );
   }
 }

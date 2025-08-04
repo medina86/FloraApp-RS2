@@ -33,7 +33,7 @@ namespace Flora.Services.Services
                     .ThenInclude(ci => ci.Product)
                         .ThenInclude(p => p.Images)
                 .Include(c => c.Items)
-                    .ThenInclude(ci => ci.CustomBouquet) // Dodano za CustomBouquet
+                    .ThenInclude(ci => ci.CustomBouquet) 
                 .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserId == request.UserId);
 
             if (cart == null || !cart.Items.Any())

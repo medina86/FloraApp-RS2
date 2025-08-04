@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flora_mobile_app/models/donation.dart';
 import 'package:flora_mobile_app/models/donation_campaign.dart';
-import 'package:flora_mobile_app/providers/donation_api.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
+import 'package:flora_mobile_app/screens/paypal_donation_screen.dart';
+import 'package:flora_mobile_app/helpers/image_loader.dart';
 
 class DonationScreen extends StatefulWidget {
   final DonationCampaign campaign;
@@ -47,26 +47,21 @@ class _DonationScreenState extends State<DonationScreen> {
         throw Exception('User not logged in');
       }
 
-      final donation = Donation(
-        donorName: user.firstName + ' ' + user.lastName,
-        email: user.email,
-        amount: double.parse(_amountController.text),
-        purpose: widget.campaign.title,
-        campaignId: widget.campaign.id,
-      );
+      final double donationAmount = double.parse(_amountController.text);
 
-      await DonationApiService.makeDonation(donation);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Thank you for your donation!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      Navigator.pop(context);
+      // Navigate to PayPal donation screen
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PayPalDonationScreen(
+              campaign: widget.campaign,
+              userId: widget.userId,
+              amount: donationAmount,
+            ),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -128,8 +123,8 @@ class _DonationScreenState extends State<DonationScreen> {
                 if (widget.campaign.imageUrl != null)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      widget.campaign.imageUrl!,
+                    child: ImageLoader.loadImage(
+                      url: widget.campaign.imageUrl!,
                       height: 200,
                       width: double.infinity,
                       fit: BoxFit.cover,

@@ -57,13 +57,6 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        title: const Text("Account info", style: AppTextStyles.appBarStyle),
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: AppColors.floralPink),
-      ),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           if (userProvider.error != null) {

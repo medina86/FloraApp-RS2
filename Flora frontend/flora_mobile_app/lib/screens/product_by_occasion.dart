@@ -1,37 +1,49 @@
 import 'dart:convert';
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:http/http.dart' as http;
+
 Future<List<Product>> fetchProductsByOccasionName(String occasionName) async {
   try {
     final encodedName = Uri.encodeComponent(occasionName);
 
+    print('🔍 Fetching products for occasion: $occasionName');
+    print('🌐 URL: $baseUrl/product?occasionName=$encodedName');
+
     final response = await http.get(
       Uri.parse('$baseUrl/product?occasionName=$encodedName'),
+      headers: AuthProvider.getHeaders(),
     );
+
+    print('📡 Response status code: ${response.statusCode}');
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonResponse = json.decode(response.body);
       final List<dynamic> items = jsonResponse['items'];
 
-      print('✅ Found ${items.length} products');
+      print('✅ Found ${items.length} products for occasion: $occasionName');
 
-      final products = items.map((json) {
-        final product = Product.fromJson(json);
-        print(
-          '🖼️ Product ${product.name} has ${product.imageUrls.length} images: ${product.imageUrls}',
-        );
-        return product;
-      }).where((product) => product.active && product.isAvailable).toList();
+      final products = items
+          .map((json) {
+            final product = Product.fromJson(json);
+            print('🖼️ Product: ${product.name} - Active: ${product.active} - Available: ${product.isAvailable}');
+            return product;
+          })
+          .where((product) => product.active && product.isAvailable)
+          .toList();
 
+      print('✅ Returning ${products.length} active and available products');
       return products;
     } else {
+      print('❌ Failed to load products: ${response.statusCode}');
+      print('❌ Response body: ${response.body}');
       throw Exception('Failed to load products: ${response.statusCode}');
     }
   } catch (e) {
-    print('💥 Exception: $e');
+    print('💥 Exception fetching products for occasion $occasionName: $e');
     rethrow;
   }
 }
@@ -62,12 +74,14 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
+    return Material(
+      color: Colors.white,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            // Removed duplicate header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Align(
@@ -166,51 +180,11 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () {
-              MainLayout.of(context)?.goBackToHome();
-            },
-            child: const Icon(
-              Icons.arrow_back_ios,
-              color: Color(0xFFE91E63),
-              size: 24,
-            ),
-          ),
-          const Text(
-            'Flora',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFE91E63),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE91E63),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Icon(
-              Icons.notifications,
-              color: Colors.white,
-              size: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Removed the _buildHeader method as we're now using the global header
 
   Widget _buildProductCard(Product product) {
     print('🖼️ Building card for: ${product.name}');

@@ -52,7 +52,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            // Removed duplicate header - using GlobalAppHeader from MainLayout
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Align(
@@ -101,7 +101,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: ListView.builder(
-                        itemCount: categories.length + 1, 
+                        itemCount: categories.length + 1,
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             return Padding(
@@ -109,9 +109,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               child: _buildCustomBouquetCard(context),
                             );
                           } else {
-                            final category = categories[index - 1]; 
+                            final category = categories[index - 1];
                             final backgroundColor =
-                                categoryColors[(index - 1) % categoryColors.length];
+                                categoryColors[(index - 1) %
+                                    categoryColors.length];
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 15),
                               child: _buildCategoryCard(
@@ -134,116 +135,90 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(Icons.menu, color: Color(0xFFE91E63), size: 24),
-          Text(
-            'Flora',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFE91E63),
-              fontStyle: FontStyle.italic,
-            ),
+  // Removed _buildHeader method as we're now using the global header from MainLayout
+
+  Widget _buildCustomBouquetCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) =>
+                CreateCustomBouquetScreen(userId: widget.userId),
           ),
-          Icon(Icons.notifications, color: Color(0xFFE91E63), size: 24),
-        ],
+        );
+      },
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          image: DecorationImage(
+            image: AssetImage('assets/images/custom_bouqet.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                ),
+              ),
+            ),
+
+            const Positioned(
+              left: 20,
+              top: 0,
+              bottom: 0,
+              right: 60,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'CUSTOM BOUQUETS',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 2,
+                        color: Colors.black54,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const Positioned(
+              right: 20,
+              top: 0,
+              bottom: 0,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-        
-
- 
- Widget _buildCustomBouquetCard(BuildContext context) {
-  return GestureDetector(
-   
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => CreateCustomBouquetScreen(userId: widget.userId),
-                ),
-              );
-    },
-    child: Container(
-      height: 120,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        image: DecorationImage(
-          image: AssetImage('assets/images/custom_bouqet.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Stack(
-        children: [
-          
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              gradient: LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.black.withOpacity(0.4),
-                  Colors.transparent
-                ],
-              ),
-            ),
-          ),
-          
-          const Positioned(
-            left: 20,
-            top: 0,
-            bottom: 0,
-            right: 60,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'CUSTOM BOUQUETS',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, 
-                  shadows: [
-                    Shadow(
-                      offset: Offset(0, 1),
-                      blurRadius: 2,
-                      color: Colors.black54,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          const Positioned(
-            right: 20,
-            top: 0,
-            bottom: 0,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white,
-                size: 20,
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
 
   Widget _buildCategoryCard(
     BuildContext context,
@@ -294,7 +269,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ),
             ),
-            
+
             Positioned(
               left: 20,
               top: 0,
@@ -319,7 +294,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 ),
               ),
             ),
-            
+
             const Positioned(
               right: 20,
               top: 0,

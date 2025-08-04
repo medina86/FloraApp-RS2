@@ -38,6 +38,8 @@ builder.Services.AddTransient<IDecorationRequestService, DecorationRequestServic
 builder.Services.AddTransient<IDecorationSuggestionService, DecorationSuggestionService>();
 builder.Services.AddTransient<IDonationCampaignService, DonationCampaignService>();
 builder.Services.AddTransient<IDonationService, DonationService>();
+builder.Services.AddTransient<IBlogPostService, BlogPostService>();
+builder.Services.AddTransient<IBlogCommentService, BlogCommentService>();
 
 
 builder.Services.AddControllers();

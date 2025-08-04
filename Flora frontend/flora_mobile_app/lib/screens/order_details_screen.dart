@@ -1,6 +1,7 @@
 import 'package:flora_mobile_app/models/order.dart';
 import 'package:flutter/material.dart';
 import 'dart:math'; // Za min funkciju
+import 'package:flora_mobile_app/helpers/image_loader.dart';
 
 class MobileOrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -17,7 +18,9 @@ class MobileOrderDetailsScreen extends StatelessWidget {
             shape: BoxShape.circle,
             color: isCompleted
                 ? Colors.green
-                : (isActive ? const Color.fromARGB(255, 170, 46, 92) : Colors.grey[300]),
+                : (isActive
+                      ? const Color.fromARGB(255, 170, 46, 92)
+                      : Colors.grey[300]),
           ),
           child: isCompleted
               ? const Icon(Icons.check, color: Colors.white, size: 16)
@@ -29,7 +32,9 @@ class MobileOrderDetailsScreen extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
-            color: isActive ? const Color.fromARGB(255, 170, 46, 92) : Colors.grey[600],
+            color: isActive
+                ? const Color.fromARGB(255, 170, 46, 92)
+                : Colors.grey[600],
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -39,10 +44,10 @@ class MobileOrderDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String orderIdDisplay = order.id.toString().substring(
-      0,
-      min(order.id.toString().length, 8),
-    ).toUpperCase();
+    final String orderIdDisplay = order.id
+        .toString()
+        .substring(0, min(order.id.toString().length, 8))
+        .toUpperCase();
 
     final String formattedDate =
         '${order.orderDate.day}.${order.orderDate.month}.${order.orderDate.year}';
@@ -54,10 +59,12 @@ class MobileOrderDetailsScreen extends StatelessWidget {
 
     if (order.status == 'Pending') {
       isOrderPlaced = true;
-    } else if (order.status == 'Processed') { // Pretpostavljamo da "Processed" znači "In delivery"
+    } else if (order.status == 'Processed') {
+      // Pretpostavljamo da "Processed" znači "In delivery"
       isOrderPlaced = true;
       isInDelivery = true;
-    } else if (order.status == 'Completed') { // Pretpostavljamo da "Completed" znači "Delivered"
+    } else if (order.status == 'Completed') {
+      // Pretpostavljamo da "Completed" znači "Delivered"
       isOrderPlaced = true;
       isInDelivery = true;
       isDelivered = true;
@@ -69,7 +76,10 @@ class MobileOrderDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 170, 46, 92)),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 170, 46, 92),
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -128,21 +138,19 @@ class MobileOrderDetailsScreen extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item.productImageUrl?.isNotEmpty == true
+                          child: ImageLoader.loadImage(
+                            url: item.productImageUrl?.isNotEmpty == true
                                 ? item.productImageUrl!
                                 : 'https://via.placeholder.com/80x80/FFB6C1/FFFFFF?text=No+Image',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.image,
-                                  color: Colors.grey,
-                                  size: 40,
-                                ),
-                              );
-                            },
+                            errorWidget: Container(
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                color: Colors.grey,
+                                size: 40,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -258,7 +266,9 @@ class MobileOrderDetailsScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: isOrderPlaced && isInDelivery ? const Color.fromARGB(255, 170, 46, 92) : Colors.grey[300],
+                    color: isOrderPlaced && isInDelivery
+                        ? const Color.fromARGB(255, 170, 46, 92)
+                        : Colors.grey[300],
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                   ),
                 ),
@@ -266,7 +276,9 @@ class MobileOrderDetailsScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     height: 2,
-                    color: isInDelivery && isDelivered ? const Color.fromARGB(255, 170, 46, 92) : Colors.grey[300],
+                    color: isInDelivery && isDelivered
+                        ? const Color.fromARGB(255, 170, 46, 92)
+                        : Colors.grey[300],
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                   ),
                 ),
@@ -286,21 +298,30 @@ class MobileOrderDetailsScreen extends StatelessWidget {
         onTap: (index) {
           // Implementiraj navigaciju za donji bar ako je potrebno
           // Trenutno, samo se vraća na prethodni ekran ako se klikne na Account tab
-          if (index == 4) { // Ako je Account tab
+          if (index == 4) {
+            // Ako je Account tab
             Navigator.of(context).pop(); // Vrati se sa Order Details ekrana
           } else {
             // Implementiraj navigaciju za ostale tabove
             // MainLayout.of(context)?.openTab(index); // Ako imaš takvu metodu
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Navigation to tab $index not implemented.')),
+              SnackBar(
+                content: Text('Navigation to tab $index not implemented.'),
+              ),
             );
           }
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorites"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: "Favorites",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: "Cart",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
         ],
       ),

@@ -22,6 +22,86 @@ namespace Flora.Services.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Flora.Services.Database.BlogComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("BlogPostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlogPostId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("BlogComments");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.BlogImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BlogPostId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BlogPostId");
+
+                    b.ToTable("BlogImages");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.BlogPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("BlogPosts");
+                });
+
             modelBuilder.Entity("Flora.Services.Database.Cart", b =>
                 {
                     b.Property<int>("Id")
@@ -254,7 +334,7 @@ namespace Flora.Services.Migrations
                     b.Property<double>("Amount")
                         .HasColumnType("float");
 
-                    b.Property<int?>("CampaignId")
+                    b.Property<int>("CampaignId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
@@ -272,9 +352,21 @@ namespace Flora.Services.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CampaignId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Donations");
                 });
@@ -666,6 +758,36 @@ namespace Flora.Services.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("Flora.Services.Database.BlogComment", b =>
+                {
+                    b.HasOne("Flora.Services.Database.BlogPost", "BlogPost")
+                        .WithMany("Comments")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Flora.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlogPost");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.BlogImage", b =>
+                {
+                    b.HasOne("Flora.Services.Database.BlogPost", "BlogPost")
+                        .WithMany("Images")
+                        .HasForeignKey("BlogPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BlogPost");
+                });
+
             modelBuilder.Entity("Flora.Services.Database.CartItem", b =>
                 {
                     b.HasOne("Flora.Services.Database.Cart", "Cart")
@@ -745,9 +867,19 @@ namespace Flora.Services.Migrations
                 {
                     b.HasOne("Flora.Services.Database.DonationCampaign", "Campaign")
                         .WithMany("Donations")
-                        .HasForeignKey("CampaignId");
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Flora.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Campaign");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Favorite", b =>
@@ -846,6 +978,13 @@ namespace Flora.Services.Migrations
                     b.Navigation("Role");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.BlogPost", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("Flora.Services.Database.Cart", b =>

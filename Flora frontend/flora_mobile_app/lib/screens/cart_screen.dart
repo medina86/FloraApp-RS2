@@ -58,14 +58,14 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _increaseQuantity(int itemId) async {
     if (_updatingItems.contains(itemId)) return;
-    
+
     setState(() {
       _updatingItems.add(itemId);
     });
-    
+
     try {
       final result = await CartApiService.increaseQuantity(itemId);
-      
+
       if (result != null) {
         setState(() {
           final index = _cart!.items.indexWhere((item) => item.id == itemId);
@@ -73,7 +73,7 @@ class _CartScreenState extends State<CartScreen> {
             _cart!.items[index] = result;
           }
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Quantity increased'),
@@ -86,10 +86,7 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() {
@@ -100,20 +97,20 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _decreaseQuantity(int itemId) async {
     if (_updatingItems.contains(itemId)) return;
-    
+
     setState(() {
       _updatingItems.add(itemId);
     });
-    
+
     try {
       final result = await CartApiService.decreaseQuantity(itemId);
-      
+
       if (result != null) {
         if (result is Map && result['removed'] == true) {
           setState(() {
             _cart!.items.removeWhere((item) => item.id == itemId);
           });
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Item removed from cart'),
@@ -127,7 +124,7 @@ class _CartScreenState extends State<CartScreen> {
               _cart!.items[index] = result;
             }
           });
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Quantity decreased'),
@@ -141,10 +138,7 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() {
@@ -155,14 +149,14 @@ class _CartScreenState extends State<CartScreen> {
 
   Future<void> _removeItem(int itemId) async {
     if (_updatingItems.contains(itemId)) return;
-    
+
     setState(() {
       _updatingItems.add(itemId);
     });
-    
+
     try {
       final success = await CartApiService.removeCartItem(itemId);
-      
+
       if (success) {
         setState(() {
           _cart!.items.removeWhere((item) => item.id == itemId);
@@ -182,7 +176,6 @@ class _CartScreenState extends State<CartScreen> {
         );
       }
     } catch (e) {
-      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error removing item: $e'),
@@ -200,10 +193,8 @@ class _CartScreenState extends State<CartScreen> {
     if (_cart != null && _cart!.items.isNotEmpty) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => CheckoutScreen(
-            cart: _cart!,
-            userId: widget.userId,
-          ),
+          builder: (context) =>
+              CheckoutScreen(cart: _cart!, userId: widget.userId),
         ),
       );
     } else {
@@ -220,24 +211,7 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color.fromARGB(255, 170, 46, 92)),
-          onPressed: () {},
-        ),
-        title: const Text(
-          'Flora',
-          style: TextStyle(
-            color: Color.fromARGB(255, 170, 46, 92),
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      // Removed duplicate AppBar - using GlobalAppHeader from MainLayout
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -366,9 +340,16 @@ class _CartScreenState extends State<CartScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _updatingItems.isEmpty ? _checkout : null,
+                            onPressed: _updatingItems.isEmpty
+                                ? _checkout
+                                : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 170, 46, 92),
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                170,
+                                46,
+                                92,
+                              ),
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(

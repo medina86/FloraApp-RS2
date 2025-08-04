@@ -22,13 +22,15 @@ class Donation {
   factory Donation.fromJson(Map<String, dynamic> json) {
     return Donation(
       id: json['id'] as int,
-      donorName: json['donorName'] as String,
-      email: json['email'] as String,
-      amount: (json['amount'] as num).toDouble(),
-      purpose: json['purpose'] as String,
-      date: DateTime.parse(json['date'] as String),
+      donorName: json['donorName'] as String? ?? 'Anonymous',
+      email: json['email'] as String? ?? '',
+      amount: json['amount'] != null ? (json['amount'] as num).toDouble() : 0.0,
+      purpose: json['purpose'] as String? ?? '',
+      date: json['date'] != null
+          ? DateTime.parse(json['date'] as String)
+          : DateTime.now(),
       campaignId: json['campaignId'] as int,
-      campaignTitle: json['campaignTitle'] as String,
+      campaignTitle: json['campaignTitle'] as String? ?? '',
     );
   }
 

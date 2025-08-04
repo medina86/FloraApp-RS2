@@ -54,15 +54,27 @@ class OrderApiService {
     });
   }
 
-  static Future<List<OrderModel>> getOrdersByUserId(int userId) async {
-    final params = {'UserId': userId};
+ static Future<List<OrderModel>> getOrdersByUserId(int userId, {bool retrieveAll = true, bool includeTotalCount = true}) async {
+  final params = {
+    'UserId': userId,
+    'RetrieveAll': 'true', 
+    'IncludeTotalCount': true,
+  };
 
-    return BaseApiService.getWithParams('/Order', params, (data) {
-      final Map<String, dynamic> jsonResponse = data as Map<String, dynamic>;
-      final List<dynamic> items = jsonResponse['items'] ?? [];
-      return items.map((json) => OrderModel.fromJson(json)).toList();
-    });
-  }
+if (retrieveAll) {
+  params['RetrieveAll'] = 'true'; 
+}
+if (includeTotalCount) {
+  params['IncludeTotalCount'] = 'true'; 
+}
+
+
+  return BaseApiService.getWithParams('/Order', params, (data) {
+    final Map<String, dynamic> jsonResponse = data as Map<String, dynamic>;
+    final List<dynamic> items = jsonResponse['items'] ?? [];
+    return items.map((json) => OrderModel.fromJson(json)).toList();
+  });
+}
 
   static Future<OrderModel> processOrder(int orderId) async {
     return BaseApiService.postEmpty('/Order/$orderId/process', (data) => OrderModel.fromJson(data));

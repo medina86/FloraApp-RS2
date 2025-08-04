@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/cart_model.dart';
 import 'package:flora_mobile_app/providers/order_api.dart';
+import 'package:flora_mobile_app/helpers/image_loader.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final CartModel cart;
@@ -62,13 +63,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         postalCode: _postalCodeController.text,
       );
       print('Shipping Address prepared: ${shippingAddress.toJson()}');
-      print('Calling createOrderFromCart with userId: ${widget.userId}, cartId: ${widget.cart.id}');
+      print(
+        'Calling createOrderFromCart with userId: ${widget.userId}, cartId: ${widget.cart.id}',
+      );
       final order = await OrderApiService.createOrderFromCart(
         userId: widget.userId,
         cartId: widget.cart.id,
         shippingAddress: shippingAddress,
       );
-      
+
       if (order != null) {
         setState(() {
           _createdOrder = order;
@@ -101,7 +104,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() {
         _isProcessingOrder = false;
       });
-      print('Order processing finished. isProcessingOrder: $_isProcessingOrder');
+      print(
+        'Order processing finished. isProcessingOrder: $_isProcessingOrder',
+      );
     }
   }
 
@@ -113,7 +118,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 170, 46, 92)),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 170, 46, 92),
+          ),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -171,21 +179,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            item.imageUrl?.isNotEmpty == true
+                          child: ImageLoader.loadImage(
+                            url: item.imageUrl?.isNotEmpty == true
                                 ? item.imageUrl!
                                 : 'https://via.placeholder.com/80x80/FFB6C1/FFFFFF?text=No+Image',
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.image,
-                                  color: Colors.grey,
-                                  size: 40,
-                                ),
-                              );
-                            },
+                            errorWidget: Container(
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                color: Colors.grey,
+                                size: 40,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -385,8 +391,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorites"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: "Favorites",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: "Cart",
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
         ],
       ),

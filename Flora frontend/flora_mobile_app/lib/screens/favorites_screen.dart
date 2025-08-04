@@ -34,14 +34,13 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     super.dispose();
   }
 
-void _loadFavorites() {
-  setState(() {
-    _futureFavorites = FavoriteApiService.getFavoritesByUser(widget.userId);
-    _allFavorites = [];
-    _filteredFavorites = [];
-  });
-}
-
+  void _loadFavorites() {
+    setState(() {
+      _futureFavorites = FavoriteApiService.getFavoritesByUser(widget.userId);
+      _allFavorites = [];
+      _filteredFavorites = [];
+    });
+  }
 
   void _filterProducts() {
     final query = _searchController.text.toLowerCase();
@@ -50,8 +49,10 @@ void _loadFavorites() {
         _filteredFavorites = List.from(_allFavorites);
       } else {
         _filteredFavorites = _allFavorites
-            .where((product) => 
-                product.productName?.toLowerCase().contains(query) ?? false)
+            .where(
+              (product) =>
+                  product.productName?.toLowerCase().contains(query) ?? false,
+            )
             .toList();
       }
     });
@@ -101,14 +102,16 @@ void _loadFavorites() {
     });
 
     try {
-    final success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
-      product.favoriteId,
+      final success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
+        product.favoriteId,
       );
 
       if (success) {
         setState(() {
           _allFavorites.removeWhere((p) => p.productId == product.productId);
-          _filteredFavorites.removeWhere((p) => p.productId == product.productId);
+          _filteredFavorites.removeWhere(
+            (p) => p.productId == product.productId,
+          );
           _selectedProducts.remove(product.productId);
         });
 
@@ -121,11 +124,11 @@ void _loadFavorites() {
               textColor: Colors.white,
               onPressed: () async {
                 final addSuccess = await FavoriteApiService.addToFavorites(
-                  widget.userId, 
-                  product.productId
+                  widget.userId,
+                  product.productId,
                 );
                 if (addSuccess) {
-                  _loadFavorites(); 
+                  _loadFavorites();
                 }
               },
             ),
@@ -141,10 +144,7 @@ void _loadFavorites() {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
       );
     } finally {
       setState(() {
@@ -160,7 +160,21 @@ void _loadFavorites() {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            // Removed duplicate header - using GlobalAppHeader from MainLayout
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Favourites',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFE91E63),
+                  ),
+                ),
+              ),
+            ),
             _buildSearchBar(),
             Expanded(
               child: FutureBuilder<List<FavoriteProduct>>(
@@ -212,8 +226,8 @@ void _loadFavorites() {
                       _allFavorites = snapshot.data!;
                       _filteredFavorites = List.from(_allFavorites);
                     }
-                    
-                    return _filteredFavorites.isEmpty 
+
+                    return _filteredFavorites.isEmpty
                         ? _buildNoSearchResults()
                         : _buildFavoritesList();
                   }
@@ -227,57 +241,7 @@ void _loadFavorites() {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Icon(
-                Icons.menu,
-                color: Color(0xFFE91E63),
-                size: 24,
-              ),
-              const Text(
-                'Flora',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFE91E63),
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE91E63),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.notifications,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Favourites',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFE91E63),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Removed _buildHeader method as we're now using the GlobalAppHeader from MainLayout
 
   Widget _buildSearchBar() {
     return Padding(
@@ -292,10 +256,7 @@ void _loadFavorites() {
           decoration: InputDecoration(
             hintText: 'Search',
             hintStyle: TextStyle(color: Colors.grey[500]),
-            prefixIcon: Icon(
-              Icons.search,
-              color: Colors.grey[500],
-            ),
+            prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -317,7 +278,7 @@ void _loadFavorites() {
             itemBuilder: (context, index) {
               final product = _filteredFavorites[index];
               final isSelected = _selectedProducts.contains(product.productId);
-              
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 15),
                 child: _buildFavoriteItem(product, isSelected),
@@ -344,7 +305,7 @@ void _loadFavorites() {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: isSelected 
+          border: isSelected
               ? Border.all(color: const Color(0xFFE91E63), width: 2)
               : null,
           boxShadow: [
@@ -403,19 +364,14 @@ void _loadFavorites() {
                 height: 24,
                 margin: const EdgeInsets.only(right: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFE91E63) : Colors.transparent,
-                  border: Border.all(
-                    color: const Color(0xFFE91E63),
-                    width: 2,
-                  ),
+                  color: isSelected
+                      ? const Color(0xFFE91E63)
+                      : Colors.transparent,
+                  border: Border.all(color: const Color(0xFFE91E63), width: 2),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: isSelected
-                    ? const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 16,
-                      )
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
                     : null,
               ),
             ),
@@ -457,7 +413,7 @@ void _loadFavorites() {
           ),
         ),
         child: Text(
-          _selectedProducts.isEmpty 
+          _selectedProducts.isEmpty
               ? 'ADD TO CART'
               : 'ADD TO CART (${_selectedProducts.length})',
           style: const TextStyle(
@@ -475,11 +431,7 @@ void _loadFavorites() {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.favorite_border,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.favorite_border, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 20),
           Text(
             'No Favorites Yet',
@@ -493,10 +445,7 @@ void _loadFavorites() {
           Text(
             'Start adding products to your favorites\nto see them here',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
           const SizedBox(height: 30),
           ElevatedButton(
@@ -529,11 +478,7 @@ void _loadFavorites() {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 20),
           Text(
             'No Results Found',
@@ -547,10 +492,7 @@ void _loadFavorites() {
           Text(
             'Try searching with different keywords',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
         ],
       ),

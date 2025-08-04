@@ -1,23 +1,23 @@
 import 'package:flora_mobile_app/models/donation.dart';
 import 'package:flora_mobile_app/models/donation_campaign.dart';
+import 'package:flora_mobile_app/models/paypal_donation_model.dart';
+import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/providers/base_provider.dart';
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 
 class DonationApiService {
   static Future<List<DonationCampaign>> getActiveCampaigns() async {
-    return await BaseApiService.get(
-      '/DonationCampaign',
-      (data) {
-        if (data is Map<String, dynamic>) {
-          final list = data['items'] ?? data['result'] ?? data['data'] ?? [];
-          return (list as List)
-              .map((item) => DonationCampaign.fromJson(item))
-              .toList();
-        } else if (data is List) {
-          return data.map((item) => DonationCampaign.fromJson(item)).toList();
-        }
-        return <DonationCampaign>[];
-      },
-    );
+    return await BaseApiService.get('/DonationCampaign', (data) {
+      if (data is Map<String, dynamic>) {
+        final list = data['items'] ?? data['result'] ?? data['data'] ?? [];
+        return (list as List)
+            .map((item) => DonationCampaign.fromJson(item))
+            .toList();
+      } else if (data is List) {
+        return data.map((item) => DonationCampaign.fromJson(item)).toList();
+      }
+      return <DonationCampaign>[];
+    });
   }
 
   static Future<DonationCampaign> getCampaignById(int id) async {
@@ -38,9 +38,71 @@ class DonationApiService {
   static Future<List<Donation>> getUserDonations(int userId) async {
     return await BaseApiService.get<List<Donation>>(
       '/Donation/user/$userId',
-      (data) => (data as List)
-          .map((item) => Donation.fromJson(item))
-          .toList(),
+      (data) => (data as List).map((item) => Donation.fromJson(item)).toList(),
     );
+  }
+
+  // PayPal donacijske metode
+  static Future<PayPalDonationResponse> initiatePayPalDonation({
+    required int campaignId,
+    required int userId,
+    required double amount,
+    required String returnUrl,
+    required String cancelUrl,
+    String status = 'Pending',
+    String? transactionId,
+  }) async {
+    final request = PayPalDonationRequest(
+      userId: userId,
+      campaignId: campaignId,
+      amount: amount,
+      returnUrl: returnUrl,
+      cancelUrl: cancelUrl,
+      status: status,
+      transactionId: transactionId,
+    );
+
+    return await BaseApiService.post<PayPalDonationResponse>(
+      '/Donation/initiate-paypal',
+      request.toJson(),
+      (data) => PayPalDonationResponse.fromJson(data),
+    );
+  }
+
+  static Future<Donation> confirmPayPalDonation({
+    required int donationId,
+    required String paymentId,
+    String? status,
+  }) async {
+    // Detaljniji logging za debugging
+    print(
+      'Calling confirmPayPalDonation with donationId=$donationId, paymentId=$paymentId',
+    );
+
+    // Probajmo drugi pristup - eksplicitno uključi parametre i u URL i u body
+    try {
+      // Pokušaj 1: Koristimo query parametre
+      final endpoint =
+          '/Donation/confirm-paypal?donationId=$donationId&paymentId=$paymentId';
+      print('Attempt 1: Using endpoint URL: $baseUrl$endpoint');
+
+      return await BaseApiService.post<Donation>(endpoint, {
+        'donationId': donationId,
+        'paymentId': paymentId,
+        'status': status ?? 'Completed',
+      }, (data) => Donation.fromJson(data));
+    } catch (e) {
+      print('First attempt failed: $e');
+
+      // Pokušaj 2: Koristimo samo body
+      final endpoint = '/Donation/confirm-paypal';
+      print('Attempt 2: Using endpoint URL: $baseUrl$endpoint');
+
+      return await BaseApiService.post<Donation>(endpoint, {
+        'donationId': donationId,
+        'paymentId': paymentId,
+        'status': status ?? 'Completed',
+      }, (data) => Donation.fromJson(data));
+    }
   }
 }

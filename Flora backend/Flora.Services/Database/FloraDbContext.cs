@@ -28,6 +28,9 @@ namespace Flora.Services.Database
         public DbSet<DecorationSuggestion> DecorationSuggestions { get; set; }
         public DbSet<Donation>Donations { get; set; }
         public DbSet<DonationCampaign>DonationCampaigns { get; set; }
+        public DbSet<BlogComment> BlogComments { get; set; }
+        public DbSet<BlogPost> BlogPosts { get; set; }
+        public DbSet<BlogImage> BlogImages { get; set; }
 
 
 

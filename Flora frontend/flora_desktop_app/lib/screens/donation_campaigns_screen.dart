@@ -32,7 +32,6 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
     super.initState();
     _fetchCampaigns();
 
-    // We'll need to run this after the first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupNavigationListener();
     });
@@ -41,7 +40,6 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
   void _setupNavigationListener() {
     _adminLayoutState = context.findAncestorStateOfType<AdminMainLayoutState>();
     if (_adminLayoutState != null) {
-      // Listen for navigation changes and refresh when needed
       _adminLayoutState!.navigationChangeNotifier.addListener(
         _onNavigationChanged,
       );
@@ -51,20 +49,17 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
 
   void _onNavigationChanged() {
     if (!mounted) return;
-    // Check if the navigation value has changed
     if (_adminLayoutState != null &&
         _adminLayoutState!.navigationChangeNotifier.value !=
             _lastNavigationValue) {
       _lastNavigationValue = _adminLayoutState!.navigationChangeNotifier.value;
-      // Since we're currently showing this screen, we can just refresh our data
-      // We'll refresh whenever navigation changes
+      
       _fetchCampaigns();
     }
   }
 
   @override
   void dispose() {
-    // Remove the listener when the widget is disposed
     if (_adminLayoutState != null) {
       _adminLayoutState!.navigationChangeNotifier.removeListener(
         _onNavigationChanged,

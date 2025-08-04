@@ -3,6 +3,7 @@ import 'package:flora_mobile_app/models/donation_campaign.dart';
 import 'package:flora_mobile_app/providers/donation_api.dart';
 import 'package:flora_mobile_app/screens/donation_screen.dart';
 import 'package:intl/intl.dart';
+import 'package:flora_mobile_app/helpers/image_loader.dart';
 
 class DonationCampaignsScreen extends StatefulWidget {
   final int userId;
@@ -174,8 +175,8 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
-                child: Image.network(
-                  campaign.imageUrl!,
+                child: ImageLoader.loadImage(
+                  url: campaign.imageUrl!,
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,

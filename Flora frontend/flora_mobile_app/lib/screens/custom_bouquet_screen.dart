@@ -4,19 +4,31 @@ import 'package:flora_mobile_app/widgets/flower_quantity.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
+
 class CreateCustomBouquetScreen extends StatefulWidget {
   final int userId;
   const CreateCustomBouquetScreen({super.key, required this.userId});
 
   @override
-  State<CreateCustomBouquetScreen> createState() => _CreateCustomBouquetScreenState();
+  State<CreateCustomBouquetScreen> createState() =>
+      _CreateCustomBouquetScreenState();
 }
 
 class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
-  String _selectedColor = 'Pink'; 
+  String _selectedColor = 'Pink';
   final List<String> _colors = [
-    'Pink', 'Purple', 'Yellow', 'Red', 'DarkPurple', 'LightPink',
-    'Teal', 'White', 'Mint', 'Grey', 'LightBlue', 'Cream',
+    'Pink',
+    'Purple',
+    'Yellow',
+    'Red',
+    'DarkPurple',
+    'LightPink',
+    'Teal',
+    'White',
+    'Mint',
+    'Grey',
+    'LightBlue',
+    'Cream',
   ];
   final Map<String, Color> _colorMap = {
     'Pink': const Color.fromARGB(255, 255, 170, 187),
@@ -39,7 +51,8 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
   bool _isCreatingBouquet = false;
 
   final TextEditingController _cardMessageController = TextEditingController();
-  final TextEditingController _specialInstructionsController = TextEditingController();
+  final TextEditingController _specialInstructionsController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -68,7 +81,10 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading flowers: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error loading flowers: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -79,7 +95,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
 
   void _updateFlowerQuantity(int productId, int newQuantity) {
     setState(() {
-      _flowerQuantities[productId] = newQuantity.clamp(0, 99); 
+      _flowerQuantities[productId] = newQuantity.clamp(0, 99);
     });
   }
 
@@ -91,141 +107,185 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
     });
     return total;
   }
-Future<void> _createBouquet() async {
-  final selectedItems = _flowerQuantities.entries
-      .where((entry) => entry.value > 0)
-      .map((entry) {
-        final product = _availableFlowers.firstWhere((f) => f.id == entry.key);
-        return CustomBouquetItemModel(
-          productId: product.id,
-          productName: product.name, 
-          quantity: entry.value,
-        );
-      })
-      .toList();
 
-  if (selectedItems.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Please choose at least one flower.'), 
-        backgroundColor: Colors.orange
-      ),
-    );
-    return;
-  }
+  Future<void> _createBouquet() async {
+    final selectedItems = _flowerQuantities.entries
+        .where((entry) => entry.value > 0)
+        .map((entry) {
+          final product = _availableFlowers.firstWhere(
+            (f) => f.id == entry.key,
+          );
+          return CustomBouquetItemModel(
+            productId: product.id,
+            productName: product.name,
+            quantity: entry.value,
+          );
+        })
+        .toList();
 
-  setState(() {
-    _isCreatingBouquet = true;
-  });
-
-  try {
-    print('🔸 Step 1: Creating custom bouquet...');
-    final createdBouquet = await CustomBouquetApiService.createCustomBouquet(
-      color: _selectedColor,
-      cardMessage: _cardMessageController.text.trim().isEmpty 
-          ? null 
-          : _cardMessageController.text.trim(),
-      specialInstructions: _specialInstructionsController.text.trim().isEmpty 
-          ? null 
-          : _specialInstructionsController.text.trim(),
-      totalPrice: _calculateTotalPrice(),
-      userId: widget.userId,
-      items: selectedItems,
-    );
-
-    print('✅ Step 1 Complete: Custom bouquet created with ID: ${createdBouquet.id}');
-
-    print('🔸 Step 2: Getting cart ID for user ${widget.userId}...');
-    final cartId = await CustomBouquetApiService.getCartIdByUser(widget.userId);
-
-    if (cartId == null) {
-      throw Exception('No cart found for user ${widget.userId}');
+    if (selectedItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please choose at least one flower.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
     }
 
-    print('✅ Step 2 Complete: Cart ID found: $cartId');
-
-    print('🔸 Step 3: Adding custom bouquet to cart...');
-    final addedToCart = await CustomBouquetApiService.addCustomBouquetToCart(
-      cartId: cartId,
-      customBouquetId: createdBouquet.id!,
-      quantity: 1, 
-      cardMessage: _cardMessageController.text.trim().isEmpty 
-          ? null 
-          : _cardMessageController.text.trim(),
-      specialInstructions: _specialInstructionsController.text.trim().isEmpty 
-          ? null 
-          : _specialInstructionsController.text.trim(),
-    );
-
-    if (!addedToCart) {
-      throw Exception('Failed to add custom bouquet to cart');
-    }
-
-    print('✅ Step 3 Complete: Custom bouquet added to cart successfully!');
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Bouquet #${createdBouquet.id} created and added to cart successfully!'), 
-        backgroundColor: Color.fromARGB(255, 170, 46, 92),
-        duration: Duration(seconds: 3),
-      ),
-    );
-
-    // Reset form
     setState(() {
-      _selectedColor = 'Pink';
-      _flowerQuantities = {for (var flower in _availableFlowers) flower.id: 0};
-      _cardMessageController.clear();
-      _specialInstructionsController.clear();
+      _isCreatingBouquet = true;
     });
 
-  } catch (e) {
-    print('🔴 Error in _createBouquet: $e');
-    
-    String errorMessage;
-    if (e.toString().contains('404')) {
-      errorMessage = 'API endpoint not found. Please check if CustomBouquet API is available.';
-    } else if (e.toString().contains('No cart found')) {
-      errorMessage = 'No cart found for your account. Please check your account settings.';
-    } else {
-      errorMessage = 'Error: ${e.toString()}';
+    try {
+      print('🔸 Step 1: Creating custom bouquet...');
+      final createdBouquet = await CustomBouquetApiService.createCustomBouquet(
+        color: _selectedColor,
+        cardMessage: _cardMessageController.text.trim().isEmpty
+            ? null
+            : _cardMessageController.text.trim(),
+        specialInstructions: _specialInstructionsController.text.trim().isEmpty
+            ? null
+            : _specialInstructionsController.text.trim(),
+        totalPrice: _calculateTotalPrice(),
+        userId: widget.userId,
+        items: selectedItems,
+      );
+
+      print(
+        '✅ Step 1 Complete: Custom bouquet created with ID: ${createdBouquet.id}',
+      );
+
+      print('🔸 Step 2: Getting cart ID for user ${widget.userId}...');
+      final cartId = await CustomBouquetApiService.getCartIdByUser(
+        widget.userId,
+      );
+
+      if (cartId == null) {
+        throw Exception('No cart found for user ${widget.userId}');
+      }
+
+      print('✅ Step 2 Complete: Cart ID found: $cartId');
+
+      print('🔸 Step 3: Adding custom bouquet to cart...');
+      final addedToCart = await CustomBouquetApiService.addCustomBouquetToCart(
+        cartId: cartId,
+        customBouquetId: createdBouquet.id!,
+        quantity: 1,
+        cardMessage: _cardMessageController.text.trim().isEmpty
+            ? null
+            : _cardMessageController.text.trim(),
+        specialInstructions: _specialInstructionsController.text.trim().isEmpty
+            ? null
+            : _specialInstructionsController.text.trim(),
+      );
+
+      if (!addedToCart) {
+        throw Exception('Failed to add custom bouquet to cart');
+      }
+
+      print('✅ Step 3 Complete: Custom bouquet added to cart successfully!');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Bouquet #${createdBouquet.id} created and added to cart successfully!',
+          ),
+          backgroundColor: Color.fromARGB(255, 170, 46, 92),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      // Reset form
+      setState(() {
+        _selectedColor = 'Pink';
+        _flowerQuantities = {
+          for (var flower in _availableFlowers) flower.id: 0,
+        };
+        _cardMessageController.clear();
+        _specialInstructionsController.clear();
+      });
+    } catch (e) {
+      print('🔴 Error in _createBouquet: $e');
+
+      String errorMessage;
+      if (e.toString().contains('404')) {
+        errorMessage =
+            'API endpoint not found. Please check if CustomBouquet API is available.';
+      } else if (e.toString().contains('No cart found')) {
+        errorMessage =
+            'No cart found for your account. Please check your account settings.';
+      } else {
+        errorMessage = 'Error: ${e.toString()}';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isCreatingBouquet = false;
+      });
     }
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(errorMessage), 
-        backgroundColor: Colors.red,
-        duration: Duration(seconds: 5),
-      ),
-    );
-  } finally {
-    setState(() {
-      _isCreatingBouquet = false;
-    });
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color.fromARGB(255, 170, 46, 92)),
-          onPressed: () {
-          },
-        ),
-        title: const Text(
-          'Flora',
-          style: TextStyle(
-            color: Color.fromARGB(255, 170, 46, 92),
-            fontSize: 24,
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.1),
+        centerTitle: true,
+        title: Text(
+          "Flora",
+          style: const TextStyle(
+            color: Color.fromARGB(255, 232, 30, 123),
+            fontSize: 26,
             fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic,
           ),
         ),
-        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 170, 46, 92),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      bottomNavigationBar: Theme(
+        data: Theme.of(
+          context,
+        ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
+        child: BottomNavigationBar(
+          selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
+          unselectedItemColor: Colors.white,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          type: BottomNavigationBarType.fixed,
+          currentIndex: 0,
+          onTap: (index) {
+            Navigator.pop(context);
+          },
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+            BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite),
+              label: "Favorites",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart),
+              label: "Cart",
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
+          ],
+        ),
       ),
       body: _isLoadingFlowers
           ? const Center(
@@ -238,6 +298,7 @@ Future<void> _createBouquet() async {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Add title at the top
                   const Text(
                     'Create custom bouquet',
                     style: TextStyle(
@@ -259,12 +320,13 @@ Future<void> _createBouquet() async {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 6,
-                      crossAxisSpacing: 8.0,
-                      mainAxisSpacing: 8.0,
-                      childAspectRatio: 1.0,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 6,
+                          crossAxisSpacing: 8.0,
+                          mainAxisSpacing: 8.0,
+                          childAspectRatio: 1.0,
+                        ),
                     itemCount: _colors.length,
                     itemBuilder: (context, index) {
                       final colorName = _colors[index];
@@ -364,8 +426,14 @@ Future<void> _createBouquet() async {
                             ),
                             FlowerQuantityControl(
                               quantity: quantity,
-                              onIncrease: () => _updateFlowerQuantity(flower.id, quantity + 1),
-                              onDecrease: () => _updateFlowerQuantity(flower.id, quantity - 1),
+                              onIncrease: () => _updateFlowerQuantity(
+                                flower.id,
+                                quantity + 1,
+                              ),
+                              onDecrease: () => _updateFlowerQuantity(
+                                flower.id,
+                                quantity - 1,
+                              ),
                             ),
                           ],
                         ),
@@ -378,7 +446,10 @@ Future<void> _createBouquet() async {
                     decoration: InputDecoration(
                       labelText: 'Add card message',
                       border: const OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                      suffixIcon: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.grey[600],
+                      ),
                     ),
                     maxLines: null, // Omogućava više linija
                     keyboardType: TextInputType.multiline,
@@ -389,7 +460,10 @@ Future<void> _createBouquet() async {
                     decoration: InputDecoration(
                       labelText: 'Special instructions',
                       border: const OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                      suffixIcon: Icon(
+                        Icons.keyboard_arrow_down,
+                        color: Colors.grey[600],
+                      ),
                     ),
                     maxLines: null, // Omogućava više linija
                     keyboardType: TextInputType.multiline,
@@ -440,22 +514,6 @@ Future<void> _createBouquet() async {
                 ],
               ),
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color.fromARGB(255, 170, 46, 92),
-        selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-        unselectedItemColor: Colors.white,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        currentIndex: 0, 
-       
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorites"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-        ],
-      ),
     );
   }
 }

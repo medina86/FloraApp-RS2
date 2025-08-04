@@ -35,7 +35,7 @@ class DecorationRequest {
   Map<String, dynamic> toJson() {
     return {
       'EventType': eventType,
-      'EventDate': eventDate.toIso8601String(), 
+      'EventDate': eventDate.toIso8601String(),
       'VenueType': venueType,
       'NumberOfGuests': numberOfGuests,
       'NumberOfTables': numberOfTables,
@@ -125,17 +125,16 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
     }
   }
 
-  // Funkcija za slanje forme
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
       setState(() {
-        _isSubmitting = true; // Postavi stanje na slanje
+        _isSubmitting = true;
       });
 
       final request = DecorationRequest(
-        id:0,
+        id: 0,
         eventType: _selectedEventType!,
         eventDate: _selectedDate!,
         venueType: _venueTypeController.text,
@@ -209,23 +208,19 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Using GlobalAppHeader from MainLayout
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF06292),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
-        ),
         title: const Text(
-          'Flora',
+          'Event Decoration Request',
           style: TextStyle(
-            fontFamily: 'DancingScript',
-            fontSize: 28,
+            color: Color(0xFFF06292),
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
         ),
-        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFFF06292)),
+        automaticallyImplyLeading: false, // MainLayout handles the back button
       ),
       body: Container(
         color: const Color(0xFFFCE4EC),
@@ -416,31 +411,6 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFFF06292),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white.withOpacity(0.7),
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_bag),
-            label: 'Shop',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Cart',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Account'),
-        ],
-        currentIndex: 0,
-        onTap: (index) {},
       ),
     );
   }
