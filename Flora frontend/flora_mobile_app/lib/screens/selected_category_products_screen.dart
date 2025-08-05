@@ -147,7 +147,8 @@ class _SelectedCategoryProductsScreenState
                                 crossAxisCount: 2,
                                 crossAxisSpacing: 15,
                                 mainAxisSpacing: 15,
-                                childAspectRatio: 0.8,
+                                childAspectRatio:
+                                    0.7, // Adjusted from 0.8 to give more height
                               ),
                           itemCount: products.length,
                           itemBuilder: (context, index) {
@@ -195,7 +196,8 @@ class _SelectedCategoryProductsScreenState
           children: [
             // Product Image
             Expanded(
-              flex: 3,
+              flex:
+                  5, // Adjusted from 3 to give proportionally less space to the image
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(
@@ -210,9 +212,12 @@ class _SelectedCategoryProductsScreenState
             ),
             // Product Info
             Expanded(
-              flex: 2,
+              flex:
+                  4, // Adjusted from 2 to give proportionally more space to the text
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(
+                  8,
+                ), // Reduced padding from 12 to 8
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,7 +225,7 @@ class _SelectedCategoryProductsScreenState
                     Text(
                       product.name,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13, // Slightly reduced font size from 14
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -229,15 +234,20 @@ class _SelectedCategoryProductsScreenState
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          '${product.price.toStringAsFixed(2)} KM',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFE91E63),
+                        Flexible(
+                          child: Text(
+                            '${product.price.toStringAsFixed(2)} KM',
+                            style: const TextStyle(
+                              fontSize: 14, // Reduced from 16
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE91E63),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 4), // Add small gap
                         GestureDetector(
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -248,8 +258,8 @@ class _SelectedCategoryProductsScreenState
                             );
                           },
                           child: Container(
-                            width: 30,
-                            height: 30,
+                            width: 28, // Slightly smaller from 30
+                            height: 28, // Slightly smaller from 30
                             decoration: BoxDecoration(
                               color: const Color(0xFFE91E63),
                               borderRadius: BorderRadius.circular(6),

@@ -2,11 +2,13 @@ using eCommerce.Services.Database;
 using Flora.Models.Requests;
 using Flora.Services;
 using Flora.Services.Database;
+using Flora.Services.Database.Seeders;
 using Flora.Services.Interfaces;
 using Flora.Services.Services;
 using FloraAPI.Filters;
 using Mapster;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -85,6 +87,7 @@ app.UseCors("AllowAll");
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FLoraDbContext>();
+    
 }
 
 

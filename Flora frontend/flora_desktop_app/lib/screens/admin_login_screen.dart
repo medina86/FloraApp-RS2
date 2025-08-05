@@ -28,6 +28,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         'password': _password.text.trim(),
       };
 
+      // Privremeno postavimo kredencijale za potrebe API poziva
       AuthProvider.setCredentials(
         credentials['username']!,
         credentials['password']!,
@@ -38,12 +39,58 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         (data) => data ?? <String, dynamic>{},
       );
 
-      // If we got here, login was successful
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminMainLayout()),
+      // Provjera je li korisnik admin (roleId = 1)
+      bool isAdmin = false;
+      
+      // Provjera formata odgovora - odgovor može sadržavati roleId direktno ili listu roles
+      if (loginResponse.containsKey('roleId')) {
+        // Direktni format
+        isAdmin = loginResponse['roleId'] == 1;
+      } else if (loginResponse.containsKey('roles')) {
+        // Format s listom uloga
+        final roles = loginResponse['roles'] as List<dynamic>?;
+        isAdmin = roles?.any((role) => role['id'] == 1) ?? false;
+      }
+      
+      if (isAdmin) {
+        // Korisnik je admin, postavimo podatke i pristupimo admin sučelju
+        int? adminRoleId = 1; // Definitivno znamo da je korisnik admin
+        AuthProvider.setUserData(
+          credentials['username']!,
+          credentials['password']!,
+          adminRoleId,
         );
+        
+        // Ako postoji lista uloga, pohrani je također
+        if (loginResponse.containsKey('roles') && loginResponse['roles'] is List) {
+          List<dynamic> serverRoles = loginResponse['roles'] as List<dynamic>;
+          List<Map<String, dynamic>> userRoles = serverRoles
+            .map((role) => {
+              'id': role['id'],
+              'name': role['name'],
+              'description': role['description'],
+            })
+            .toList();
+          AuthProvider.setRoles(userRoles);
+        }
+        // Login uspješan i korisnik je admin
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => AdminMainLayout()),
+          );
+        }
+      } else {
+        // Korisnik nije admin
+        AuthProvider.logout();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Pristup dozvoljen samo administratorima."),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } on UnauthorizedException catch (e) {
       AuthProvider.logout();

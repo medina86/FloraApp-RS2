@@ -109,16 +109,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // The header is now provided by MainLayout's GlobalAppHeader
-    // We don't need our own header anymore
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Removed _buildHeader(context) as it's now in the GlobalAppHeader
-              _buildSearchBar(),
+             
               _buildFeaturedSection(),
               _buildBrowseByCategory(context),
               _buildBrowseByOccasions(),
@@ -133,55 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Icon(Icons.menu, color: Color(0xFFE91E63), size: 28),
-          Image.asset('assets/images/Logo.png', width: 120, height: 120),
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: Color(0xFFE91E63),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(Icons.notifications, color: Colors.white, size: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: TextField(
-          decoration: InputDecoration(
-            hintText: 'Search',
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildFeaturedSection() {
     if (isLoading) {
@@ -290,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildCategoryItem('Bouquet', Icons.local_florist, context),
+              _buildCategoryItem('Bouquets', Icons.local_florist, context),
               _buildCategoryItem('Box', Icons.card_giftcard, context),
               _buildCategoryItem('Domes', Icons.home, context),
             ],
@@ -360,7 +308,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildOccasionItem('Wedding', Icons.favorite),
+              _buildOccasionItem('Newborns', Icons.favorite),
               _buildOccasionItem('Birthday', Icons.cake),
               _buildOccasionItem('Graduation', Icons.school),
             ],
@@ -687,7 +635,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          // Blog image s univerzalnim ImageLoader-om i BlogProviderEnhanced za URL
+          
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: blog.imageUrls.isNotEmpty

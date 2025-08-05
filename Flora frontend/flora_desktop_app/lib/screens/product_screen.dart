@@ -19,9 +19,14 @@ class _ProductsPageState extends State<ProductsPage> {
   bool isLoading = true;
   String searchQuery = '';
   bool? activeFilter; // null = all, true = active only, false = inactive only
-  bool?
-  availableFilter; // null = all, true = available only, false = unavailable only
+  bool? availableFilter; // null = all, true = available only, false = unavailable only
   final TextEditingController _searchController = TextEditingController();
+  
+  // Pagination variables
+  int currentPage = 0;
+  int pageSize = 10;
+  int? totalItems;
+  int? totalPages;
 
   @override
   void initState() {
@@ -87,30 +92,42 @@ class _ProductsPageState extends State<ProductsPage> {
     });
 
     try {
-      Map<String, dynamic> queryParams = {};
+      Map<String, dynamic> queryParams = {
+        'page': currentPage.toString(),
+        'pageSize': pageSize.toString(),
+        'includeTotalCount': 'true',
+      };
 
       if (searchQuery.isNotEmpty) {
         queryParams['name'] = searchQuery;
       }
       if (activeFilter != null) {
-        queryParams['active'] = activeFilter!;
+        queryParams['active'] = activeFilter.toString();
       }
       if (availableFilter != null) {
-        queryParams['isAvailable'] = availableFilter!;
+        queryParams['isAvailable'] = availableFilter.toString();
       }
 
-      final productsResponse =
-          await BaseApiService.getWithParams<List<Product>>(
-            '/Product',
-            queryParams,
-            (data) {
-              if (data is Map<String, dynamic>) {
-                final items = data['items'] as List;
-                return items.map((item) => Product.fromJson(item)).toList();
-              }
-              return <Product>[];
-            },
-          );
+      final response = await BaseApiService.getWithParams<Map<String, dynamic>>(
+        '/Product',
+        queryParams,
+        (data) {
+          return data as Map<String, dynamic>;
+        },
+      );
+
+      List<Product> productsResponse = [];
+
+      if (response.containsKey('items')) {
+        final items = response['items'] as List;
+        productsResponse = items.map((item) => Product.fromJson(item)).toList();
+        
+        // Postavimo ukupni broj proizvoda ako je dostupan
+        if (response.containsKey('totalCount')) {
+          totalItems = response['totalCount'] as int;
+          totalPages = (totalItems! / pageSize).ceil();
+        }
+      }
 
       // Dohvatanje slika za svaki proizvod
       for (var product in productsResponse) {
@@ -119,7 +136,11 @@ class _ProductsPageState extends State<ProductsPage> {
 
       setState(() {
         products = productsResponse;
-        _applyLocalFilters();
+        if (selectedCategory != 'All') {
+          _applyLocalFilters(); // Koristimo lokalno filtriranje samo za kategoriju
+        } else {
+          filteredProducts = productsResponse; // Za ostale filtere, API nam vraća već filtrirane rezultate
+        }
         isLoading = false;
       });
     } on UnauthorizedException catch (e) {
@@ -172,24 +193,49 @@ class _ProductsPageState extends State<ProductsPage> {
     }
 
     setState(() {
-      filteredProducts = filtered;
+      // Ažuriranje paginacije za lokalne filtere
+      totalItems = filtered.length;
+      totalPages = (totalItems! / pageSize).ceil();
+      
+      // Osiguramo da currentPage ne ide izvan granica
+      if (currentPage >= totalPages! && totalPages! > 0) {
+        currentPage = totalPages! - 1;
+      }
+      
+      // Primijenimo paginaciju na filtrirane proizvode
+      if (totalItems! > pageSize) {
+        int startIndex = currentPage * pageSize;
+        int endIndex = startIndex + pageSize;
+        if (endIndex > filtered.length) {
+          endIndex = filtered.length;
+        }
+        
+        filteredProducts = filtered.sublist(startIndex, endIndex);
+      } else {
+        filteredProducts = filtered;
+      }
     });
   }
 
   Future<void> searchProducts(String query) async {
     setState(() {
       searchQuery = query;
+      currentPage = 0; // Reset na prvu stranicu kada pretražujemo
     });
     await fetchProducts();
   }
 
   void _updateFilters() async {
+    setState(() {
+      currentPage = 0; // Reset na prvu stranicu kada mijenjamo filtere
+    });
     await fetchProducts();
   }
 
   void filterByCategory(String category) {
     setState(() {
       selectedCategory = category;
+      currentPage = 0; 
     });
     _applyLocalFilters();
   }
@@ -752,13 +798,16 @@ class _ProductsPageState extends State<ProductsPage> {
                               ),
                             ),
                           )
-                        : ListView.separated(
-                            itemCount: filteredProducts.length,
-                            separatorBuilder: (context, index) =>
-                                Divider(height: 1, color: Colors.grey.shade200),
-                            itemBuilder: (context, index) {
-                              final product = filteredProducts[index];
-                              return Container(
+                        : Column(
+                            children: [
+                              Expanded(
+                                child: ListView.separated(
+                                  itemCount: filteredProducts.length,
+                                  separatorBuilder: (context, index) =>
+                                      Divider(height: 1, color: Colors.grey.shade200),
+                                  itemBuilder: (context, index) {
+                                    final product = filteredProducts[index];
+                                    return Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 24,
                                   vertical: 16,
@@ -947,20 +996,82 @@ class _ProductsPageState extends State<ProductsPage> {
                                         ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
+                                                             ],
                           ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
-          ),
+        ]
+        ),
+            ),          ),
+          // Pagination controls
+          if (totalPages != null && totalPages! > 1)
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: Colors.grey.shade200),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.chevron_left),
+                    onPressed: currentPage > 0
+                        ? () {
+                            setState(() {
+                              currentPage--;
+                            });
+                            if (selectedCategory != 'All') {
+                              _applyLocalFilters(); // Lokalna paginacija za kategorije
+                            } else {
+                              fetchProducts(); // API paginacija za ostalo
+                            }
+                          }
+                        : null,
+                    color: currentPage > 0
+                        ? Color(0xFFE91E63)
+                        : Colors.grey.shade400,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Page ${currentPage + 1} of $totalPages',
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                  SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.chevron_right),
+                    onPressed: totalPages != null &&
+                            currentPage < totalPages! - 1
+                        ? () {
+                            setState(() {
+                              currentPage++;
+                            });
+                            if (selectedCategory != 'All') {
+                              _applyLocalFilters(); // Lokalna paginacija za kategorije
+                            } else {
+                              fetchProducts(); // API paginacija za ostalo
+                            }
+                          }
+                        : null,
+                    color: totalPages != null &&
+                            currentPage < totalPages! - 1
+                        ? Color(0xFFE91E63)
+                        : Colors.grey.shade400,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
+
 
   void _showDeleteDialog(Product product) {
     showDialog(
@@ -1006,7 +1117,7 @@ class _ProductsPageState extends State<ProductsPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Unauthorized: ${e.message ?? 'Please log in again.'}',
+                        'Unauthorized: ${e.message}',
                       ),
                       backgroundColor: Colors.red,
                     ),

@@ -29,7 +29,9 @@ Future<List<Product>> fetchProductsByOccasionName(String occasionName) async {
       final products = items
           .map((json) {
             final product = Product.fromJson(json);
-            print('🖼️ Product: ${product.name} - Active: ${product.active} - Available: ${product.isAvailable}');
+            print(
+              '🖼️ Product: ${product.name} - Active: ${product.active} - Available: ${product.isAvailable}',
+            );
             return product;
           })
           .where((product) => product.active && product.isAvailable)
@@ -79,109 +81,113 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey[50],
         body: SafeArea(
-        child: Column(
-          children: [
-            // Removed duplicate header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${widget.occasionName} Collection',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFE91E63),
+          child: Column(
+            children: [
+              // Removed duplicate header
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${widget.occasionName} Collection',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFE91E63),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: FutureBuilder<List<Product>>(
-                future: _futureProducts,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFFE91E63),
-                      ),
-                    );
-                  } else if (snapshot.hasError) {
-                    print('❌ FutureBuilder error: ${snapshot.error}');
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading products',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+              Expanded(
+                child: FutureBuilder<List<Product>>(
+                  future: _futureProducts,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFE91E63),
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      print('❌ FutureBuilder error: ${snapshot.error}');
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 64,
                               color: Colors.grey,
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${snapshot.error}',
-                            style: const TextStyle(color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _futureProducts = fetchProductsByOccasionName(
-                                  widget.occasionName,
-                                );
-                              });
-                            },
-                            child: Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No products found for this occasion.',
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
-                    );
-                  } else {
-                    final products = snapshot.data!;
-                    print('✅ Displaying ${products.length} products');
-                    return Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 15,
-                              mainAxisSpacing: 15,
-                              childAspectRatio: 0.8,
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading products',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
                             ),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final product = products[index];
-                          return _buildProductCard(product);
-                        },
-                      ),
-                    );
-                  }
-                },
+                            const SizedBox(height: 8),
+                            Text(
+                              '${snapshot.error}',
+                              style: const TextStyle(color: Colors.grey),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _futureProducts = fetchProductsByOccasionName(
+                                    widget.occasionName,
+                                  );
+                                });
+                              },
+                              child: Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No products found for this occasion.',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      );
+                    } else {
+                      final products = snapshot.data!;
+                      print('✅ Displaying ${products.length} products');
+                      return Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 15,
+                                mainAxisSpacing: 15,
+                                childAspectRatio:
+                                    0.7, // Adjusted from 0.8 to give more height
+                              ),
+                          itemCount: products.length,
+                          itemBuilder: (context, index) {
+                            final product = products[index];
+                            return _buildProductCard(product);
+                          },
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   // Removed the _buildHeader method as we're now using the global header
@@ -218,7 +224,8 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              flex: 3,
+              flex:
+                  5, // Adjusted from 3 to give proportionally less space to the image
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(
@@ -235,9 +242,12 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
               ),
             ),
             Expanded(
-              flex: 2,
+              flex:
+                  4, // Adjusted from 2 to give proportionally more space to the text
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(
+                  8,
+                ), // Reduced padding from 12 to 8
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -245,7 +255,7 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
                     Text(
                       product.name,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13, // Slightly reduced font size from 14
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -254,15 +264,20 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          '${product.price.toStringAsFixed(2)} KM',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFFE91E63),
+                        Flexible(
+                          child: Text(
+                            '${product.price.toStringAsFixed(2)} KM',
+                            style: const TextStyle(
+                              fontSize: 14, // Reduced from 16
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE91E63),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 4), // Add small gap
                         GestureDetector(
                           onTap: () {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -273,8 +288,8 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
                             );
                           },
                           child: Container(
-                            width: 30,
-                            height: 30,
+                            width: 28, // Slightly smaller from 30
+                            height: 28, // Slightly smaller from 30
                             decoration: BoxDecoration(
                               color: const Color(0xFFE91E63),
                               borderRadius: BorderRadius.circular(6),

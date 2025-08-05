@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Reflection.Emit;
+using Flora.Services.Database.Seeders;
 
 namespace Flora.Services.Database
 {
@@ -42,6 +43,30 @@ namespace Flora.Services.Database
         {
             base.OnModelCreating(modelBuilder);
 
+            // Seeding data
+            modelBuilder.Entity<Categories>().SeedData();
+            modelBuilder.Entity<Occasion>().SeedData();
+            modelBuilder.Entity<Role>().SeedData();
+            modelBuilder.Entity<User>().SeedData();
+            modelBuilder.Entity<UserRole>().SeedData();
+            modelBuilder.Entity<Product>().SeedData();
+            modelBuilder.Entity<ProductImages>().SeedData();
+            modelBuilder.Entity<BlogPost>().SeedData();
+            modelBuilder.Entity<BlogImage>().SeedData();
+            modelBuilder.Entity<BlogComment>().SeedData();
+            modelBuilder.Entity<DonationCampaign>().SeedData();
+            modelBuilder.Entity<Donation>().SeedData();
+            modelBuilder.Entity<DecorationRequest>().SeedData();
+            modelBuilder.Entity<DecorationSuggestion>().SeedData();
+            modelBuilder.Entity<ShippingAddress>().SeedData();
+            modelBuilder.Entity<Order>().SeedData();
+            modelBuilder.Entity<OrderDetail>().SeedData();
+            modelBuilder.Entity<CustomBouquet>().SeedData();
+            modelBuilder.Entity<CustomBouquetItem>().SeedData();
+            modelBuilder.Entity<Cart>().SeedData();
+            modelBuilder.Entity<CartItem>().SeedData();
+            modelBuilder.Entity<Favorite>().SeedData();
+            
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
@@ -71,11 +96,7 @@ namespace Flora.Services.Database
             modelBuilder.Entity<Order>()
                 .Property(o => o.Status)
                 .HasConversion<string>();
-            modelBuilder.Entity<Occasion>().HasData(
-                new Occasion { OccasionId = 1, Name = "Birthday" },
-                new Occasion { OccasionId = 2, Name = "Weeding" },
-                new Occasion { OccasionId = 3, Name = "Graduation" }
-            );
+           
         }
     }
     }

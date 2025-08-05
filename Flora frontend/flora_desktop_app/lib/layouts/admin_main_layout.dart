@@ -5,6 +5,8 @@ import 'package:flora_desktop_app/screens/reservation_screen.dart';
 import 'package:flora_desktop_app/screens/user_screen.dart';
 import 'package:flora_desktop_app/screens/donation_campaigns_screen.dart';
 import 'package:flora_desktop_app/screens/blog_screen.dart';
+import 'package:flora_desktop_app/providers/auth_provider.dart';
+import 'package:flora_desktop_app/screens/admin_login_screen.dart';
 import 'package:flutter/material.dart';
 
 /*
@@ -127,11 +129,29 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
   }
 
   void _logout() {
+    AuthProvider.logout();
     Navigator.pushReplacementNamed(context, '/admin-login');
   }
 
   @override
   Widget build(BuildContext context) {
+    // Provjera je li korisnik autentificiran i je li admin
+    if (!AuthProvider.isAuthenticated || !AuthProvider.isAdmin) {
+      // Ako korisnik nije admin, preusmjeri na login stranicu
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => AdminLoginScreen())
+        );
+      });
+      // Prikaži loading ekran dok se ne preusmjeri
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    // Ako je korisnik admin, prikaži admin sučelje
     return Scaffold(
       body: Row(
         children: [

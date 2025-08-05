@@ -59,7 +59,6 @@ class _BlogPostDetailScreenState extends State<BlogPostDetailScreen> {
           _isLoading = false;
         });
 
-        // Log information about loaded post
         developer.log('Blog post loaded: ${post.title}');
         developer.log('Image URLs: ${post.imageUrls}');
       }
@@ -115,7 +114,6 @@ class _BlogPostDetailScreenState extends State<BlogPostDetailScreen> {
         _isSubmittingComment = false;
       });
 
-      // Scroll to bottom to show the new comment
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -180,7 +178,7 @@ class _BlogPostDetailScreenState extends State<BlogPostDetailScreen> {
                     padding: const EdgeInsets.all(16.0),
                     children: [
                       if (_blogPost!.imageUrls.isNotEmpty) ...[
-                        // Use getValidImageUrl to find first valid image, prioritizing Azure Blob Storage URLs
+                        
                         if (BlogProviderEnhanced.getValidImageUrl(
                               _blogPost!.imageUrls,
                             ) !=

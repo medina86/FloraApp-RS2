@@ -14,7 +14,9 @@ import 'package:flora_mobile_app/screens/my_orders_screen.dart';
 import 'package:flora_mobile_app/screens/my_events_screen.dart';
 import 'package:flora_mobile_app/screens/suggested_decoration_screen.dart';
 import 'package:flora_mobile_app/screens/custom_bouquet_screen.dart';
+import 'package:flora_mobile_app/screens/order_details_screen.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
+import 'package:flora_mobile_app/models/order.dart';
 import 'package:flora_mobile_app/widgets/global_app_header.dart';
 import 'package:flora_mobile_app/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
@@ -58,6 +60,13 @@ class MainLayout extends StatefulWidget {
     final mainLayout = of(context);
     if (mainLayout != null) {
       mainLayout.openMyOrdersScreen();
+    }
+  }
+
+  static void openOrderDetails(BuildContext context, OrderModel order) {
+    final mainLayout = of(context);
+    if (mainLayout != null) {
+      mainLayout.openOrderDetailsScreen(order);
     }
   }
 
@@ -260,6 +269,20 @@ class _MainLayoutState extends State<MainLayout> {
       _currentCategoryId = null;
       _currentCategoryName = null;
       _currentOccasionName = "My Events"; // Set screen name for header
+    });
+  }
+
+  void openOrderDetailsScreen(OrderModel order) {
+    setState(() {
+      _selectedProductScreen = null;
+      _selectedCategoryScreen = null;
+      _selectedOccasionScreen = MobileOrderDetailsScreen(
+        order: order,
+        showAppBar: false, // Don't show AppBar since MainLayout provides one
+      );
+      _currentCategoryId = null;
+      _currentCategoryName = null;
+      _currentOccasionName = "Order Details"; // Set screen name for header
     });
   }
 
