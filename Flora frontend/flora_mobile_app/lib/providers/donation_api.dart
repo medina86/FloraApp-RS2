@@ -3,7 +3,7 @@ import 'package:flora_mobile_app/models/donation_campaign.dart';
 import 'package:flora_mobile_app/models/paypal_donation_model.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/providers/base_provider.dart';
-import 'package:flora_mobile_app/providers/auth_provider.dart';
+
 
 class DonationApiService {
   static Future<List<DonationCampaign>> getActiveCampaigns() async {

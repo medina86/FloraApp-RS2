@@ -32,20 +32,11 @@ class _CartScreenState extends State<CartScreen> {
     });
     try {
       final cart = await CartApiService.getCartByUser(widget.userId);
-      
-      print('Učitana korpa: ID=${cart.id}, ukupno stavki: ${cart.items.length}');
-      
-      for (var i = 0; i < cart.items.length; i++) {
-        final item = cart.items[i];
-        print('Stavka $i: ID=${item.id}, ProductID=${item.productId}, CustomBouquetID=${item.customBouquetId}, Naziv=${item.productName}');
-      }
-      
       setState(() {
         _cart = cart;
         _isLoading = false;
       });
     } catch (e) {
-      print('Greška pri učitavanju korpe: $e');
       setState(() {
         _isLoading = false;
       });
@@ -268,18 +259,9 @@ class _CartScreenState extends State<CartScreen> {
                           itemCount: cartItems.length,
                           itemBuilder: (context, index) {
                             final item = cartItems[index];
-                            
-                            // Debug ispis za provjeru vrijednosti
-                            print('Cart item $index: ID=${item.id}, ProductID=${item.productId}, CustomBouquetID=${item.customBouquetId}');
-                            
+
                             // Koristimo poseban widget za custom bukete
-                            // Identifikujemo custom buket na osnovu customBouquetId, imena proizvoda ili productId=0
-                            bool isCustomBouquet = item.customBouquetId != null || 
-                                                  (item.productName == 'Custom bouquet' && item.productId == 0);
-                            
-                            if (isCustomBouquet) {
-                              print('Prikazujem CUSTOM BUKET za item $index - ProductName=${item.productName}, ProductID=${item.productId}');
-                              
+                            if (item.customBouquetId != null) {
                               return CustomBouquetCartItemWidget(
                                 item: item,
                                 onIncrease: () => _increaseQuantity(item.id),

@@ -4,7 +4,6 @@ import 'package:flora_mobile_app/providers/base_provider.dart';
 class CartApiService {
   static Future<CartModel> getCartByUser(int userId) async {
     try {
-      print('Pozivam API za korpu za userId=$userId');
       final cartData = await BaseApiService.get(
         '/cart?UserId=$userId',
         (data) => data,
@@ -15,30 +14,17 @@ class CartApiService {
       }
       
       final cartInfo = cartData['items'][0];
-      print('Pronađena korpa ID=${cartInfo['id']}');
       
       List<CartItemModel> items = [];
       try {
-        print('Učitavam stavke korpe za CartId=${cartInfo['id']}');
         final itemsData = await BaseApiService.get(
           '/cartItem?CartId=${cartInfo['id']}',
           (data) => data,
         );
         
-        print('Učitani podaci o stavkama: $itemsData');
-        
         if (itemsData['items'] != null) {
           items = (itemsData['items'] as List)
-              .map((item) {
-                print('Stavka: $item');
-                // Posebno pogledajmo customBouquetId
-                if (item.containsKey('customBouquetId')) {
-                  print('customBouquetId=${item['customBouquetId']}, tip: ${item['customBouquetId']?.runtimeType}');
-                } else {
-                  print('customBouquetId ne postoji u podacima stavke');
-                }
-                return CartItemModel.fromJson(item);
-              })
+              .map((item) => CartItemModel.fromJson(item))
               .toList();
         }
       } catch (e) {

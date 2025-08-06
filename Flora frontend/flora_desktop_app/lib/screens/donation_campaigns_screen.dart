@@ -53,7 +53,7 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
         _adminLayoutState!.navigationChangeNotifier.value !=
             _lastNavigationValue) {
       _lastNavigationValue = _adminLayoutState!.navigationChangeNotifier.value;
-      
+
       _fetchCampaigns();
     }
   }
@@ -151,7 +151,7 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12.0), // Reduced padding
+                padding: const EdgeInsets.all(12.0), 
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -172,8 +172,8 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: Colors.grey[600],
-                          height: 1.2, // Reduced line height
-                          fontSize: 13, // Smaller font size
+                          height: 1.2,
+                          fontSize: 13, 
                         ),
                       ),
                     ),
@@ -196,13 +196,13 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4), // Reduced space
+                    const SizedBox(height: 4), 
                     Text(
                       '${campaign.totalAmount.toStringAsFixed(2)} KM',
                       style: const TextStyle(
                         color: Colors.pink,
                         fontWeight: FontWeight.bold,
-                        fontSize: 18, // Slightly smaller font
+                        fontSize: 18,
                       ),
                     ),
                   ],
@@ -254,9 +254,6 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                       adminLayoutState.setContent(
                         const AddDonationCampaignScreen(),
                       );
-
-                      // We need to refresh the campaigns list when we return
-                      // Schedule a fetch after a short delay
                       await Future.delayed(const Duration(seconds: 2));
                       if (mounted) {
                         _fetchCampaigns();
@@ -328,76 +325,6 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Recent Donations',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF666666),
-                        ),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Refresh'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.grey[700],
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        headingTextStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF666666),
-                        ),
-                        dataTextStyle: TextStyle(color: Colors.grey[800]),
-                        horizontalMargin: 24,
-                        columns: const [
-                          DataColumn(label: Text('Donor name')),
-                          DataColumn(label: Text('Email')),
-                          DataColumn(label: Text('Amount')),
-                          DataColumn(label: Text('Purpose')),
-                          DataColumn(label: Text('Date')),
-                        ],
-                        rows: const [
-                          DataRow(
-                            cells: [
-                              DataCell(Text('John Smith')),
-                              DataCell(Text('john.smith@example.com')),
-                              DataCell(Text('100.00 KM')),
-                              DataCell(Text('For flower corner')),
-                              DataCell(Text('04/07/2024')),
-                            ],
-                          ),
-                          DataRow(
-                            cells: [
-                              DataCell(Text('Jane Doe')),
-                              DataCell(Text('jane.doe@example.com')),
-                              DataCell(Text('50.00 KM')),
-                              DataCell(Text('For event')),
-                              DataCell(Text('03/25/2024')),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

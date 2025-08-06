@@ -4,7 +4,6 @@ import 'package:flora_mobile_app/models/custom_bouquet_model.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:math';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 
 class CustomBouquetCartItemWidget extends StatefulWidget {
@@ -39,83 +38,42 @@ class _CustomBouquetCartItemWidgetState
   @override
   void initState() {
     super.initState();
-    // Debug ispis
-    print('CustomBouquetCartItemWidget - initState, customBouquetId=${widget.item.customBouquetId}, productName=${widget.item.productName}');
-    
-    // Try to load bouquet details, even if customBouquetId is null
-    // For items with productId=0 and name "Custom bouquet", we'll try to get details from API by cartItemId
-    _loadBouquetDetails();
+    // Load the bouquet details if this is a custom bouquet
+    if (widget.item.customBouquetId != null) {
+      _loadBouquetDetails();
+    }
   }
 
   Future<void> _loadBouquetDetails() async {
-    // If customBouquetId is null, we may still have a custom bouquet identified by name/productId
-    if (widget.item.customBouquetId == null && 
-        (widget.item.productName != 'Custom bouquet' || widget.item.productId != 0)) {
-      print('Nije moguće učitati detalje - item nije custom buket');
-      return;
-    }
+    if (widget.item.customBouquetId == null) return;
 
-    print('Učitavam detalje za buket ID=${widget.item.customBouquetId}');
-    
-    // Always check if the widget is still mounted before calling setState
-    if (!mounted) return;
-    
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Determine which API endpoint to use based on available IDs
-      Uri url;
-      if (widget.item.customBouquetId != null) {
-        // If we have a customBouquetId, use it directly
-        url = Uri.parse('$baseUrl/CustomBouquet/${widget.item.customBouquetId}');
-        print('API poziv po customBouquetId: GET $url');
-      } else {
-        // If customBouquetId is null but we have a cart item ID for a custom bouquet,
-        // try to fetch details using cart item ID
-        url = Uri.parse('$baseUrl/CustomBouquet/ByCartItem/${widget.item.id}');
-        print('API poziv po cartItemId: GET $url');
-      }
-      
+      // Load bouquet details from API
+      final url = Uri.parse(
+        '$baseUrl/CustomBouquet/${widget.item.customBouquetId}',
+      );
       final response = await http.get(url, headers: AuthProvider.getHeaders());
 
-      print('API odgovor kod: ${response.statusCode}');
-      if (response.body.isNotEmpty) {
-        print('API odgovor body: ${response.body.substring(0, min(100, response.body.length))}...');
-      }
-      
-      // Check mounted before updating state to prevent errors
-      if (!mounted) return;
-      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
           _bouquetDetails = CustomBouquetModel.fromJson(data);
           _isLoading = false;
-          print('Buket učitan: ${_bouquetDetails?.color}, ${_bouquetDetails?.items.length} stavki');
-        });
-      } else if (response.statusCode == 404) {
-        // Handle case when no bouquet details could be found
-        print('API vratio 404 - Buket nije pronađen');
-        setState(() {
-          _isLoading = false;
-          // Keep _bouquetDetails as null to show the appropriate UI
         });
       } else {
-        print('API error: Status ${response.statusCode}');
-        setState(() {
-          _isLoading = false;
-        });
+        throw Exception(
+          'Failed to load bouquet details: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('Error loading custom bouquet details: $e');
-      // Check if widget is still mounted before calling setState
-      if (!mounted) return;
-      
       setState(() {
         _isLoading = false;
       });
+      print('Error loading custom bouquet details: $e');
     }
   }
 
@@ -248,11 +206,7 @@ class _CustomBouquetCartItemWidgetState
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _isLoading 
-                              ? "Loading details..." 
-                              : _bouquetDetails?.color != null 
-                                ? "Color: ${_bouquetDetails!.color}" 
-                                : "Custom arrangement",
+                            "Color: ${_bouquetDetails?.color ?? 'Loading...'}",
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -379,49 +333,7 @@ class _CustomBouquetCartItemWidgetState
                   ? Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       alignment: Alignment.center,
-                      child: Column(
-                        children: [
-                          const Divider(),
-                          const Text(
-                            'Custom Bouquet Details',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'This is a personalized custom arrangement.',
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 4),
-                          // Show any special instructions or card message
-                          if (widget.item.specialInstructions != null &&
-                              widget.item.specialInstructions!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Special Instructions: ${widget.item.specialInstructions}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
-                          if (widget.item.cardMessage != null &&
-                              widget.item.cardMessage!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Card Message: ${widget.item.cardMessage}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      child: const Text('No details available'),
                     )
                   : Padding(
                       padding: const EdgeInsets.only(top: 8),

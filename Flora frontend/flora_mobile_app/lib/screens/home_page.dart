@@ -4,6 +4,7 @@ import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'dart:math'; // Potrebno za funkciju min
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/models/blog_post.dart';
 import 'package:flora_mobile_app/providers/blog_api.dart';
@@ -20,15 +21,18 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> featuredProducts = [];
+  List<Product> recommendedProducts = [];
   BlogPost? latestBlogPost;
   bool isLoading = true;
   bool isLoadingBlog = true;
+  bool isLoadingRecommendations = true;
 
   @override
   void initState() {
     super.initState();
     _fetchFeaturedProducts();
     _fetchLatestBlogPost();
+    _fetchRecommendedProducts();
   }
 
   Future<List<String>> _fetchImageUrls(int productId) async {
@@ -45,53 +49,80 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchFeaturedProducts() async {
-    // Make sure to check if widget is still mounted before continuing
-    if (!mounted) return;
-    
+    final response = await http.get(
+      Uri.parse('$baseUrl/Product/featured'),
+      headers: AuthProvider.getHeaders(),
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = json.decode(response.body);
+      final List<Product> products = jsonData
+          .map((item) => Product.fromJson(item))
+          .toList();
+      for (Product product in products) {
+        product.imageUrls = await _fetchImageUrls(product.id);
+      }
+      setState(() {
+        featuredProducts = products;
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      throw Exception('Failed to load featured products');
+    }
+  }
+
+  Future<void> _fetchRecommendedProducts() async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/Product/featured'),
-        headers: AuthProvider.getHeaders(),
+      setState(() {
+        isLoadingRecommendations = true;
+      });
+
+      final url = Uri.parse(
+        '$baseUrl/Recommendations/user/${widget.userId}?maxResults=5',
       );
-      
-      // Check mounted again after awaiting the network call
-      if (!mounted) return;
-      
+      final response = await http.get(url, headers: AuthProvider.getHeaders());
+
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
+
+        if (jsonData.isEmpty) {
+          setState(() {
+            recommendedProducts = [];
+            isLoadingRecommendations = false;
+          });
+          return;
+        }
+
         final List<Product> products = jsonData
             .map((item) => Product.fromJson(item))
             .toList();
-            
+
         for (Product product in products) {
-          product.imageUrls = await _fetchImageUrls(product.id);
-          // Check mounted frequently during loops to bail early if needed
           if (!mounted) return;
+          product.imageUrls = await _fetchImageUrls(product.id);
         }
-        
-        // Final mounted check before setState
+
         if (!mounted) return;
-        
         setState(() {
-          featuredProducts = products;
-          isLoading = false;
+          recommendedProducts = products;
+          isLoadingRecommendations = false;
         });
       } else {
-        // Check if still mounted
         if (!mounted) return;
-        
         setState(() {
-          isLoading = false;
+          recommendedProducts = [];
+          isLoadingRecommendations = false;
         });
-        print('Error loading featured products: ${response.statusCode}');
+        print('Error loading recommended products: ${response.statusCode}');
       }
     } catch (e) {
-      print('Exception in _fetchFeaturedProducts: $e');
-      // Check if still mounted
+      print('Exception in _fetchRecommendedProducts: $e');
       if (!mounted) return;
-      
       setState(() {
-        isLoading = false;
+        recommendedProducts = [];
+        isLoadingRecommendations = false;
       });
     }
   }
@@ -102,11 +133,9 @@ class _HomeScreenState extends State<HomeScreen> {
         isLoadingBlog = true;
       });
 
-      // Get all blog posts and take the most recent one
       final posts = await BlogApiService.getBlogPosts();
 
       if (posts.isNotEmpty) {
-        // Sort by created date descending to get the most recent post
         posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         if (mounted) {
@@ -142,7 +171,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-             
               _buildFeaturedSection(),
               _buildBrowseByCategory(context),
               _buildBrowseByOccasions(),
@@ -156,7 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
 
   Widget _buildFeaturedSection() {
     if (isLoading) {
@@ -391,29 +418,48 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Color(0xFFE91E63),
                 ),
               ),
-              Icon(Icons.arrow_forward_ios, color: Color(0xFFE91E63), size: 16),
             ],
           ),
           SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildRecommendedItem('Spring Bliss'),
-              _buildRecommendedItem('Pure Grace'),
-              _buildRecommendedItem('SoftElegance'),
-            ],
-          ),
+
+          if (isLoadingRecommendations)
+            Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(color: Color(0xFFE91E63)),
+            )
+          else if (recommendedProducts.isNotEmpty)
+            SizedBox(
+              height: 160,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: recommendedProducts.length,
+                itemBuilder: (context, index) {
+                  return _buildRecommendedItem(recommendedProducts[index]);
+                },
+              ),
+            )
+          else
+            Container(
+              height: 100,
+              alignment: Alignment.center,
+              child: Text('No recommendations available'),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildRecommendedItem(String title) {
-    return Column(
-      children: [
-        Container(
-          width: 80,
-          height: 80,
+  Widget _buildRecommendedItem(Product product) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: GestureDetector(
+        onTap: () {
+          MainLayout.of(context)?.openProductScreen(product);
+        },
+        child: Container(
+          width: 120,
+          height: 160,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
@@ -425,17 +471,70 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Slika proizvoda
+              ClipRRect(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                child: product.imageUrls.isNotEmpty
+                    ? Image.network(
+                        product.imageUrls.first,
+                        width: 120,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 120,
+                            height: 90,
+                            color: Colors.grey[200],
+                            child: Icon(Icons.image, color: Colors.grey),
+                          );
+                        },
+                      )
+                    : Container(
+                        width: 120,
+                        height: 90,
+                        color: Colors.grey[200],
+                        child: Icon(Icons.image, color: Colors.grey),
+                      ),
+              ),
+
+              // Naziv i cijena
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 6.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      '${product.price.toStringAsFixed(2)} KM',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE91E63),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -662,7 +761,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: blog.imageUrls.isNotEmpty

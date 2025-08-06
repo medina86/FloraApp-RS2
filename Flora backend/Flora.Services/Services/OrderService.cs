@@ -18,12 +18,18 @@ namespace Flora.Services.Services
         private readonly FLoraDbContext _context;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly IRecommendationService _recommendationService;
 
-        public OrderService(FLoraDbContext context, IMapper mapper, IConfiguration configuration) : base(context, mapper)
+        public OrderService(
+            FLoraDbContext context, 
+            IMapper mapper, 
+            IConfiguration configuration,
+            IRecommendationService recommendationService) : base(context, mapper)
         {
             _context = context;
             _mapper = mapper;
             _configuration = configuration;
+            _recommendationService = recommendationService;
         }
 
         public async Task<OrderResponse> CreateOrderFromCart(OrderRequest request)
@@ -198,6 +204,20 @@ namespace Flora.Services.Services
             OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Completed);
             order.Status = OrderStatus.Completed;
             await _context.SaveChangesAsync();
+            
+            // Pokrenite preračunavanje preporuka u pozadini
+            // Ne čekamo da se završi
+            _ = Task.Run(async () => 
+            {
+                try
+                {
+                    await _recommendationService.RecalculateSimilarityMapAsync();
+                }
+                catch
+                {
+                    // Ne obrađujemo greške ovdje jer ne želimo da utječu na proces narudžbe
+                }
+            });
 
             return _mapper.Map<OrderResponse>(order);
         }
