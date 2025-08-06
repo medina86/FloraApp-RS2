@@ -177,8 +177,20 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               return OrderCardWidget(
                                 order: order,
                                 onTap: () {
-                                  // Use MainLayout navigation for consistent UI
-                                  MainLayout.openOrderDetails(context, order);
+                                  final mainLayout = MainLayout.of(context);
+                                  if (mainLayout != null) {
+                                    mainLayout.openOrderDetailsScreen(order);
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            MobileOrderDetailsScreen(
+                                              order: order,
+                                              showAppBar: true,
+                                            ),
+                                      ),
+                                    );
+                                  }
                                 },
                               );
                             },
@@ -217,8 +229,21 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               return OrderCardWidget(
                                 order: order,
                                 onTap: () {
-                                  // Use MainLayout navigation for consistent UI
-                                  MainLayout.openOrderDetails(context, order);
+                                  
+                                  final mainLayout = MainLayout.of(context);
+                                  if (mainLayout != null) {
+                                    mainLayout.openOrderDetailsScreen(order);
+                                  } else {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            MobileOrderDetailsScreen(
+                                              order: order,
+                                              showAppBar: true,
+                                            ),
+                                      ),
+                                    );
+                                  }
                                 },
                               );
                             },

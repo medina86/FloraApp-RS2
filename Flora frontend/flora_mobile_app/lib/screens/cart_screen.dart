@@ -1,7 +1,8 @@
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/layouts/cart_item_widget.dart';
+import 'package:flora_mobile_app/layouts/custom_bouquet_cart_item_widget.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
-import 'package:flora_mobile_app/screens/checkout_screen.dart'; // Dodaj ovo
+import 'package:flora_mobile_app/screens/checkout_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/models/cart_model.dart';
 import 'package:flora_mobile_app/providers/cart_api.dart';
@@ -31,11 +32,20 @@ class _CartScreenState extends State<CartScreen> {
     });
     try {
       final cart = await CartApiService.getCartByUser(widget.userId);
+      
+      print('Učitana korpa: ID=${cart.id}, ukupno stavki: ${cart.items.length}');
+      
+      for (var i = 0; i < cart.items.length; i++) {
+        final item = cart.items[i];
+        print('Stavka $i: ID=${item.id}, ProductID=${item.productId}, CustomBouquetID=${item.customBouquetId}, Naziv=${item.productName}');
+      }
+      
       setState(() {
         _cart = cart;
         _isLoading = false;
       });
     } catch (e) {
+      print('Greška pri učitavanju korpe: $e');
       setState(() {
         _isLoading = false;
       });
@@ -258,6 +268,29 @@ class _CartScreenState extends State<CartScreen> {
                           itemCount: cartItems.length,
                           itemBuilder: (context, index) {
                             final item = cartItems[index];
+                            
+                            // Debug ispis za provjeru vrijednosti
+                            print('Cart item $index: ID=${item.id}, ProductID=${item.productId}, CustomBouquetID=${item.customBouquetId}');
+                            
+                            // Koristimo poseban widget za custom bukete
+                            // Identifikujemo custom buket na osnovu customBouquetId, imena proizvoda ili productId=0
+                            bool isCustomBouquet = item.customBouquetId != null || 
+                                                  (item.productName == 'Custom bouquet' && item.productId == 0);
+                            
+                            if (isCustomBouquet) {
+                              print('Prikazujem CUSTOM BUKET za item $index - ProductName=${item.productName}, ProductID=${item.productId}');
+                              
+                              return CustomBouquetCartItemWidget(
+                                item: item,
+                                onIncrease: () => _increaseQuantity(item.id),
+                                onDecrease: () => _decreaseQuantity(item.id),
+                                onRemove: () => _removeItem(item.id),
+                                isUpdating: _updatingItems.contains(item.id),
+                                // Za custom buket ne dodajemo onTap funkciju jer je prikaz detalja u samom widgetu
+                              );
+                            }
+
+                            // Standardni widget za obične proizvode
                             return CartItemWidget(
                               item: item,
                               onIncrease: () => _increaseQuantity(item.id),

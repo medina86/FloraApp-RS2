@@ -45,27 +45,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchFeaturedProducts() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/Product/featured'),
-      headers: AuthProvider.getHeaders(),
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = json.decode(response.body);
-      final List<Product> products = jsonData
-          .map((item) => Product.fromJson(item))
-          .toList();
-      for (Product product in products) {
-        product.imageUrls = await _fetchImageUrls(product.id);
+    // Make sure to check if widget is still mounted before continuing
+    if (!mounted) return;
+    
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/Product/featured'),
+        headers: AuthProvider.getHeaders(),
+      );
+      
+      // Check mounted again after awaiting the network call
+      if (!mounted) return;
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<Product> products = jsonData
+            .map((item) => Product.fromJson(item))
+            .toList();
+            
+        for (Product product in products) {
+          product.imageUrls = await _fetchImageUrls(product.id);
+          // Check mounted frequently during loops to bail early if needed
+          if (!mounted) return;
+        }
+        
+        // Final mounted check before setState
+        if (!mounted) return;
+        
+        setState(() {
+          featuredProducts = products;
+          isLoading = false;
+        });
+      } else {
+        // Check if still mounted
+        if (!mounted) return;
+        
+        setState(() {
+          isLoading = false;
+        });
+        print('Error loading featured products: ${response.statusCode}');
       }
+    } catch (e) {
+      print('Exception in _fetchFeaturedProducts: $e');
+      // Check if still mounted
+      if (!mounted) return;
+      
       setState(() {
-        featuredProducts = products;
         isLoading = false;
       });
-    } else {
-      setState(() {
-        isLoading = false;
-      });
-      throw Exception('Failed to load featured products');
     }
   }
 

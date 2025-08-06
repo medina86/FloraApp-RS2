@@ -1,9 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:flora_mobile_app/screens/custom_bouquet_screen.dart';
-import 'package:flora_mobile_app/screens/my_orders_screen.dart';
-import 'package:flora_mobile_app/screens/my_events_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final int userId;
@@ -21,7 +17,7 @@ class AppDrawer extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
             decoration: const BoxDecoration(
-              color: Color(0xFFF06292), // Consistent pink color
+              color: Color(0xFFF06292), 
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +34,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Cvjećara koja oduševljava',
+                  'The flower shop that delights',
                   style: TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ],
@@ -46,69 +42,49 @@ class AppDrawer extends StatelessWidget {
           ),
           _buildDrawerItem(
             icon: Icons.home,
-            title: 'Početna',
+            title: 'Home',
             onTap: () => _navigateToScreen(context, 0),
           ),
           _buildDrawerItem(
             icon: Icons.store,
-            title: 'Prodavnica',
+            title: 'Shop',
             onTap: () => _navigateToScreen(context, 1),
           ),
           _buildDrawerItem(
             icon: Icons.favorite,
-            title: 'Omiljeno',
+            title: 'Favorites',
             onTap: () => _navigateToScreen(context, 2),
           ),
           _buildDrawerItem(
             icon: Icons.shopping_cart,
-            title: 'Korpa',
+            title: 'Cart',
             onTap: () => _navigateToScreen(context, 3),
           ),
           _buildDrawerItem(
             icon: Icons.person,
-            title: 'Profil',
+            title: 'Profile',
             onTap: () => _navigateToScreen(context, 4),
           ),
           const Divider(),
-          _buildDrawerItem(
-            icon: Icons.shopping_bag,
-            title: 'Moje narudžbe',
-            onTap: () => _navigateToMyOrders(context),
-          ),
-          _buildDrawerItem(
-            icon: Icons.event_note,
-            title: 'Moji događaji',
-            onTap: () => _navigateToMyEvents(context),
-          ),
           _buildDrawerItem(
             icon: Icons.article,
             title: 'Blog',
             onTap: () => _navigateToBlog(context),
           ),
           _buildDrawerItem(
-            icon: Icons.volunteer_activism,
-            title: 'Donacije',
-            onTap: () => _navigateToDonations(context),
-          ),
-          _buildDrawerItem(
-            icon: Icons.card_giftcard,
-            title: 'Prilagođeni buketi',
-            onTap: () => _navigateToCustomBouquets(context),
-          ),
-          _buildDrawerItem(
             icon: Icons.event,
-            title: 'Dekoracije',
+            title: 'Decorations',
             onTap: () => _navigateToDecorations(context),
           ),
           const Divider(),
           _buildDrawerItem(
             icon: Icons.info_outline,
-            title: 'O nama',
+            title: 'About Us',
             onTap: () => _navigateToAbout(context),
           ),
           _buildDrawerItem(
             icon: Icons.contact_phone,
-            title: 'Kontakt',
+            title: 'Contact',
             onTap: () => _navigateToContact(context),
           ),
         ],
@@ -137,248 +113,18 @@ class AppDrawer extends StatelessWidget {
   }
 
   void _navigateToScreen(BuildContext context, int index) {
-    Navigator.of(context).pop(); // Close the drawer
+    Navigator.of(context).pop(); 
     onNavigate(index);
   }
 
   void _navigateToBlog(BuildContext context) {
     Navigator.of(context).pop();
-    // Use the existing navigation method from MainLayout
     MainLayout.openBlog(context);
-  }
-
-  void _navigateToDonations(BuildContext context) {
-    Navigator.of(context).pop();
-    MainLayout.openDonations(context);
-  }
-
-  void _navigateToCustomBouquets(BuildContext context) {
-    Navigator.of(context).pop();
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Theme(
-          data: Theme.of(context).copyWith(
-            scaffoldBackgroundColor: Colors.white,
-            appBarTheme: const AppBarTheme(
-              color: Colors.white,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Color.fromARGB(255, 170, 46, 92)),
-            ),
-          ),
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'Custom Bouquet',
-                style: TextStyle(
-                  color: Color.fromARGB(255, 170, 46, 92),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            body: CreateCustomBouquetScreen(userId: userId),
-            bottomNavigationBar: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
-              child: BottomNavigationBar(
-                selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-                unselectedItemColor: Colors.white,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-                type: BottomNavigationBarType.fixed,
-                currentIndex: 0,
-                onTap: (index) {
-                  Navigator.pop(context);
-                  onNavigate(index);
-                },
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: "Home",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.store),
-                    label: "Shop",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.favorite),
-                    label: "Favorites",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.shopping_cart),
-                    label: "Cart",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: "Account",
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _navigateToDecorations(BuildContext context) {
     Navigator.of(context).pop();
     MainLayout.openDecorationRequest(context);
-  }
-
-  void _navigateToMyOrders(BuildContext context) {
-    Navigator.of(context).pop();
-    // Navigate directly with a complete Scaffold to ensure proper layout
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Theme(
-          data: Theme.of(context).copyWith(
-            scaffoldBackgroundColor: Colors.white,
-            appBarTheme: const AppBarTheme(
-              color: Colors.white,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Color.fromARGB(255, 170, 46, 92)),
-            ),
-          ),
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'My Orders',
-                style: TextStyle(
-                  color: Color.fromARGB(255, 170, 46, 92),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            body: MyOrdersScreen(userId: userId),
-            bottomNavigationBar: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
-              child: BottomNavigationBar(
-                selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-                unselectedItemColor: Colors.white,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-                type: BottomNavigationBarType.fixed,
-                currentIndex: 0,
-                onTap: (index) {
-                  Navigator.pop(context);
-                  onNavigate(index);
-                },
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: "Home",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.store),
-                    label: "Shop",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.favorite),
-                    label: "Favorites",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.shopping_cart),
-                    label: "Cart",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: "Account",
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _navigateToMyEvents(BuildContext context) {
-    Navigator.of(context).pop();
-    // Navigate directly with a complete Scaffold to ensure proper layout
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => Theme(
-          data: Theme.of(context).copyWith(
-            scaffoldBackgroundColor: Colors.white,
-            appBarTheme: const AppBarTheme(
-              color: Colors.white,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Color.fromARGB(255, 170, 46, 92)),
-            ),
-          ),
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text(
-                'My Events',
-                style: TextStyle(
-                  color: Color.fromARGB(255, 170, 46, 92),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ),
-            body: MyEventsScreen(userId: userId),
-            bottomNavigationBar: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
-              child: BottomNavigationBar(
-                selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-                unselectedItemColor: Colors.white,
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-                type: BottomNavigationBarType.fixed,
-                currentIndex: 0,
-                onTap: (index) {
-                  Navigator.pop(context);
-                  onNavigate(index);
-                },
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home),
-                    label: "Home",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.store),
-                    label: "Shop",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.favorite),
-                    label: "Favorites",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.shopping_cart),
-                    label: "Cart",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person),
-                    label: "Account",
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _navigateToAbout(BuildContext context) {
@@ -397,12 +143,12 @@ class AppDrawer extends StatelessWidget {
         children: const [
           SizedBox(height: 16),
           Text(
-            'Flora je cvjećara koja nudi širok asortiman cvijeća i dekoracija za sve prilike.',
+            'Flora is a flower shop that offers a wide range of flowers and decorations for all occasions.',
           ),
           SizedBox(height: 8),
-          Text('Nalazimo se u Sarajevu na adresi Zmaja od Bosne bb.'),
+          Text('We are located in Sarajevo at Zmaja od Bosne bb.'),
           SizedBox(height: 8),
-          Text('© 2025 Flora. Sva prava pridržana.'),
+          Text('© 2025 Flora. All rights reserved.'),
         ],
       ),
     );
@@ -410,30 +156,29 @@ class AppDrawer extends StatelessWidget {
 
   void _navigateToContact(BuildContext context) {
     Navigator.of(context).pop();
-    // Show contact information in dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Kontakt'),
+        title: const Text('Contact'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            Text('Telefon: +387 33 123 456'),
+            Text('Phone: +387 33 123 456'),
             SizedBox(height: 8),
             Text('Email: info@flora.ba'),
             SizedBox(height: 8),
-            Text('Adresa: Zmaja od Bosne bb, Sarajevo'),
+            Text('Address: Zmaja od Bosne bb, Sarajevo'),
             SizedBox(height: 16),
-            Text('Radno vrijeme:'),
-            Text('Ponedjeljak - Petak: 08:00 - 20:00'),
-            Text('Subota: 08:00 - 17:00'),
-            Text('Nedjelja: 09:00 - 15:00'),
+            Text('Working Hours:'),
+            Text('Monday - Friday: 08:00 - 20:00'),
+            Text('Saturday: 08:00 - 17:00'),
+            Text('Sunday: 09:00 - 15:00'),
           ],
         ),
         actions: [
           TextButton(
-            child: const Text('Zatvori'),
+            child: const Text('Close'),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],

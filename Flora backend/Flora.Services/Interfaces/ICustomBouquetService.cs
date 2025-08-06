@@ -11,6 +11,7 @@ namespace Flora.Services.Interfaces
 {
     public interface ICustomBouquetService : ICRUDService<CustomBouquetResponse, CustomBouquetSearchObject, CustomBouquetRequest, CustomBouquetRequest>
     {
+        Task<CustomBouquetResponse?> GetByCartItemIdAsync(int cartItemId);
     }
 
 }

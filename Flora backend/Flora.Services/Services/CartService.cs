@@ -24,7 +24,7 @@ namespace Flora.Services.Services
                     .ThenInclude(i => i.Product)
                         .ThenInclude(p => p.Images)
                 .Include(c => c.Items)
-                    .ThenInclude(i => i.CustomBouquet); // Dodano za CustomBouquet
+                    .ThenInclude(i => i.CustomBouquet); 
 
             if (search?.UserId.HasValue == true)
             {

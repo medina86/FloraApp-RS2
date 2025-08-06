@@ -2,6 +2,7 @@ import 'package:flora_mobile_app/models/order.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:flora_mobile_app/helpers/image_loader.dart';
+import 'package:flora_mobile_app/layouts/custom_bouquet_order_detail_widget.dart';
 
 class MobileOrderDetailsScreen extends StatelessWidget {
   final OrderModel order;
@@ -104,6 +105,13 @@ class MobileOrderDetailsScreen extends StatelessWidget {
           itemCount: order.orderDetails.length,
           itemBuilder: (context, index) {
             final item = order.orderDetails[index];
+
+            // Koristimo custom widget za custom bukete
+            if (item.customBouquetId != null) {
+              return CustomBouquetOrderDetailWidget(orderDetail: item);
+            }
+
+            // Standardni prikaz za obične proizvode
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Row(

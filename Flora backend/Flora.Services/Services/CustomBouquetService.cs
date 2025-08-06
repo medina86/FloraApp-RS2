@@ -81,13 +81,23 @@ namespace Flora.Services.Services
             };
         }
 
+        public async Task<CustomBouquetResponse?> GetByCartItemIdAsync(int cartItemId)
+        {
+            var cartItem = await _context.CartItems
+                .FirstOrDefaultAsync(ci => ci.Id == cartItemId);
 
+            if (cartItem == null || !cartItem.CustomBouquetId.HasValue)
+                return null;
+
+            return await GetByIdAsync(cartItem.CustomBouquetId.Value);
+        }
         protected override CustomBouquetResponse MapToResponse(CustomBouquet entity)
         {
             return new CustomBouquetResponse
             {
                 Id = entity.Id,
                 Color = entity.Color,
+                CustomBouquetId = entity.Id,
                 CardMessage = entity.CardMessage,
                 SpecialInstructions = entity.SpecialInstructions,
                 TotalPrice = entity.TotalPrice,

@@ -13,6 +13,7 @@ namespace Flora.Models.Responses
         public string? CardMessage { get; set; }
         public string? SpecialInstructions { get; set; }
         public decimal TotalPrice { get; set; }
+        public int? CustomBouquetId { get; set; }
 
         public List<CustomBouquetItemResponse> Items { get; set; }
     }
