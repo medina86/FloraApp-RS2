@@ -41,7 +41,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
       // Provjera je li korisnik admin (roleId = 1)
       bool isAdmin = false;
-      
+
       // Provjera formata odgovora - odgovor može sadržavati roleId direktno ili listu roles
       if (loginResponse.containsKey('roleId')) {
         // Direktni format
@@ -51,7 +51,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         final roles = loginResponse['roles'] as List<dynamic>?;
         isAdmin = roles?.any((role) => role['id'] == 1) ?? false;
       }
-      
+
       if (isAdmin) {
         // Korisnik je admin, postavimo podatke i pristupimo admin sučelju
         int? adminRoleId = 1; // Definitivno znamo da je korisnik admin
@@ -60,17 +60,20 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           credentials['password']!,
           adminRoleId,
         );
-        
+
         // Ako postoji lista uloga, pohrani je također
-        if (loginResponse.containsKey('roles') && loginResponse['roles'] is List) {
+        if (loginResponse.containsKey('roles') &&
+            loginResponse['roles'] is List) {
           List<dynamic> serverRoles = loginResponse['roles'] as List<dynamic>;
           List<Map<String, dynamic>> userRoles = serverRoles
-            .map((role) => {
-              'id': role['id'],
-              'name': role['name'],
-              'description': role['description'],
-            })
-            .toList();
+              .map(
+                (role) => {
+                  'id': role['id'],
+                  'name': role['name'],
+                  'description': role['description'],
+                },
+              )
+              .toList();
           AuthProvider.setRoles(userRoles);
         }
         // Login uspješan i korisnik je admin

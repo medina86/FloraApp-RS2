@@ -179,14 +179,11 @@ abstract class BaseApiService {
     try {
       final queryString = buildQueryString(params);
       final url = '$baseUrl$endpoint$queryString';
-      
-      final response = await http.get(
-        Uri.parse(url),
-        headers: _headers,
-      );
+
+      final response = await http.get(Uri.parse(url), headers: _headers);
 
       _handleResponse(response, 'GET $endpoint (File Download)');
-      
+
       // Return file bytes
       return response.bodyBytes;
     } catch (e) {

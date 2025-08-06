@@ -12,9 +12,9 @@ class AuthProvider {
     if (username != null && password != null) {
       final credentials = base64Encode(utf8.encode('$username:$password'));
       headers['Authorization'] = 'Basic $credentials';
-      print('Debug - Auth Headers: ${headers['Authorization']}'); // Debug print
+      print('Debug - Auth Headers: ${headers['Authorization']}'); 
     } else {
-      print('Debug - No credentials set in AuthProvider'); // Debug print
+      print('Debug - No credentials set in AuthProvider'); 
     }
 
     return headers;
@@ -27,7 +27,6 @@ class AuthProvider {
     // Provjera po roleId
     if (roleId == 1) return true;
     
-    // Provjera po listi roles ako roleId nije postavljen
     return roles.any((role) => role['id'] == 1);
   }
 

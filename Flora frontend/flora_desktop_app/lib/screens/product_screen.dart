@@ -19,9 +19,10 @@ class _ProductsPageState extends State<ProductsPage> {
   bool isLoading = true;
   String searchQuery = '';
   bool? activeFilter; // null = all, true = active only, false = inactive only
-  bool? availableFilter; // null = all, true = available only, false = unavailable only
+  bool?
+  availableFilter; // null = all, true = available only, false = unavailable only
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Pagination variables
   int currentPage = 0;
   int pageSize = 10;
@@ -121,7 +122,7 @@ class _ProductsPageState extends State<ProductsPage> {
       if (response.containsKey('items')) {
         final items = response['items'] as List;
         productsResponse = items.map((item) => Product.fromJson(item)).toList();
-        
+
         // Postavimo ukupni broj proizvoda ako je dostupan
         if (response.containsKey('totalCount')) {
           totalItems = response['totalCount'] as int;
@@ -139,7 +140,8 @@ class _ProductsPageState extends State<ProductsPage> {
         if (selectedCategory != 'All') {
           _applyLocalFilters(); // Koristimo lokalno filtriranje samo za kategoriju
         } else {
-          filteredProducts = productsResponse; // Za ostale filtere, API nam vraća već filtrirane rezultate
+          filteredProducts =
+              productsResponse; // Za ostale filtere, API nam vraća već filtrirane rezultate
         }
         isLoading = false;
       });
@@ -196,12 +198,12 @@ class _ProductsPageState extends State<ProductsPage> {
       // Ažuriranje paginacije za lokalne filtere
       totalItems = filtered.length;
       totalPages = (totalItems! / pageSize).ceil();
-      
+
       // Osiguramo da currentPage ne ide izvan granica
       if (currentPage >= totalPages! && totalPages! > 0) {
         currentPage = totalPages! - 1;
       }
-      
+
       // Primijenimo paginaciju na filtrirane proizvode
       if (totalItems! > pageSize) {
         int startIndex = currentPage * pageSize;
@@ -209,7 +211,7 @@ class _ProductsPageState extends State<ProductsPage> {
         if (endIndex > filtered.length) {
           endIndex = filtered.length;
         }
-        
+
         filteredProducts = filtered.sublist(startIndex, endIndex);
       } else {
         filteredProducts = filtered;
@@ -235,7 +237,7 @@ class _ProductsPageState extends State<ProductsPage> {
   void filterByCategory(String category) {
     setState(() {
       selectedCategory = category;
-      currentPage = 0; 
+      currentPage = 0;
     });
     _applyLocalFilters();
   }
@@ -803,219 +805,239 @@ class _ProductsPageState extends State<ProductsPage> {
                               Expanded(
                                 child: ListView.separated(
                                   itemCount: filteredProducts.length,
-                                  separatorBuilder: (context, index) =>
-                                      Divider(height: 1, color: Colors.grey.shade200),
+                                  separatorBuilder: (context, index) => Divider(
+                                    height: 1,
+                                    color: Colors.grey.shade200,
+                                  ),
                                   itemBuilder: (context, index) {
                                     final product = filteredProducts[index];
                                     return Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 24,
+                                        vertical: 16,
+                                      ),
                                       child: Row(
                                         children: [
-                                          GestureDetector(
-                                            onTap: () =>
-                                                _showImageDialog(product),
-                                            child: Hero(
-                                              tag:
-                                                  'product_image_${product.id}',
-                                              child: Container(
-                                                width: 40,
-                                                height: 40,
-                                                decoration: BoxDecoration(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: Colors.grey.shade300,
-                                                    width: 1,
+                                          Expanded(
+                                            flex: 3,
+                                            child: Row(
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () =>
+                                                      _showImageDialog(product),
+                                                  child: Hero(
+                                                    tag:
+                                                        'product_image_${product.id}',
+                                                    child: Container(
+                                                      width: 40,
+                                                      height: 40,
+                                                      decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: Colors
+                                                              .grey
+                                                              .shade300,
+                                                          width: 1,
+                                                        ),
+                                                      ),
+                                                      child: ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              7,
+                                                            ),
+                                                        child:
+                                                            product
+                                                                .imageUrls
+                                                                .isNotEmpty
+                                                            ? Image.network(
+                                                                product
+                                                                    .imageUrls
+                                                                    .first,
+                                                                fit: BoxFit
+                                                                    .cover,
+                                                                errorBuilder:
+                                                                    (
+                                                                      context,
+                                                                      error,
+                                                                      stackTrace,
+                                                                    ) {
+                                                                      return _buildPlaceholder(
+                                                                        product
+                                                                            .name,
+                                                                      );
+                                                                    },
+                                                                loadingBuilder:
+                                                                    (
+                                                                      context,
+                                                                      child,
+                                                                      loadingProgress,
+                                                                    ) {
+                                                                      if (loadingProgress ==
+                                                                          null)
+                                                                        return child;
+                                                                      return Container(
+                                                                        color: Colors
+                                                                            .grey
+                                                                            .shade100,
+                                                                        child: Center(
+                                                                          child: SizedBox(
+                                                                            width:
+                                                                                16,
+                                                                            height:
+                                                                                16,
+                                                                            child: CircularProgressIndicator(
+                                                                              strokeWidth: 2,
+                                                                              valueColor:
+                                                                                  AlwaysStoppedAnimation<
+                                                                                    Color
+                                                                                  >(
+                                                                                    Color(
+                                                                                      0xFFE91E63,
+                                                                                    ),
+                                                                                  ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                                      );
+                                                                    },
+                                                              )
+                                                            : _buildPlaceholder(
+                                                                product.name,
+                                                              ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
-                                                child: ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(7),
-                                                  child:
-                                                      product
-                                                          .imageUrls
-                                                          .isNotEmpty
-                                                      ? Image.network(
-                                                          product
-                                                              .imageUrls
-                                                              .first,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (
-                                                                context,
-                                                                error,
-                                                                stackTrace,
-                                                              ) {
-                                                                return _buildPlaceholder(
-                                                                  product.name,
-                                                                );
-                                                              },
-                                                          loadingBuilder:
-                                                              (
-                                                                context,
-                                                                child,
-                                                                loadingProgress,
-                                                              ) {
-                                                                if (loadingProgress ==
-                                                                    null)
-                                                                  return child;
-                                                                return Container(
-                                                                  color: Colors
-                                                                      .grey
-                                                                      .shade100,
-                                                                  child: Center(
-                                                                    child: SizedBox(
-                                                                      width: 16,
-                                                                      height:
-                                                                          16,
-                                                                      child: CircularProgressIndicator(
-                                                                        strokeWidth:
-                                                                            2,
-                                                                        valueColor:
-                                                                            AlwaysStoppedAnimation<
-                                                                              Color
-                                                                            >(
-                                                                              Color(
-                                                                                0xFFE91E63,
-                                                                              ),
-                                                                            ),
-                                                                      ),
-                                                                    ),
-                                                                  ),
-                                                                );
-                                                              },
-                                                        )
-                                                      : _buildPlaceholder(
-                                                          product.name,
+                                                SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        product.name,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 14,
                                                         ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                      if (product.description !=
+                                                          null)
+                                                        Text(
+                                                          product.description!,
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade600,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      Text(
+                                                        product.categoryName ??
+                                                            'Unknown',
+                                                        style: TextStyle(
+                                                          fontSize: 11,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade500,
+                                                          fontStyle:
+                                                              FontStyle.italic,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ),
+                                              ],
+                                            ),
+                                          ),
+                                          // Price
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              '${product.price.toStringAsFixed(2)} KM',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey.shade700,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                             ),
                                           ),
-                                          SizedBox(width: 12),
+                                          // Status
                                           Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                                            flex: 2,
+                                            child: _buildStatusIndicators(
+                                              product,
+                                            ),
+                                          ),
+                                          // Actions
+                                          SizedBox(
+                                            width: 100,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
                                               children: [
-                                                Text(
-                                                  product.name,
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.w500,
-                                                    fontSize: 14,
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.edit_outlined,
+                                                    color: Colors.blue.shade600,
+                                                    size: 20,
                                                   ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
+                                                  onPressed: () async {
+                                                    final result =
+                                                        await showEditProductDialog(
+                                                          context,
+                                                          product,
+                                                          categories,
+                                                        );
+                                                    if (result == true) {
+                                                      await fetchProducts();
+                                                    }
+                                                  },
+                                                  tooltip: 'Edit Product',
                                                 ),
-                                                if (product.description != null)
-                                                  Text(
-                                                    product.description!,
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color:
-                                                          Colors.grey.shade600,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.delete_outline,
+                                                    color: Colors.red.shade400,
+                                                    size: 20,
                                                   ),
-                                                Text(
-                                                  product.categoryName ??
-                                                      'Unknown',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey.shade500,
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
+                                                  onPressed: () =>
+                                                      _showDeleteDialog(
+                                                        product,
+                                                      ),
+                                                  tooltip: 'Delete Product',
                                                 ),
                                               ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    // Price
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        '${product.price.toStringAsFixed(2)} KM',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey.shade700,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    // Status
-                                    Expanded(
-                                      flex: 2,
-                                      child: _buildStatusIndicators(product),
-                                    ),
-                                    // Actions
-                                    SizedBox(
-                                      width: 100,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(
-                                              Icons.edit_outlined,
-                                              color: Colors.blue.shade600,
-                                              size: 20,
-                                            ),
-                                            onPressed: () async {
-                                              final result =
-                                                  await showEditProductDialog(
-                                                    context,
-                                                    product,
-                                                    categories,
-                                                  );
-                                              if (result == true) {
-                                                await fetchProducts();
-                                              }
-                                            },
-                                            tooltip: 'Edit Product',
-                                          ),
-                                          IconButton(
-                                            icon: Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red.shade400,
-                                              size: 20,
-                                            ),
-                                            onPressed: () =>
-                                                _showDeleteDialog(product),
-                                            tooltip: 'Delete Product',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                                             ],
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ),
             ),
-        ]
-        ),
-            ),          ),
+          ),
           // Pagination controls
           if (totalPages != null && totalPages! > 1)
             Container(
               padding: EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade200),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1046,8 +1068,8 @@ class _ProductsPageState extends State<ProductsPage> {
                   SizedBox(width: 8),
                   IconButton(
                     icon: Icon(Icons.chevron_right),
-                    onPressed: totalPages != null &&
-                            currentPage < totalPages! - 1
+                    onPressed:
+                        totalPages != null && currentPage < totalPages! - 1
                         ? () {
                             setState(() {
                               currentPage++;
@@ -1059,8 +1081,7 @@ class _ProductsPageState extends State<ProductsPage> {
                             }
                           }
                         : null,
-                    color: totalPages != null &&
-                            currentPage < totalPages! - 1
+                    color: totalPages != null && currentPage < totalPages! - 1
                         ? Color(0xFFE91E63)
                         : Colors.grey.shade400,
                   ),
@@ -1071,7 +1092,6 @@ class _ProductsPageState extends State<ProductsPage> {
       ),
     );
   }
-
 
   void _showDeleteDialog(Product product) {
     showDialog(
@@ -1112,13 +1132,10 @@ class _ProductsPageState extends State<ProductsPage> {
                       ),
                     );
                   }
-                }
-                on UnauthorizedException catch (e) {
+                } on UnauthorizedException catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        'Unauthorized: ${e.message}',
-                      ),
+                      content: Text('Unauthorized: ${e.message}'),
                       backgroundColor: Colors.red,
                     ),
                   );

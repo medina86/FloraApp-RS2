@@ -6,6 +6,7 @@ class ShippingAddressModel {
   final String street;
   final String houseNumber;
   final String postalCode;
+  final String? orderNote;
 
   ShippingAddressModel({
     this.id,
@@ -15,6 +16,7 @@ class ShippingAddressModel {
     required this.street,
     required this.houseNumber,
     required this.postalCode,
+    this.orderNote,
   });
 
   factory ShippingAddressModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class ShippingAddressModel {
       street: json['street'],
       houseNumber: json['houseNumber'],
       postalCode: json['postalCode'],
+      orderNote: json['orderNote'],
     );
   }
 
@@ -37,7 +40,7 @@ class ShippingAddressModel {
       'street': street,
       'houseNumber': houseNumber,
       'postalCode': postalCode,
-      
+      'orderNote': orderNote,
     };
   }
 }
