@@ -10,6 +10,7 @@ using Mapster;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
     
@@ -18,6 +19,8 @@ builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables();
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 builder.Services.AddMapster();
 TypeAdapterConfig<ProductRequest, Product>.NewConfig()
@@ -42,6 +45,7 @@ builder.Services.AddTransient<IDonationCampaignService, DonationCampaignService>
 builder.Services.AddTransient<IDonationService, DonationService>();
 builder.Services.AddTransient<IBlogPostService, BlogPostService>();
 builder.Services.AddTransient<IBlogCommentService, BlogCommentService>();
+builder.Services.AddTransient<IStatisticsService, StatisticsService>();
 
 
 builder.Services.AddControllers();
@@ -103,6 +107,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12:5014");
+//app.Run("http://192.168.0.12:5014");
 
-//app.Run();
+app.Run();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flora_desktop_app/layouts/constants.dart';
 import 'package:http/http.dart' as http;
 import 'auth_provider.dart';
@@ -169,6 +170,28 @@ abstract class BaseApiService {
   ) async {
     final queryString = buildQueryString(params);
     return get('$endpoint$queryString', parser);
+  }
+
+  static Future<Uint8List?> downloadFile(
+    String endpoint,
+    Map<String, dynamic> params,
+  ) async {
+    try {
+      final queryString = buildQueryString(params);
+      final url = '$baseUrl$endpoint$queryString';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: _headers,
+      );
+
+      _handleResponse(response, 'GET $endpoint (File Download)');
+      
+      // Return file bytes
+      return response.bodyBytes;
+    } catch (e) {
+      rethrow;
+    }
   }
 }
 
