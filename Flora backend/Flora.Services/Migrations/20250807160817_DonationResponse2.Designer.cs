@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Flora.Services.Migrations
 {
     [DbContext(typeof(FLoraDbContext))]
-    [Migration("20250805150124_DataSeed")]
-    partial class DataSeed
+    [Migration("20250807160817_DonationResponse2")]
+    partial class DonationResponse2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -649,6 +649,66 @@ namespace Flora.Services.Migrations
                             ThemeOrColors = "Company colors: Red and Black",
                             UserId = 3,
                             VenueType = "Conference Hall"
+                        });
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationSelection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comments")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DecorationRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DecorationSuggestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecorationRequestId");
+
+                    b.HasIndex("DecorationSuggestionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DecorationSelections");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Comments = "I love this design! Can we add a few more roses to each centerpiece?",
+                            CreatedAt = new DateTime(2025, 7, 20, 14, 30, 0, 0, DateTimeKind.Unspecified),
+                            DecorationRequestId = 1,
+                            DecorationSuggestionId = 1,
+                            Status = "Selected",
+                            UserId = 2
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Comments = "Perfect! Please make sure the blue matches the invitations I sent.",
+                            CreatedAt = new DateTime(2025, 7, 25, 10, 15, 0, 0, DateTimeKind.Unspecified),
+                            DecorationRequestId = 2,
+                            DecorationSuggestionId = 3,
+                            Status = "Selected",
+                            UserId = 3
                         });
                 });
 
@@ -2423,37 +2483,37 @@ namespace Flora.Services.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1102),
+                            CreatedAt = new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4108),
                             Email = "admin@flora.com",
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "Admin",
-                            PasswordHash = "fvzNF7nToakcYyIstAa5RVlcIRM5eOkPC02nvYngKAo=",
-                            PasswordSalt = "INJuPpd8ChWKjnRFRwhFUQ==",
+                            PasswordHash = "qDwRm1Je9uV+OOVzUkx39yVc6kwX7kHXghsphGzASt8=",
+                            PasswordSalt = "XN5np4S0VzWNtZLrR/NTQg==",
                             Username = "admin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1112),
+                            CreatedAt = new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4114),
                             Email = "user@flora.com",
                             FirstName = "User",
                             IsActive = true,
                             LastName = "User",
-                            PasswordHash = "NGDPDRX4xTaE5YJxUZ53T3gzgIYkcDJsizDZU4Kpzkw=",
-                            PasswordSalt = "gB2pS1mPpFyAtXyo/6+myg==",
+                            PasswordHash = "gX/yzzWNl+5dUWP7r+SoKS/4oWbaLISB07DQtz6PfMU=",
+                            PasswordSalt = "RqPOpvr8F7P+yM9Giv+K0w==",
                             Username = "user"
                         },
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1118),
+                            CreatedAt = new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4116),
                             Email = "medina@flora.com",
                             FirstName = "Medina",
                             IsActive = true,
                             LastName = "Krhan",
-                            PasswordHash = "Nxk0xiyZW/uS4BN4+YVPIValESHmQPa3q60nab2jEIM=",
-                            PasswordSalt = "QIHv7bT4eeXjuYzhVxiQoQ==",
+                            PasswordHash = "uzCHhrGT3SlTTIK9h8fFYUfs7Nxzg59xwhqW/z7Dz6Q=",
+                            PasswordSalt = "YXKd1kb3lhk3uTvfEo5L7Q==",
                             Username = "medina"
                         });
                 });
@@ -2598,6 +2658,33 @@ namespace Flora.Services.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Flora.Services.Database.DecorationSelection", b =>
+                {
+                    b.HasOne("Flora.Services.Database.DecorationRequest", "DecorationRequest")
+                        .WithMany()
+                        .HasForeignKey("DecorationRequestId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Flora.Services.Database.DecorationSuggestion", "DecorationSuggestion")
+                        .WithMany()
+                        .HasForeignKey("DecorationSuggestionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Flora.Services.Database.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DecorationRequest");
+
+                    b.Navigation("DecorationSuggestion");
 
                     b.Navigation("User");
                 });

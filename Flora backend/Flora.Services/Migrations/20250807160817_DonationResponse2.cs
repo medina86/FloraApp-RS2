@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Flora.Services.Migrations
 {
     /// <inheritdoc />
-    public partial class DataSeed : Migration
+    public partial class DonationResponse2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -525,6 +525,40 @@ namespace Flora.Services.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "DecorationSelections",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DecorationRequestId = table.Column<int>(type: "int", nullable: false),
+                    DecorationSuggestionId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Comments = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DecorationSelections", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DecorationSelections_DecorationRequests_DecorationRequestId",
+                        column: x => x.DecorationRequestId,
+                        principalTable: "DecorationRequests",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_DecorationSelections_DecorationSuggestions_DecorationSuggestionId",
+                        column: x => x.DecorationSuggestionId,
+                        principalTable: "DecorationSuggestions",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_DecorationSelections_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "BlogPosts",
                 columns: new[] { "Id", "Content", "CreatedAt", "Title" },
@@ -606,9 +640,9 @@ namespace Flora.Services.Migrations
                 columns: new[] { "Id", "CreatedAt", "Email", "FirstName", "IsActive", "LastLoginAt", "LastName", "PasswordHash", "PasswordSalt", "PhoneNumber", "ProfileImageUrl", "Username" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1102), "admin@flora.com", "Admin", true, null, "Admin", "fvzNF7nToakcYyIstAa5RVlcIRM5eOkPC02nvYngKAo=", "INJuPpd8ChWKjnRFRwhFUQ==", null, null, "admin" },
-                    { 2, new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1112), "user@flora.com", "User", true, null, "User", "NGDPDRX4xTaE5YJxUZ53T3gzgIYkcDJsizDZU4Kpzkw=", "gB2pS1mPpFyAtXyo/6+myg==", null, null, "user" },
-                    { 3, new DateTime(2025, 8, 5, 15, 1, 23, 897, DateTimeKind.Utc).AddTicks(1118), "medina@flora.com", "Medina", true, null, "Krhan", "Nxk0xiyZW/uS4BN4+YVPIValESHmQPa3q60nab2jEIM=", "QIHv7bT4eeXjuYzhVxiQoQ==", null, null, "medina" }
+                    { 1, new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4108), "admin@flora.com", "Admin", true, null, "Admin", "qDwRm1Je9uV+OOVzUkx39yVc6kwX7kHXghsphGzASt8=", "XN5np4S0VzWNtZLrR/NTQg==", null, null, "admin" },
+                    { 2, new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4114), "user@flora.com", "User", true, null, "User", "gX/yzzWNl+5dUWP7r+SoKS/4oWbaLISB07DQtz6PfMU=", "RqPOpvr8F7P+yM9Giv+K0w==", null, null, "user" },
+                    { 3, new DateTime(2025, 8, 7, 16, 8, 16, 842, DateTimeKind.Utc).AddTicks(4116), "medina@flora.com", "Medina", true, null, "Krhan", "uzCHhrGT3SlTTIK9h8fFYUfs7Nxzg59xwhqW/z7Dz6Q=", "YXKd1kb3lhk3uTvfEo5L7Q==", null, null, "medina" }
                 });
 
             migrationBuilder.InsertData(
@@ -874,6 +908,15 @@ namespace Flora.Services.Migrations
                     { 56, "https://florablobstorage.blob.core.windows.net/profile-images/cb9.jpg", 56 }
                 });
 
+            migrationBuilder.InsertData(
+                table: "DecorationSelections",
+                columns: new[] { "Id", "Comments", "CreatedAt", "DecorationRequestId", "DecorationSuggestionId", "Status", "UserId" },
+                values: new object[,]
+                {
+                    { 1, "I love this design! Can we add a few more roses to each centerpiece?", new DateTime(2025, 7, 20, 14, 30, 0, 0, DateTimeKind.Unspecified), 1, 1, "Selected", 2 },
+                    { 2, "Perfect! Please make sure the blue matches the invitations I sent.", new DateTime(2025, 7, 25, 10, 15, 0, 0, DateTimeKind.Unspecified), 2, 3, "Selected", 3 }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_BlogComments_BlogPostId",
                 table: "BlogComments",
@@ -922,6 +965,21 @@ namespace Flora.Services.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_DecorationRequests_UserId",
                 table: "DecorationRequests",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DecorationSelections_DecorationRequestId",
+                table: "DecorationSelections",
+                column: "DecorationRequestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DecorationSelections_DecorationSuggestionId",
+                table: "DecorationSelections",
+                column: "DecorationSuggestionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DecorationSelections_UserId",
+                table: "DecorationSelections",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -1030,7 +1088,7 @@ namespace Flora.Services.Migrations
                 name: "CustomBouquetItems");
 
             migrationBuilder.DropTable(
-                name: "DecorationSuggestions");
+                name: "DecorationSelections");
 
             migrationBuilder.DropTable(
                 name: "Donations");
@@ -1054,7 +1112,7 @@ namespace Flora.Services.Migrations
                 name: "Carts");
 
             migrationBuilder.DropTable(
-                name: "DecorationRequests");
+                name: "DecorationSuggestions");
 
             migrationBuilder.DropTable(
                 name: "DonationCampaigns");
@@ -1072,7 +1130,7 @@ namespace Flora.Services.Migrations
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "DecorationRequests");
 
             migrationBuilder.DropTable(
                 name: "ShippingAddresses");
@@ -1082,6 +1140,9 @@ namespace Flora.Services.Migrations
 
             migrationBuilder.DropTable(
                 name: "Occasions");
+
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

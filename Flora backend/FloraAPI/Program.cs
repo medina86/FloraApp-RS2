@@ -47,6 +47,7 @@ builder.Services.AddTransient<IBlogPostService, BlogPostService>();
 builder.Services.AddTransient<IBlogCommentService, BlogCommentService>();
 builder.Services.AddTransient<IStatisticsService, StatisticsService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
+builder.Services.AddTransient<IDecorationSelectionService, DecorationSelectionService>();
 
 
 builder.Services.AddControllers();
@@ -108,6 +109,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12:5014");
+//app.Run("http://192.168.0.12:5014");
 
-//app.Run();
+app.Run();

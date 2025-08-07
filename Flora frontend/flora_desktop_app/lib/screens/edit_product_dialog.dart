@@ -71,7 +71,7 @@ class _EditProductDialogState extends State<EditProductDialog> {
     super.dispose();
   }
 
-    Future<void> updateProduct() async {
+  Future<void> updateProduct() async {
     setState(() {
       isUpdating = true;
     });
@@ -90,8 +90,8 @@ class _EditProductDialogState extends State<EditProductDialog> {
           'categoryId': selectedCategoryId,
           'isNew': isNew,
           'isFeatured': isFeatured,
-          'active': active, 
-          'isAvailable': isAvailable, 
+          'active': active,
+          'isAvailable': isAvailable,
           'occasionId': widget.product.occasionId,
         }),
       );
@@ -122,7 +122,6 @@ class _EditProductDialogState extends State<EditProductDialog> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -133,15 +132,25 @@ class _EditProductDialogState extends State<EditProductDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
+              TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Product Name',
                   border: OutlineInputBorder(),
+                  errorText: _nameController.text.trim().isEmpty
+                      ? 'Product name is required'
+                      : null,
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Product name is required';
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
                   labelText: 'Description',
@@ -150,12 +159,29 @@ class _EditProductDialogState extends State<EditProductDialog> {
                 maxLines: 3,
               ),
               SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _priceController,
                 decoration: InputDecoration(
                   labelText: 'Price (KM)',
                   border: OutlineInputBorder(),
+                  errorText: _priceController.text.trim().isEmpty
+                      ? 'Price is required'
+                      : (double.tryParse(_priceController.text) == null ||
+                            double.tryParse(_priceController.text)! <= 0)
+                      ? 'Please enter a valid price'
+                      : null,
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Price is required';
+                  }
+                  final price = double.tryParse(value);
+                  if (price == null || price <= 0) {
+                    return 'Please enter a valid price';
+                  }
+                  return null;
+                },
                 keyboardType: TextInputType.numberWithOptions(decimal: true),
               ),
               SizedBox(height: 16),
@@ -164,7 +190,17 @@ class _EditProductDialogState extends State<EditProductDialog> {
                 decoration: InputDecoration(
                   labelText: 'Category',
                   border: OutlineInputBorder(),
+                  errorText: selectedCategoryId == null
+                      ? 'Category is required'
+                      : null,
                 ),
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (value) {
+                  if (value == null) {
+                    return 'Category is required';
+                  }
+                  return null;
+                },
                 items: widget.categories.map((category) {
                   return DropdownMenuItem<int>(
                     value: category.id,
@@ -289,6 +325,16 @@ class _EditProductDialogState extends State<EditProductDialog> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Please enter a valid price'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  if (selectedCategoryId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Category is required'),
                         backgroundColor: Colors.red,
                       ),
                     );

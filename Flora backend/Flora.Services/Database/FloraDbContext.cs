@@ -32,6 +32,7 @@ namespace Flora.Services.Database
         public DbSet<BlogComment> BlogComments { get; set; }
         public DbSet<BlogPost> BlogPosts { get; set; }
         public DbSet<BlogImage> BlogImages { get; set; }
+        public DbSet<DecorationSelection> DecorationSelections { get; set; }
 
 
 
@@ -58,6 +59,7 @@ namespace Flora.Services.Database
             modelBuilder.Entity<Donation>().SeedData();
             modelBuilder.Entity<DecorationRequest>().SeedData();
             modelBuilder.Entity<DecorationSuggestion>().SeedData();
+            modelBuilder.Entity<DecorationSelection>().SeedData();
             modelBuilder.Entity<ShippingAddress>().SeedData();
             modelBuilder.Entity<Order>().SeedData();
             modelBuilder.Entity<OrderDetail>().SeedData();
@@ -96,7 +98,19 @@ namespace Flora.Services.Database
             modelBuilder.Entity<Order>()
                 .Property(o => o.Status)
                 .HasConversion<string>();
-           
+                
+            // Configure DecorationSelection relationships to avoid cascade delete cycles
+            modelBuilder.Entity<DecorationSelection>()
+                .HasOne(ds => ds.DecorationSuggestion)
+                .WithMany()
+                .HasForeignKey(ds => ds.DecorationSuggestionId)
+                .OnDelete(DeleteBehavior.NoAction); // Change to NoAction to prevent cascade delete cycles
+                
+            modelBuilder.Entity<DecorationSelection>()
+                .HasOne(ds => ds.DecorationRequest)
+                .WithMany()
+                .HasForeignKey(ds => ds.DecorationRequestId)
+                .OnDelete(DeleteBehavior.NoAction); // Change to NoAction to prevent cascade delete cycles
         }
     }
     }

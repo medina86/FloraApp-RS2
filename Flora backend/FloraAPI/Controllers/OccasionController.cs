@@ -1,27 +1,32 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Flora.Models.Requests;
+using Flora.Models.Responses;
+using Flora.Models.SearchObjects;
+using Flora.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
-[ApiController]
-[Route("api/[controller]")]
-public class OccasionController : ControllerBase
+namespace FloraAPI.Controllers
 {
-    private readonly IOccasionService _occasionService;
-
-    public OccasionController(IOccasionService occasionService)
+    public class OccasionController : BaseCRUDController<OccasionResponse, OccasionSearchObject, OccasionRequest, OccasionRequest>
     {
-        _occasionService = occasionService;
-    }
+        private readonly IOccasionService _occasionService;
 
-    [HttpGet]
-    public async Task<IActionResult> GetOccasions()
-    {
-        try
+        public OccasionController(IOccasionService occasionService) : base(occasionService)
         {
-            var occasions = await _occasionService.GetAllAsync();
-            return Ok(new { items = occasions });
+            _occasionService = occasionService;
         }
-        catch (Exception ex)
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllOccasions()
         {
-            return StatusCode(500, $"Internal server error: {ex.Message}");
+            try
+            {
+                var occasions = await _occasionService.GetAllAsync();
+                return Ok(new { items = occasions });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
     }
 }

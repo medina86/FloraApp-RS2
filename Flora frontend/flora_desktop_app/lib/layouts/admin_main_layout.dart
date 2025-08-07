@@ -2,6 +2,9 @@ import 'package:flora_desktop_app/screens/dashboard_screen.dart';
 import 'package:flora_desktop_app/screens/orders_screen.dart';
 import 'package:flora_desktop_app/screens/product_screen.dart';
 import 'package:flora_desktop_app/screens/reservation_screen.dart';
+import 'package:flora_desktop_app/screens/statistics_screen.dart';
+
+
 import 'package:flora_desktop_app/screens/user_screen.dart';
 import 'package:flora_desktop_app/screens/donation_campaigns_screen.dart';
 import 'package:flora_desktop_app/screens/blog_screen.dart';
@@ -87,10 +90,8 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
       const OrdersPage(),
       ProductsPage(),
       const DonationCampaignsScreen(),
-      const Center(
-        child: Text("Statistics Page", style: TextStyle(fontSize: 24)),
-      ),
-      ReservationsScreen(),
+      const StatisticsScreen(),
+      const ReservationsScreen(),
       const BlogScreen(),
       UsersPage(),
     ];

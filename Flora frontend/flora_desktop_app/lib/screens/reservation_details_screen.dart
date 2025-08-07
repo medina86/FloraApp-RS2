@@ -1,5 +1,6 @@
 import 'package:flora_desktop_app/layouts/admin_main_layout.dart';
 import 'package:flora_desktop_app/layouts/constants.dart';
+import 'package:flora_desktop_app/models/decoration_selection_model.dart';
 import 'package:flora_desktop_app/models/reservation_model.dart';
 import 'package:flora_desktop_app/providers/auth_provider.dart';
 import 'package:flora_desktop_app/screens/reservation_screen.dart';
@@ -51,11 +52,47 @@ class ReservationDetailsScreen extends StatefulWidget {
 class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
   bool _isLoading = true;
   List<DecorationSuggestion> _suggestions = [];
+  DecorationSelection? _selectedDecoration;
+  bool _isLoadingSelection = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
     super.initState();
     _fetchSuggestions();
+    _fetchSelectedDecoration();
+  }
+
+  Future<void> _fetchSelectedDecoration() async {
+    setState(() {
+      _isLoadingSelection = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '$baseUrl/DecorationSelection/byRequest/${widget.reservation.id}',
+        ),
+        headers: AuthProvider.getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic data = json.decode(response.body);
+        setState(() {
+          _selectedDecoration = DecorationSelection.fromJson(data);
+        });
+        print('Found selected decoration: $_selectedDecoration');
+      } else if (response.statusCode != 404) {
+        // 404 is expected if no selection exists
+        print('Error fetching decoration selection: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Exception fetching decoration selection: $e');
+    } finally {
+      setState(() {
+        _isLoadingSelection = false;
+      });
+    }
   }
 
   Future<void> _fetchSuggestions() async {
@@ -195,12 +232,50 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                                 '${widget.reservation.budget.toStringAsFixed(2)} KM',
                               ),
                               const SizedBox(height: 24),
-                              const Text(
-                                'Decoration Ideas:',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Decoration Ideas:',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (_selectedDecoration != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade100,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: Colors.green.shade300,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green,
+                                            size: 18,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text(
+                                            'Client has selected a decoration',
+                                            style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(height: 16),
                               if (_isLoading)
@@ -215,21 +290,104 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: _suggestions.map((suggestion) {
-                                    // Debug log for suggestion data
-                                    print('Processing suggestion: $suggestion');
+                                    // Check if this is the selected suggestion
+                                    final bool isSelected =
+                                        _selectedDecoration != null &&
+                                        _selectedDecoration!
+                                                .decorationSuggestionId ==
+                                            suggestion.id;
+
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 12),
+                                      color: isSelected
+                                          ? Colors.green.shade50
+                                          : null,
+                                      shape: isSelected
+                                          ? RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              side: BorderSide(
+                                                color: Colors.green.shade300,
+                                                width: 2,
+                                              ),
+                                            )
+                                          : null,
                                       child: Padding(
                                         padding: const EdgeInsets.all(16),
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              suggestion.description,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                              ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    suggestion.description,
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight: isSelected
+                                                          ? FontWeight.bold
+                                                          : FontWeight.normal,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Dodajemo dugme za brisanje
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    color: Color.fromARGB(
+                                                      255,
+                                                      170,
+                                                      46,
+                                                      92,
+                                                    ),
+                                                  ),
+                                                  onPressed: () =>
+                                                      _confirmDelete(
+                                                        suggestion,
+                                                      ),
+                                                  tooltip: 'Obriši sugestiju',
+                                                ),
+                                                if (isSelected)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            20,
+                                                          ),
+                                                    ),
+                                                    child: const Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.check,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                        SizedBox(width: 4),
+                                                        Text(
+                                                          'CLIENT SELECTION',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                             if (suggestion
                                                 .imageUrl
@@ -255,6 +413,73 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                                                       ),
                                                     ),
                                               ),
+                                            ],
+                                            if (isSelected) ...[
+                                              const SizedBox(height: 16),
+                                              const Divider(),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.calendar_today,
+                                                    size: 16,
+                                                    color: Colors.green,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    'Selected on: ${DateFormat('dd.MM.yyyy - HH:mm').format(_selectedDecoration!.createdAt)}',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade700,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              if (_selectedDecoration!
+                                                          .comments !=
+                                                      null &&
+                                                  _selectedDecoration!
+                                                      .comments!
+                                                      .isNotEmpty) ...[
+                                                Text(
+                                                  'Client Comments:',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.green.shade50,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    border: Border.all(
+                                                      color:
+                                                          Colors.green.shade200,
+                                                    ),
+                                                  ),
+                                                  child: Text(
+                                                    _selectedDecoration!
+                                                        .comments!,
+                                                    style: TextStyle(
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade800,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                             const SizedBox(height: 8),
                                           ],
@@ -319,20 +544,11 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                         );
                       }
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pinkAccent,
+                      foregroundColor: Colors.white,
+                    ),
                     child: const Text('Send Ideas'),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Processing reservation... (Placeholder)',
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('Process'),
                   ),
                 ],
               ),
@@ -354,6 +570,80 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  // Funkcija za brisanje dekoracione sugestije
+  Future<void> _deleteDecorationSuggestion(int suggestionId) async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final url = '$baseUrl/DecorationSuggestion/$suggestionId';
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: AuthProvider.getHeaders(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // Uspješno brisanje
+        setState(() {
+          _suggestions.removeWhere(
+            (suggestion) => suggestion.id == suggestionId,
+          );
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dekoraciona sugestija je uspješno obrisana'),
+            backgroundColor: Color.fromARGB(255, 170, 46, 92),
+          ),
+        );
+      } else {
+        // Greška pri brisanju
+        throw Exception('Greška pri brisanju: ${response.statusCode}');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Greška pri brisanju: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
+  }
+
+  // Funkcija za potvrdu brisanja
+  void _confirmDelete(DecorationSuggestion suggestion) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Potvrda brisanja'),
+          content: const Text(
+            'Da li ste sigurni da želite obrisati ovu dekoracionu sugestiju?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Odustani'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteDecorationSuggestion(suggestion.id);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Obriši'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

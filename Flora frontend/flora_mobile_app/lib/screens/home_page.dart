@@ -4,7 +4,6 @@ import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'dart:math'; // Potrebno za funkciju min
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/models/blog_post.dart';
 import 'package:flora_mobile_app/providers/blog_api.dart';

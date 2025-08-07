@@ -19,6 +19,7 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   List<Reservation> _allReservations = [];
   List<Reservation> _filteredReservations = [];
   bool _isLoading = true;
+  bool _isDeleting = false;
   String? _error;
   String? _selectedDateFilter;
 
@@ -109,6 +110,78 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
     });
   }
 
+  void _confirmDeleteReservation(Reservation reservation) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: Text(
+            'Are you sure you want to delete reservation for "${reservation.eventType}"?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteReservation(reservation);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to delete a reservation
+  Future<void> _deleteReservation(Reservation reservation) async {
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/DecorationRequest/${reservation.id}'),
+        headers: AuthProvider.getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _allReservations.removeWhere((r) => r.id == reservation.id);
+          _filteredReservations.removeWhere((r) => r.id == reservation.id);
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reservation deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to delete reservation: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting reservation: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isDeleting = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<String> uniqueDates =
@@ -122,107 +195,131 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
             return dateA.compareTo(dateB);
           });
 
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: DropdownButton<String>(
-              value: _selectedDateFilter,
-              hint: Text('Choose date'),
-              items: [
-                const DropdownMenuItem<String>(
-                  value: null,
-                  child: Text('All Dates'),
+    return Stack(
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.centerRight,
+                child: DropdownButton<String>(
+                  value: _selectedDateFilter,
+                  hint: Text('Choose date'),
+                  items: [
+                    const DropdownMenuItem<String>(
+                      value: null,
+                      child: Text('All Dates'),
+                    ),
+                    ...uniqueDates.map((date) {
+                      return DropdownMenuItem<String>(
+                        value: date,
+                        child: Text(date),
+                      );
+                    }).toList(),
+                  ],
+                  onChanged: _applyDateFilter,
+                  dropdownColor: Colors.white,
+                  underline: Container(height: 1, color: Colors.pink),
+                  iconEnabledColor: Colors.pink,
                 ),
-                ...uniqueDates.map((date) {
-                  return DropdownMenuItem<String>(
-                    value: date,
-                    child: Text(date),
-                  );
-                }).toList(),
-              ],
-              onChanged: _applyDateFilter,
-              dropdownColor: Colors.white,
-              underline: Container(height: 1, color: Colors.pink),
-              iconEnabledColor: Colors.pink,
+              ),
+              const SizedBox(height: 16),
+              _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Colors.pink),
+                    )
+                  : _error != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                          ElevatedButton(
+                            onPressed: _fetchReservations,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _filteredReservations.isEmpty
+                  ? Center(child: Text('No reservations found.'))
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: _filteredReservations.length,
+                        itemBuilder: (context, index) {
+                          final reservation = _filteredReservations[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      DateFormat(
+                                        'dd.MM.yyyy',
+                                      ).format(reservation.eventDate),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(reservation.location),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.info_outline,
+                                      color: Colors.pink,
+                                    ),
+                                    onPressed: () {
+                                      final adminLayoutState = context
+                                          .findAncestorStateOfType<
+                                            AdminMainLayoutState
+                                          >();
+                                      if (adminLayoutState != null) {
+                                        adminLayoutState.showCustomChild(
+                                          ReservationDetailsScreen(
+                                            reservation: reservation,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    tooltip: 'View details',
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () =>
+                                        _confirmDeleteReservation(reservation),
+                                    tooltip: 'Delete reservation',
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+            ],
+          ),
+        ),
+        if (_isDeleting)
+          Container(
+            color: Colors.black.withOpacity(0.3),
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.pink),
             ),
           ),
-          const SizedBox(height: 16),
-          _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: Colors.pink),
-                )
-              : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                      ElevatedButton(
-                        onPressed: _fetchReservations,
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                )
-              : _filteredReservations.isEmpty
-              ? Center(child: Text('No reservations found.'))
-              : Expanded(
-                  child: ListView.builder(
-                    itemCount: _filteredReservations.length,
-                    itemBuilder: (context, index) {
-                      final reservation = _filteredReservations[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 16),
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  DateFormat(
-                                    'dd.MM.yyyy',
-                                  ).format(reservation.eventDate),
-                                ),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Text(reservation.location),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.info_outline,
-                                  color: Colors.pink,
-                                ),
-                                onPressed: () {
-                                  final adminLayoutState = context
-                                      .findAncestorStateOfType<
-                                        AdminMainLayoutState
-                                      >();
-                                  if (adminLayoutState != null) {
-                                    adminLayoutState.showCustomChild(
-                                      ReservationDetailsScreen(
-                                        reservation: reservation,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-        ],
-      ),
+      ],
     );
   }
 }

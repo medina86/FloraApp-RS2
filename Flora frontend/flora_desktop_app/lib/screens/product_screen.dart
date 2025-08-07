@@ -1,7 +1,11 @@
 import 'dart:convert';
 import 'package:flora_desktop_app/providers/base_provider.dart';
 import 'package:flora_desktop_app/screens/add_product_screen.dart';
+import 'package:flora_desktop_app/screens/category_management_dialog.dart'
+    as cat_dialog;
 import 'package:flora_desktop_app/screens/edit_product_dialog.dart';
+import 'package:flora_desktop_app/screens/occasion_management_dialog.dart'
+    as occ_dialog;
 import 'package:flutter/material.dart';
 import 'package:flora_desktop_app/layouts/constants.dart';
 import 'package:flora_desktop_app/providers/product_provider.dart';
@@ -15,6 +19,7 @@ class _ProductsPageState extends State<ProductsPage> {
   List<Product> products = [];
   List<Product> filteredProducts = [];
   List<Category> categories = [];
+  List<dynamic> occasions = [];
   String selectedCategory = 'All';
   bool isLoading = true;
   String searchQuery = '';
@@ -42,7 +47,77 @@ class _ProductsPageState extends State<ProductsPage> {
   }
 
   Future<void> _loadData() async {
-    await Future.wait([fetchProducts(), fetchCategories()]);
+    await Future.wait([fetchProducts(), fetchCategories(), fetchOccasions()]);
+  }
+
+  Future<void> fetchOccasions() async {
+    try {
+      final occasions = await BaseApiService.get<List<dynamic>>(
+        '/Occasion/all',
+        (data) {
+          if (data is List) {
+            return data.map((item) => item).toList();
+          } else if (data is Map<String, dynamic>) {
+            final items = data['items'] ?? data['data'] ?? [];
+            return (items as List).map((item) => item).toList();
+          }
+          return <dynamic>[];
+        },
+      );
+
+      setState(() {
+        this.occasions = occasions;
+      });
+    } on UnauthorizedException catch (e) {
+      _handleAuthError(e.message);
+    } on ApiException catch (e) {
+      print('Error loading occasions: ${e.message}');
+    } catch (e) {
+      print('Error loading occasions: $e');
+    }
+  }
+
+  void _showCategoryManagementDialog() async {
+    // Convert your existing categories to the dialog's Category type
+    List<cat_dialog.Category> dialogCategories = categories
+        .map((c) => cat_dialog.Category(id: c.id, name: c.name))
+        .toList();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => cat_dialog.CategoryManagementDialog(
+        initialCategories: dialogCategories,
+      ),
+    );
+
+    if (result == true) {
+      // Reload categories if changes were made
+      await fetchCategories();
+    }
+  }
+
+  void _showOccasionManagementDialog() async {
+    // Convert your existing occasions to the dialog's Occasion type
+    List<occ_dialog.Occasion> dialogOccasions = occasions
+        .map(
+          (o) => occ_dialog.Occasion(
+            id: o['occasionId'] ?? o['id'] ?? 0,
+            name: o['name'] ?? '',
+          ),
+        )
+        .toList();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => occ_dialog.OccasionManagementDialog(
+        initialOccasions: dialogOccasions,
+      ),
+    );
+
+    if (result == true) {
+      // Reload occasions if changes were made
+      await fetchOccasions();
+    }
   }
 
   Future<void> fetchCategories() async {
@@ -641,23 +716,56 @@ class _ProductsPageState extends State<ProductsPage> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: Colors.grey.shade300),
                 ),
-                child: DropdownButton<String>(
-                  value: selectedCategory,
-                  hint: Text('Category'),
-                  underline: SizedBox(),
-                  items: categoryNames
-                      .map(
-                        (cat) => DropdownMenuItem<String>(
-                          value: cat,
-                          child: Text(cat),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      filterByCategory(value);
-                    }
-                  },
+                child: Row(
+                  children: [
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      hint: Text('Category'),
+                      underline: SizedBox(),
+                      items: categoryNames
+                          .map(
+                            (cat) => DropdownMenuItem<String>(
+                              value: cat,
+                              child: Text(cat),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          filterByCategory(value);
+                        }
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.settings, size: 16),
+                      tooltip: 'Manage Categories',
+                      onPressed: () => _showCategoryManagementDialog(),
+                      color: Color(0xFFE91E63),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 16),
+
+              // Occasions Management Button
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  children: [
+                    Text('Occasions'),
+                    SizedBox(width: 8),
+                    IconButton(
+                      icon: Icon(Icons.settings, size: 16),
+                      tooltip: 'Manage Occasions',
+                      onPressed: () => _showOccasionManagementDialog(),
+                      color: Color(0xFFE91E63),
+                    ),
+                  ],
                 ),
               ),
 
