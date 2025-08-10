@@ -22,7 +22,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final url = Uri.parse('$baseUrl:5014/api/Users');
+    final url = Uri.parse('$baseUrl/Users');
 
     final body = jsonEncode({
       'firstName': _firstName.text,

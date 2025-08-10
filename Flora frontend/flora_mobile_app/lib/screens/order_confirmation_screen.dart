@@ -1,4 +1,5 @@
 import 'package:flora_mobile_app/models/order.dart';
+import 'package:flora_mobile_app/screens/my_orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'dart:math'; // Dodaj import za min funkciju
@@ -79,11 +80,24 @@ class OrderConfirmationScreen extends StatelessWidget {
               const SizedBox(height: 15),
               TextButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Order history not yet implemented.'),
+                  // Navigate to My Orders screen
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => MainLayout(userId: order.userId),
                     ),
-                  );
+                  ).then((_) {
+                    // Use a slight delay to ensure MainLayout is built
+                    Future.delayed(Duration(milliseconds: 100), () {
+                      final mainLayout = MainLayout.of(context);
+                      if (mainLayout != null) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => MyOrdersScreen(userId: order.userId),
+                          ),
+                        );
+                      }
+                    });
+                  });
                 },
                 child: const Text(
                   'View Order History',

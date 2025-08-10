@@ -32,12 +32,7 @@ namespace Flora.Models.Requests
         [MaxLength(20, ErrorMessage = "Postal code cannot exceed 20 characters")]
         public string PostalCode { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "Broj telefona je obavezan")]
-        [MaxLength(20, ErrorMessage = "Broj telefona ne može biti duži od 20 karaktera")]
-        [Phone(ErrorMessage = "Unesite važeći broj telefona")]
-        [RegularExpression(@"^[+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{3,6}$", 
-            ErrorMessage = "Broj telefona nije u ispravnom formatu. Primjeri ispravnih formata: +387 33 123 456, 033/123-456, 061123456")]
-        public string PhoneNumber { get; set; } = string.Empty;
+     
         
         public string? OrderNote { get; set; }
     }

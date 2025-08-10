@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/layouts/constants.dart';
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final int userId;
@@ -18,7 +19,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   final _username = TextEditingController();
-  final _password = TextEditingController(); // Optional new password
+  final _password = TextEditingController();
+  
+  bool _isLoading = true; 
 
   @override
   void initState() {
@@ -26,55 +29,131 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
-    final url = Uri.parse('$baseUrl/api/Users/${widget.userId}');
-    final response = await http.get(url);
+  @override
+  void dispose() {
+    _firstName.dispose();
+    _lastName.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _username.dispose();
+    _password.dispose();
+    super.dispose();
+  }
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+  Future<void> _loadUserData() async {
+    try {
       setState(() {
-        _firstName.text = data['firstName'] ?? '';
-        _lastName.text = data['lastName'] ?? '';
-        _email.text = data['email'] ?? '';
-        _phone.text = data['phoneNumber'] ?? '';
-        _username.text = data['username'] ?? '';
+        _isLoading = true;
       });
+      
+      print('Loading user data for userId: ${widget.userId}');
+      final url = Uri.parse('$baseUrl/Users/${widget.userId}');
+      print('API URL: $url');
+      
+      final response = await http.get(
+        url,
+        headers: AuthProvider.getHeaders(),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('Decoded data: $data');
+        
+        setState(() {
+          _firstName.text = data['firstName'] ?? '';
+          _lastName.text = data['lastName'] ?? '';
+          _email.text = data['email'] ?? '';
+          _phone.text = data['phoneNumber'] ?? '';
+          _username.text = data['username'] ?? '';
+          _isLoading = false;
+        });
+        
+        print('Controllers updated:');
+        print('FirstName: ${_firstName.text}');
+        print('LastName: ${_lastName.text}');
+        print('Email: ${_email.text}');
+        print('Phone: ${_phone.text}');
+        print('Username: ${_username.text}');
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        print('Failed to load user data: ${response.statusCode}');
+        print('Error response: ${response.body}');
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error loading user data: $e');
     }
   }
 
   Future<void> _updateProfile() async {
-    final url = Uri.parse('$baseUrl/Users/${widget.userId}');
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-    final body = jsonEncode({
-      'firstName': _firstName.text,
-      'lastName': _lastName.text,
-      'email': _email.text,
-      'username': _username.text,
-      'phoneNumber': _phone.text,
-      'isActive': true,
-      'password': _password.text.isNotEmpty ? _password.text : null,
-      'roleIds': [2],
-    });
+    try {
+      final url = Uri.parse('$baseUrl/Users/${widget.userId}');
 
-    final response = await http.put(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    );
+      final headers = AuthProvider.getHeaders();
+      headers['Content-Type'] = 'application/json';
 
-    if (response.statusCode == 200) {
+      final body = jsonEncode({
+        'firstName': _firstName.text,
+        'lastName': _lastName.text,
+        'email': _email.text,
+        'username': _username.text,
+        'phoneNumber': _phone.text,
+        'isActive': true,
+        'password': _password.text.isNotEmpty ? _password.text : null,
+        'roleIds': [2],
+      });
+
+      final response = await http.put(
+        url,
+        headers: headers,
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text("Uspješno"),
+              content: const Text("Podaci su uspješno izmijenjeni."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        print('Failed to update profile: ${response.statusCode}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Greška pri ažuriranju profila: ${response.statusCode}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error updating profile: $e');
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text("Uspješno"),
-            content: const Text("Podaci su uspješno izmijenjeni."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("OK"),
-              ),
-            ],
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Greška: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -84,40 +163,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Uredi profil")),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              _buildTextInput(_firstName, "First Name"),
-              const SizedBox(height: 15),
-              _buildTextInput(_lastName, "Last Name"),
-              const SizedBox(height: 15),
-              _buildTextInput(_email, "Email"),
-              const SizedBox(height: 15),
-              _buildTextInput(_phone, "Phone"),
-              const SizedBox(height: 15),
-              _buildTextInput(_username, "Username"),
-              const SizedBox(height: 15),
-              _buildPasswordInput(_password, "New Password (optional)"),
-              const SizedBox(height: 25),
-              ElevatedButton(
-                onPressed: _updateProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 154, 39, 120),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  "Save Changes",
-                  style: TextStyle(fontSize: 18),
+      appBar: AppBar(title: const Text("Edit Profile")),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Color.fromARGB(255, 154, 39, 120),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: [
+                    _buildTextInput(_firstName, "First Name"),
+                    const SizedBox(height: 15),
+                    _buildTextInput(_lastName, "Last Name"),
+                    const SizedBox(height: 15),
+                    _buildTextInput(_email, "Email"),
+                    const SizedBox(height: 15),
+                    _buildTextInput(_phone, "Phone"),
+                    const SizedBox(height: 15),
+                    _buildTextInput(_username, "Username"),
+                    const SizedBox(height: 15),
+                    _buildPasswordInput(_password, "New Password (optional)"),
+                    const SizedBox(height: 25),
+                    ElevatedButton(
+                      onPressed: _updateProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 154, 39, 120),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Save Changes",
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 

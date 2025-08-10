@@ -109,6 +109,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//app.Run("http://192.168.0.12:5014");
+app.Run("http://192.168.0.12:5014");
 
-app.Run();
+//app.Run();

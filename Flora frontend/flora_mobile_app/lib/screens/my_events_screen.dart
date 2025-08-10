@@ -97,7 +97,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use Scaffold to ensure proper header and navbar
+    // Use Scaffold to ensure proper header
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -120,34 +120,6 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
             color: Color.fromARGB(255, 170, 46, 92),
           ),
           onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      bottomNavigationBar: Theme(
-        data: Theme.of(
-          context,
-        ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
-        child: BottomNavigationBar(
-          selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-          unselectedItemColor: Colors.white,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          type: BottomNavigationBarType.fixed,
-          currentIndex: 0,
-          onTap: (index) {
-            Navigator.pop(context);
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite),
-              label: "Favorites",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: "Cart",
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-          ],
         ),
       ),
       body: Column(

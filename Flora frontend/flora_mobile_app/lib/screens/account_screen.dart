@@ -1,5 +1,6 @@
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/providers/user_provider.dart';
+import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:flora_mobile_app/screens/account_edit_screen.dart';
 import 'package:flora_mobile_app/screens/my_events_screen.dart';
 import 'package:flora_mobile_app/screens/my_orders_screen.dart';
@@ -7,6 +8,7 @@ import 'package:flora_mobile_app/screens/donation_campaigns_screen.dart';
 import 'package:flora_mobile_app/widgets/account_menu.dart';
 import 'package:flora_mobile_app/widgets/faq_dialog.dart';
 import 'package:flora_mobile_app/widgets/profile_image_widget.dart';
+import 'package:flora_mobile_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -114,9 +116,32 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  static void showLogoutSnackBar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Log out functionality not implemented.')),
+  static void handleLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                AuthProvider.logout();
+                
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -178,7 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
         AccountMenuItem(
           label: "Log out",
           icon: Icons.logout,
-          onTap: () => showLogoutSnackBar(context),
+          onTap: () => handleLogout(context),
         ),
       ],
     );
