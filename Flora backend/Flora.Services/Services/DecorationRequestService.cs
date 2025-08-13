@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Flora.Services.Services
 {
@@ -18,6 +19,16 @@ namespace Flora.Services.Services
         public DecorationRequestService(FLoraDbContext context, IMapper mapper)
             : base(context, mapper)
         {
+        }
+
+        protected override IQueryable<DecorationRequest> ApplyFilter(IQueryable<DecorationRequest> query, DecorationRequestSearchObject search)
+        {
+            if (search?.UserId.HasValue == true)
+            {
+                query = query.Where(dr => dr.UserId == search.UserId.Value);
+            }
+
+            return query;
         }
     }
 }

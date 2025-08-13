@@ -1,9 +1,8 @@
 import 'package:flora_mobile_app/models/order.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/providers/order_api.dart';
-import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/screens/order_confirmation_screen.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PayPalPaymentScreen extends StatefulWidget {
   final OrderModel order;
@@ -15,12 +14,11 @@ class PayPalPaymentScreen extends StatefulWidget {
 }
 
 class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  
   bool _isLoading = true;
   String? _paymentStatus;
-  String? _simulatedPaymentId;
+  String? _approvalUrl;
+  String? _paymentId;
+  late WebViewController _webViewController;
 
   @override
   void initState() {
@@ -28,63 +26,84 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
     _initiatePayment();
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
   Future<void> _initiatePayment() async {
     try {
-      final String returnUrl = '${baseUrl}/Order/confirm-paypal-payment'; 
-      final String cancelUrl = '${baseUrl}/Order/cancelPayment'; 
-
-      print('--- PayPal Payment Initiation (Flutter UI) ---');
+      print('--- PayPal Payment Initiation ---');
       print('  Order ID: ${widget.order.id}');
       print('  Amount: ${widget.order.totalAmount}');
-      print('  Return URL sent to backend: $returnUrl');
-      print('  Cancel URL sent to backend: $cancelUrl');
 
       final payPalResponse = await OrderApiService.initiatePayPalPayment(
         orderId: widget.order.id,
         amount: widget.order.totalAmount,
         currency: 'USD',
-        returnUrl: returnUrl,
-        cancelUrl: cancelUrl,
+        returnUrl: 'floraapp://paypal/success', // App će uhvatiti ovo
+        cancelUrl: 'floraapp://paypal/cancel',
       );
 
-      print('Received PayPal response from backend:');
-      print('  Approval URL (contains params): ${payPalResponse.approvalUrl}');
-      print('  Payment ID (simulated): ${payPalResponse.paymentId}');
-      print('---------------------------------');
+      print('Received PayPal response:');
+      print('  Approval URL: ${payPalResponse.approvalUrl}');
+      print('  Payment ID: ${payPalResponse.paymentId}');
 
-      final uri = Uri.parse(payPalResponse.approvalUrl);
-      final receivedOrderId = uri.queryParameters['orderId'];
-      final receivedPaymentId = uri.queryParameters['paymentId'];
+      setState(() {
+        _approvalUrl = payPalResponse.approvalUrl;
+        _paymentId = payPalResponse.paymentId;
+        _isLoading = false;
+      });
 
-      if (receivedOrderId != null && receivedPaymentId != null) {
-        setState(() {
-          _simulatedPaymentId = receivedPaymentId;
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Missing order or payment ID from backend response.');
-      }
-
+      // Setup WebView controller
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onPageStarted: (String url) {
+              print('Page started loading: $url');
+              _handleNavigation(url);
+            },
+            onNavigationRequest: (NavigationRequest request) {
+              print('Navigation request: ${request.url}');
+              if (_handleNavigation(request.url)) {
+                return NavigationDecision.prevent; // Sprečava navigaciju
+              }
+              return NavigationDecision.navigate; // Dozvoli navigaciju
+            },
+          ),
+        )
+        ..loadRequest(Uri.parse(_approvalUrl!));
     } catch (e) {
       print('Error initiating PayPal payment: $e');
       setState(() {
         _paymentStatus = 'failed';
         _isLoading = false;
       });
-      _showPaymentResultDialog('Payment Error', 'Could not initiate PayPal payment: $e');
+      _showPaymentResultDialog(
+        'Payment Error',
+        'Could not initiate PayPal payment: $e',
+      );
     }
   }
 
+  bool _handleNavigation(String url) {
+    if (url.startsWith('floraapp://paypal/success')) {
+      print('PayPal success detected!');
+      _confirmPayment();
+      return true; // Prevent WebView navigation
+    } else if (url.startsWith('floraapp://paypal/cancel')) {
+      print('PayPal cancel detected!');
+      _showPaymentResultDialog(
+        'Payment Cancelled',
+        'You cancelled the PayPal payment.',
+      );
+      return true; // Prevent WebView navigation
+    }
+    return false; // Allow WebView navigation
+  }
+
   Future<void> _confirmPayment() async {
-    if (_simulatedPaymentId == null) {
-      _showPaymentResultDialog('Payment Error', 'Payment ID not available. Please try again.');
+    if (_paymentId == null) {
+      _showPaymentResultDialog(
+        'Payment Error',
+        'Payment ID not available. Please try again.',
+      );
       return;
     }
 
@@ -93,28 +112,32 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2)); 
-
       final confirmedOrder = await OrderApiService.confirmPayPalPayment(
         orderId: widget.order.id,
-        paymentId: _simulatedPaymentId!,
+        paymentId: _paymentId!,
       );
+
       setState(() {
         _paymentStatus = 'success';
       });
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => OrderConfirmationScreen(order: confirmedOrder),
+            builder: (context) =>
+                OrderConfirmationScreen(order: confirmedOrder),
           ),
         );
       }
     } catch (e) {
-      print('Error confirming payment on backend: $e');
+      print('Error confirming payment: $e');
       setState(() {
         _paymentStatus = 'failed';
       });
-      _showPaymentResultDialog('Payment Confirmation Failed', 'Could not confirm your payment with the server: $e');
+      _showPaymentResultDialog(
+        'Payment Confirmation Failed',
+        'Could not confirm your payment: $e',
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -154,220 +177,90 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Color.fromARGB(255, 170, 46, 92)),
-          onPressed: () {},
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Color.fromARGB(255, 170, 46, 92),
+          ),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Flora',
+          'PayPal Payment',
           style: TextStyle(
             color: Color.fromARGB(255, 170, 46, 92),
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
           ),
         ),
         centerTitle: true,
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(
-                color: Color.fromARGB(255, 170, 46, 92),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color.fromARGB(255, 170, 46, 92),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading PayPal...',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ],
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Cart >> Check out >> Payment',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 170, 46, 92),
-                    ),
+          : _approvalUrl != null
+          ? Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Colors.blue[50],
+                  child: Row(
+                    children: [
+                      const Icon(Icons.security, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Secure PayPal Payment - ${widget.order.totalAmount.toStringAsFixed(2)} KM',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                ),
+                Expanded(child: WebViewWidget(controller: _webViewController)),
+              ],
+            )
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
                   const Text(
-                    'Pay with PayPal',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                    'Failed to load PayPal',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${widget.order.totalAmount.toStringAsFixed(2)} KM',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
                   const Text(
-                    'Cost',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    'Please try again later',
+                    style: TextStyle(color: Colors.grey),
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Image.network(
-                      'https://via.placeholder.com/150x50/003087/FFFFFF?text=PayPal+Logo',
-                      height: 50,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 50,
-                          width: 150,
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Text(
-                              'PayPal Logo',
-                              style: TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                          ),
-                        );
-                      },
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 170, 46, 92),
+                      foregroundColor: Colors.white,
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Pay with PayPal',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email or mobile number',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 10),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Forgot password functionality not implemented.')),
-                        );
-                      },
-                      child: const Text(
-                        'Forgot your password?',
-                        style: TextStyle(color: Colors.blue),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _confirmPayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 0, 112, 186),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Log In',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  const Divider(),
-                  const SizedBox(height: 30),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _confirmPayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 255, 102, 204),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'DONE',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                    ),
+                    child: const Text('Back to Cart'),
                   ),
                 ],
               ),
             ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color.fromARGB(255, 170, 46, 92),
-        selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-        unselectedItemColor: Colors.white,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        currentIndex: 3,
-        onTap: (index) {
-          if (index == 3) {
-            MainLayout.of(context)?.openCartTab();
-            Navigator.of(context).pop();
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Navigation to tab $index not implemented.')),
-            );
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Favorites"),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: "Cart"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-        ],
-      ),
     );
   }
 }

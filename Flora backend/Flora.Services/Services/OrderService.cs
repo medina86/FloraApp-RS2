@@ -1,16 +1,16 @@
 ﻿using Flora.Models;
 using Flora.Models.Requests;
-    using Flora.Models.Responses;
-    using Flora.Models.SearchObjects;
-    using Flora.Services.Database;
-    using Flora.Services.Interfaces;
-    using Flora.Services.StateMachines;
-    using MapsterMapper;
-    using Microsoft.EntityFrameworkCore;
-    using Microsoft.Extensions.Configuration;
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
+using Flora.Models.Responses;
+using Flora.Models.SearchObjects;
+using Flora.Services.Database;
+using Flora.Services.Interfaces;
+using Flora.Services.StateMachines;
+using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
     namespace Flora.Services.Services
     {
@@ -21,13 +21,15 @@ using Flora.Models.Requests;
             private readonly IConfiguration _configuration;
             private readonly IRecommendationService _recommendationService;
             private readonly IRabbitMQService _rabbitMQService;
+            private readonly PayPalService _payPalService;
 
         public OrderService(
                 FLoraDbContext context, 
                 IMapper mapper, 
                 IConfiguration configuration,
                 IRecommendationService recommendationService,
-                IRabbitMQService rabbitMQService) : base(context, mapper)
+                IRabbitMQService rabbitMQService,
+                PayPalService payPalService) : base(context, mapper)
 
 
             {
@@ -36,6 +38,7 @@ using Flora.Models.Requests;
                 _configuration = configuration;
                 _recommendationService = recommendationService;
                 _rabbitMQService = rabbitMQService;
+                _payPalService = payPalService;
             }
         private void SendOrderCreatedEmail(int orderId, string customerEmail)
         {
@@ -99,62 +102,6 @@ using Flora.Models.Requests;
                 await _context.SaveChangesAsync();
 
                 _context.CartItems.RemoveRange(cart.Items);
-                await _context.SaveChangesAsync();
-
-                return _mapper.Map<OrderResponse>(order);
-            }
-
-            public async Task<PayPalPaymentResponse> InitiatePayPalPaymentAsync(PayPalPaymentRequest request)
-            {
-                var paypalClientId = _configuration["PayPal:ClientID"];
-                var paypalSecretKey = _configuration["PayPal:SecretKey"];
-
-                if (string.IsNullOrEmpty(paypalClientId) || string.IsNullOrEmpty(paypalSecretKey))
-                {
-                    throw new Exception("PayPal credentials are missing.");
-                }
-
-                var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == request.OrderId);
-                if (order == null)
-                    throw new Exception("Order not found.");
-
-                OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.PaymentInitiated);
-                order.Status = OrderStatus.PaymentInitiated;
-                await _context.SaveChangesAsync();
-
-                var dummyPaymentIdFromPayPal = Guid.NewGuid().ToString();
-                var simulatedReturnUrl = $"{request.ReturnUrl}?orderId={request.OrderId}&paymentId={dummyPaymentIdFromPayPal}";
-
-                return new PayPalPaymentResponse
-                {
-                    ApprovalUrl = simulatedReturnUrl,
-                    PaymentId = dummyPaymentIdFromPayPal
-                };
-            }
-
-            public async Task<OrderResponse> ConfirmPayPalPaymentAsync(int orderId, string paymentId)
-            {
-                var order = await _context.Orders
-                                        .Include(o => o.ShippingAddress)
-                                        .Include(o => o.OrderDetails)
-                                            .ThenInclude(od => od.Product)
-                                                .ThenInclude(p => p.Images)
-                                        .Include(o => o.OrderDetails)
-                                            .ThenInclude(od => od.customBouquet) 
-                                        .FirstOrDefaultAsync(o => o.Id == orderId);
-
-                if (order == null)
-                {
-                    throw new Exception($"Order with ID {orderId} not found.");
-                }
-
-                if (string.IsNullOrEmpty(paymentId))
-                {
-                    throw new Exception("Invalid PayPal payment ID.");
-                }
-
-                OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
-                order.Status = OrderStatus.Processed;
                 await _context.SaveChangesAsync();
 
                 return _mapper.Map<OrderResponse>(order);
@@ -349,6 +296,97 @@ using Flora.Models.Requests;
                     return orderDetail.Product.Images.FirstOrDefault()?.ImageUrl;
 
                 return null;
+            }
+
+            public async Task<PayPalPaymentResponse> InitiatePayPalPaymentAsync(PayPalPaymentRequest request)
+            {
+                try
+                {
+                    var order = await _context.Orders.FindAsync(request.OrderId);
+                    if (order == null)
+                    {
+                        throw new Exception($"Order with ID {request.OrderId} not found.");
+                    }
+
+                    OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.PaymentInitiated);
+                    order.Status = OrderStatus.PaymentInitiated;
+
+                    var returnUrl = "floraapp://paypal/success";
+                    var cancelUrl = "floraapp://paypal/cancel";
+                    var description = $"Flora Order #{request.OrderId}";
+
+                    var payment = await _payPalService.CreatePayment(
+                        request.Amount, 
+                        request.Currency, 
+                        description, 
+                        returnUrl, 
+                        cancelUrl
+                    );
+
+                    var approvalUrl = _payPalService.GetApprovalUrl(payment);
+
+                    if (string.IsNullOrEmpty(approvalUrl))
+                    {
+                        throw new Exception("Failed to get PayPal approval URL.");
+                    }
+
+                    await _context.SaveChangesAsync();
+
+                    return new PayPalPaymentResponse
+                    {
+                        PaymentId = payment.id,
+                        ApprovalUrl = approvalUrl
+                    };
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to initiate PayPal payment: {ex.Message}", ex);
+                }
+            }
+
+            public async Task<OrderResponse> ConfirmPayPalPaymentAsync(int orderId, string paymentId)
+            {
+                try
+                {
+                    // Provjeri da li narudžba postoji
+                    var order = await _context.Orders
+                        .Include(o => o.ShippingAddress)
+                        .Include(o => o.OrderDetails)
+                            .ThenInclude(od => od.Product)
+                                .ThenInclude(p => p.Images)
+                        .Include(o => o.OrderDetails)
+                            .ThenInclude(od => od.customBouquet)
+                        .FirstOrDefaultAsync(o => o.Id == orderId);
+
+                    if (order == null)
+                    {
+                        throw new Exception($"Order with ID {orderId} not found.");
+                    }
+
+                    if (string.IsNullOrEmpty(paymentId))
+                    {
+                        throw new Exception("Invalid PayPal payment ID.");
+                    }
+
+                    Console.WriteLine($"Auto-approving PayPal payment for testing/development");
+
+                    OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
+                    order.Status = OrderStatus.Processed;
+                    await _context.SaveChangesAsync();
+
+                    var user = await _context.Users.FindAsync(order.UserId);
+                    if (user != null)
+                    {
+                        SendOrderStatusChangedEmail(order.Id, user.Email, "Processed");
+                    }
+
+                    Console.WriteLine($"Order {orderId} successfully processed via PayPal");
+                    return _mapper.Map<OrderResponse>(order);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to confirm PayPal payment: {ex.Message}", ex);
+                }
             }
         }
     }
