@@ -49,6 +49,9 @@ builder.Services.AddTransient<IStatisticsService, StatisticsService>();
 builder.Services.AddTransient<IRecommendationService, RecommendationService>();
 builder.Services.AddTransient<IDecorationSelectionService, DecorationSelectionService>();
 
+builder.Services.AddLogging();
+builder.Services.AddTransient<IRabbitMQService, RabbitMQService>();
+
 
 builder.Services.AddControllers();
 
@@ -76,6 +79,8 @@ builder.Services.AddAuthentication("BasicAuthentication")
 
 builder.Services.AddAuthorization();
 
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -96,7 +101,6 @@ using (var scope = app.Services.CreateScope())
     
 }
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -109,6 +113,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12:5014");
-
-//app.Run();
+//app.Run("http://192.168.0.12:5014");
+//app.Run("http://172.20.10.3:5014");
+app.Run();

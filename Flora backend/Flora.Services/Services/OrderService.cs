@@ -1,4 +1,5 @@
-﻿    using Flora.Models.Requests;
+﻿using Flora.Models;
+using Flora.Models.Requests;
     using Flora.Models.Responses;
     using Flora.Models.SearchObjects;
     using Flora.Services.Database;
@@ -19,20 +20,38 @@
             private readonly IMapper _mapper;
             private readonly IConfiguration _configuration;
             private readonly IRecommendationService _recommendationService;
+            private readonly IRabbitMQService _rabbitMQService;
 
-            public OrderService(
+        public OrderService(
                 FLoraDbContext context, 
                 IMapper mapper, 
                 IConfiguration configuration,
-                IRecommendationService recommendationService) : base(context, mapper)
+                IRecommendationService recommendationService,
+                IRabbitMQService rabbitMQService) : base(context, mapper)
+
+
             {
                 _context = context;
                 _mapper = mapper;
                 _configuration = configuration;
                 _recommendationService = recommendationService;
+                _rabbitMQService = rabbitMQService;
             }
+        private void SendOrderCreatedEmail(int orderId, string customerEmail)
+        {
+            var message = new EmailMessage
+            {
+                To = customerEmail,
+                Subject = "Vaša narudžba je zaprimljena",
+                Body = $"Hvala na kupovini! Vaša narudžba #{orderId} je uspješno zaprimljena i trenutno se obrađuje.",
+                OrderId = orderId,
+                OrderState = "Created"
+            };
 
-            public async Task<OrderResponse> CreateOrderFromCart(OrderRequest request)
+            _rabbitMQService.SendMessage("order.created", message);
+        }
+
+        public async Task<OrderResponse> CreateOrderFromCart(OrderRequest request)
             {
                 var cart = await _context.Carts
                     .Include(c => c.Items)
@@ -60,8 +79,10 @@
                 };
                 _context.Orders.Add(order);
                 await _context.SaveChangesAsync();
+            var u=await _context.Users.FindAsync(request.UserId);
+            SendOrderCreatedEmail(order.Id, u.Email);
 
-                foreach (var cartItem in cart.Items)
+            foreach (var cartItem in cart.Items)
                 {
                     var orderDetail = new OrderDetail
                     {
@@ -138,8 +159,21 @@
 
                 return _mapper.Map<OrderResponse>(order);
             }
+        private void SendOrderStatusChangedEmail(int orderId, string customerEmail, string newStatus)
+        {
+            var message = new EmailMessage
+            {
+                To = customerEmail,
+                Subject = $"Status vaše narudžbe #{orderId} je promijenjen",
+                Body = $"Vaša narudžba sada ima status: {newStatus}.",
+                OrderId = orderId,
+                OrderState = newStatus
+            };
 
-            public async Task<OrderResponse> ProcessOrder(int orderId)
+            _rabbitMQService.SendMessage("order.statuschanged", message);
+        }
+
+        public async Task<OrderResponse> ProcessOrder(int orderId)
             {
                 var order = await _context.Orders
                                       .Include(o => o.ShippingAddress)
@@ -147,7 +181,7 @@
                                           .ThenInclude(od => od.Product)
                                               .ThenInclude(p => p.Images)
                                       .Include(o => o.OrderDetails)
-                                          .ThenInclude(od => od.customBouquet) 
+                                          .ThenInclude(od => od.customBouquet)
                                       .FirstOrDefaultAsync(o => o.Id == orderId);
 
                 if (order == null)
@@ -158,6 +192,13 @@
                 OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
                 order.Status = OrderStatus.Processed;
                 await _context.SaveChangesAsync();
+
+                // Dohvati korisnika za email
+                var user = await _context.Users.FindAsync(order.UserId);
+                if (user != null)
+                {
+                    SendOrderStatusChangedEmail(order.Id, user.Email, "Processed");
+                }
 
                 return _mapper.Map<OrderResponse>(order);
             }
@@ -182,6 +223,13 @@
                 order.Status = OrderStatus.Delivered;
                 await _context.SaveChangesAsync();
 
+                // Dohvati korisnika za email
+                var user = await _context.Users.FindAsync(order.UserId);
+                if (user != null)
+                {
+                    SendOrderStatusChangedEmail(order.Id, user.Email, "Delivered");
+                }
+
                 return _mapper.Map<OrderResponse>(order);
             }
 
@@ -204,6 +252,13 @@
                 OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Completed);
                 order.Status = OrderStatus.Completed;
                 await _context.SaveChangesAsync();
+
+                // Dohvati korisnika za email
+                var user = await _context.Users.FindAsync(order.UserId);
+                if (user != null)
+                {
+                    SendOrderStatusChangedEmail(order.Id, user.Email, "Completed");
+                }
             
                 _ = Task.Run(async () => 
                 {

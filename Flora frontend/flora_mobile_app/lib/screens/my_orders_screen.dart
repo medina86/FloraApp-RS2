@@ -201,7 +201,6 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               return OrderCardWidget(
                                 order: order,
                                 onTap: () {
-                                  
                                   final mainLayout = MainLayout.of(context);
                                   if (mainLayout != null) {
                                     mainLayout.openOrderDetailsScreen(order);

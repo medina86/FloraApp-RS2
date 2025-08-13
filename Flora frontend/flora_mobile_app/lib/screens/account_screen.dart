@@ -131,7 +131,7 @@ class _AccountScreenState extends State<AccountScreen> {
             TextButton(
               onPressed: () {
                 AuthProvider.logout();
-                
+
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginPage()),
                   (Route<dynamic> route) => false,

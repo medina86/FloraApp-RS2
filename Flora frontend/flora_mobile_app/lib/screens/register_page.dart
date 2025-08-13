@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/layouts/constants.dart';
+import 'package:flora_mobile_app/providers/cart_api.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -42,6 +43,19 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (response.statusCode == 201) {
+      // Dobijamo podatke o kreiranom korisniku
+      final userResponse = jsonDecode(response.body);
+      final userId = userResponse['id'];
+
+      try {
+        // Kreiramo cart za novog korisnika
+        await CartApiService.createCartForUser(userId);
+        print('Cart successfully created for user $userId');
+      } catch (e) {
+        print('Warning: Failed to create cart for user $userId: $e');
+        // Ne prekidamo proces registracije zbog ovoga
+      }
+
       showDialog(
         context: context,
         builder: (_) => AlertDialog(

@@ -97,7 +97,6 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use Scaffold to ensure proper header
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

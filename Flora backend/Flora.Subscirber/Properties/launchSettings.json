@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Flora.Subscirber": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

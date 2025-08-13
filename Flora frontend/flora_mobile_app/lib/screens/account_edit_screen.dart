@@ -20,8 +20,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _phone = TextEditingController();
   final _username = TextEditingController();
   final _password = TextEditingController();
-  
-  bool _isLoading = true; 
+
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -45,15 +45,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() {
         _isLoading = true;
       });
-      
+
       print('Loading user data for userId: ${widget.userId}');
       final url = Uri.parse('$baseUrl/Users/${widget.userId}');
       print('API URL: $url');
-      
-      final response = await http.get(
-        url,
-        headers: AuthProvider.getHeaders(),
-      );
+
+      final response = await http.get(url, headers: AuthProvider.getHeaders());
 
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
@@ -61,7 +58,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('Decoded data: $data');
-        
+
         setState(() {
           _firstName.text = data['firstName'] ?? '';
           _lastName.text = data['lastName'] ?? '';
@@ -70,7 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _username.text = data['username'] ?? '';
           _isLoading = false;
         });
-        
+
         print('Controllers updated:');
         print('FirstName: ${_firstName.text}');
         print('LastName: ${_lastName.text}');
@@ -114,11 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'roleIds': [2],
       });
 
-      final response = await http.put(
-        url,
-        headers: headers,
-        body: body,
-      );
+      final response = await http.put(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
         if (mounted) {
@@ -141,7 +134,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Greška pri ažuriranju profila: ${response.statusCode}'),
+              content: Text(
+                'Greška pri ažuriranju profila: ${response.statusCode}',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -151,10 +146,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       print('Error updating profile: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Greška: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -191,7 +183,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ElevatedButton(
                       onPressed: _updateProfile,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 154, 39, 120),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          154,
+                          39,
+                          120,
+                        ),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(

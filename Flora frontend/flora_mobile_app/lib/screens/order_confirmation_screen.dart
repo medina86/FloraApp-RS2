@@ -18,7 +18,6 @@ class OrderConfirmationScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // Removed duplicate AppBar - using GlobalAppHeader from MainLayout
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -81,23 +80,27 @@ class OrderConfirmationScreen extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   // Navigate to My Orders screen
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => MainLayout(userId: order.userId),
-                    ),
-                  ).then((_) {
-                    // Use a slight delay to ensure MainLayout is built
-                    Future.delayed(Duration(milliseconds: 100), () {
-                      final mainLayout = MainLayout.of(context);
-                      if (mainLayout != null) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => MyOrdersScreen(userId: order.userId),
-                          ),
-                        );
-                      }
-                    });
-                  });
+                  Navigator.of(context)
+                      .pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              MainLayout(userId: order.userId),
+                        ),
+                      )
+                      .then((_) {
+                        // Use a slight delay to ensure MainLayout is built
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          final mainLayout = MainLayout.of(context);
+                          if (mainLayout != null) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    MyOrdersScreen(userId: order.userId),
+                              ),
+                            );
+                          }
+                        });
+                      });
                 },
                 child: const Text(
                   'View Order History',
