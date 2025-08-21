@@ -20,6 +20,7 @@ class SendIdeasScreen extends StatefulWidget {
 }
 
 class _SendIdeasScreenState extends State<SendIdeasScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _messageController = TextEditingController();
   bool _isSending = false;
   bool _isLoading = true;
@@ -73,10 +74,15 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
   }
 
   Future<void> _sendMessage() async {
-    if (_messageController.text.isEmpty && _selectedImage == null) {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_messageController.text.trim().isEmpty && _selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a message or select an image.'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -109,7 +115,6 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
 
       var response = await request.send();
 
-      // Čitanje odgovora
       final responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -183,89 +188,127 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
               child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Message:'),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _messageController,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          hintText: 'Send message',
-                          filled: true,
-                          fillColor: Colors.grey[100],
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text('Upload Suggestion Image:'),
-                      const SizedBox(height: 16),
-                      Center(
-                        child: Column(
-                          children: [
-                            _selectedImage != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    child: Image.file(
-                                      _selectedImage!,
-                                      width: 200,
-                                      height: 200,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : Container(
-                                    width: 200,
-                                    height: 200,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      border: Border.all(
-                                        color: Colors.grey[300]!,
-                                      ),
-                                    ),
-                                    child: Icon(
-                                      Icons.image,
-                                      size: 50,
-                                      color: Colors.grey[400],
-                                    ),
-                                  ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.upload_file),
-                              label: const Text('Select Image'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.pink,
-                                foregroundColor: Colors.white,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Message:'),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _messageController,
+                          maxLines: 5,
+                          validator: (value) {
+                            if (value != null &&
+                                value.trim().isNotEmpty &&
+                                value.trim().length < 5) {
+                              return 'Message must be at least 5 characters if provided';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Send message',
+                            filled: true,
+                            fillColor: Colors.grey[100],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: Colors.pink,
+                                width: 2.0,
                               ),
                             ),
-                          ],
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: Colors.red.shade400,
+                                width: 1.0,
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: Colors.red.shade400,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: _isSending ? null : _sendMessage,
-                          child: _isSending
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text('Send'),
+                        const SizedBox(height: 24),
+                        Text('Upload Suggestion Image:'),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Column(
+                            children: [
+                              _selectedImage != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.file(
+                                        _selectedImage!,
+                                        width: 200,
+                                        height: 200,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 200,
+                                      height: 200,
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(
+                                          8.0,
+                                        ),
+                                        border: Border.all(
+                                          color: Colors.grey[300]!,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.image,
+                                        size: 50,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: _pickImage,
+                                icon: const Icon(Icons.upload_file),
+                                label: const Text('Select Image'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.pink,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+                        const SizedBox(height: 24),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: _isSending ? null : _sendMessage,
+                            child: _isSending
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text('Send'),
+                          ),
+                        ),
+                      ],
+                    ), 
+                  ), 
+                ), 
+              ), 
+            ), 
+          ), 
+        ], 
+      ), 
     );
   }
 }

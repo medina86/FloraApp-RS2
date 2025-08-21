@@ -51,13 +51,13 @@ using System;
                 {
                     query=query.Where(p=>p.Price<=search.MaxPrice.Value && p.Price>=search.MinPrice);
                 }
-            if (search.Active)
+            if (search.Active != null)
             {
                 query = query.Where(p => p.Active == search.Active);
             }
             
 
-            if (search.IsAvailable)
+            if (search.IsAvailable != null)
             {
                 query = query.Where(p => p.IsAvailable == search.IsAvailable);
             }

@@ -1,9 +1,7 @@
 import 'package:flora_mobile_app/models/donation.dart';
 import 'package:flora_mobile_app/models/donation_campaign.dart';
 import 'package:flora_mobile_app/models/paypal_donation_model.dart';
-import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/providers/base_provider.dart';
-
 
 class DonationApiService {
   static Future<List<DonationCampaign>> getActiveCampaigns() async {
@@ -84,7 +82,7 @@ class DonationApiService {
       // Pokušaj 1: Koristimo query parametre
       final endpoint =
           '/Donation/confirm-paypal?donationId=$donationId&paymentId=$paymentId';
-      print('Attempt 1: Using endpoint URL: $baseUrl$endpoint');
+      print('Attempt 1: Using endpoint URL: $endpoint');
 
       return await BaseApiService.post<Donation>(endpoint, {
         'donationId': donationId,
@@ -96,7 +94,7 @@ class DonationApiService {
 
       // Pokušaj 2: Koristimo samo body
       final endpoint = '/Donation/confirm-paypal';
-      print('Attempt 2: Using endpoint URL: $baseUrl$endpoint');
+      print('Attempt 2: Using endpoint URL: $endpoint');
 
       return await BaseApiService.post<Donation>(endpoint, {
         'donationId': donationId,
@@ -104,5 +102,42 @@ class DonationApiService {
         'status': status ?? 'Completed',
       }, (data) => Donation.fromJson(data));
     }
+  }
+
+  // Nova metoda - kao kod narudžbi (2-step process)
+  static Future<PayPalDonationResponse2> initiatePayPalDonation2({
+    required int donationId,
+    required double amount,
+    required String currency,
+    required String returnUrl,
+    required String cancelUrl,
+  }) async {
+    final request = {
+      'donationId': donationId,
+      'amount': amount,
+      'currency': currency,
+      'returnUrl': returnUrl,
+      'cancelUrl': cancelUrl,
+    };
+
+    return await BaseApiService.post<PayPalDonationResponse2>(
+      '/Donation/initiatePayPalDonation',
+      request,
+      (data) => PayPalDonationResponse2.fromJson(data),
+    );
+  }
+
+  static Future<Donation> confirmPayPalDonation2({
+    required int donationId,
+    required String paymentId,
+  }) async {
+    final endpoint =
+        '/Donation/confirm-paypal-donation?donationId=$donationId&paymentId=$paymentId';
+
+    return await BaseApiService.post<Donation>(
+      endpoint,
+      {},
+      (data) => Donation.fromJson(data),
+    );
   }
 }

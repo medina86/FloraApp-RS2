@@ -20,6 +20,7 @@ namespace Flora.Models.Requests
         [Required(ErrorMessage = "End date is required")]
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
+        public decimal TotalAmount { get; set; }
         
         public IFormFile? Image { get; set; }
     }

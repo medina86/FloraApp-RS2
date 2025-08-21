@@ -42,7 +42,9 @@ class _CartScreenState extends State<CartScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error loading cart: $e'),
+          content: const Text(
+            'Failed to load cart. Please check your connection and try again.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -87,7 +89,10 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Failed to update cart item. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -139,7 +144,10 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Failed to update cart item. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {
@@ -178,8 +186,8 @@ class _CartScreenState extends State<CartScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error removing item: $e'),
+        const SnackBar(
+          content: Text('Failed to remove item. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );

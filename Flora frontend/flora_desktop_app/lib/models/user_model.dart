@@ -42,7 +42,9 @@ class UserModel {
       phoneNumber: json['phoneNumber'],
       isActive: json['isActive'],
       createdAt: DateTime.parse(json['createdAt']),
-      lastLoginAt: json['lastLoginAt'] != null ? DateTime.parse(json['lastLoginAt']) : null,
+      lastLoginAt: json['lastLoginAt'] != null
+          ? DateTime.parse(json['lastLoginAt'])
+          : null,
       profileImageUrl: json['profileImageUrl'],
       roles: roles,
     );
@@ -56,11 +58,7 @@ class RoleModel {
   final String name;
   final String? description;
 
-  RoleModel({
-    required this.id,
-    required this.name,
-    this.description,
-  });
+  RoleModel({required this.id, required this.name, this.description});
 
   factory RoleModel.fromJson(Map<String, dynamic> json) {
     return RoleModel(

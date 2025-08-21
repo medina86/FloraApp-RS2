@@ -1,9 +1,10 @@
+import 'package:flora_desktop_app/screens/admin_login_screen.dart';
 import 'package:flora_desktop_app/screens/dashboard_screen.dart';
 import 'package:flora_desktop_app/screens/orders_screen.dart';
 import 'package:flora_desktop_app/screens/product_screen.dart';
 import 'package:flora_desktop_app/screens/reservation_screen.dart';
 import 'package:flora_desktop_app/screens/statistics_screen.dart';
-
+import 'package:flora_desktop_app/providers/auth_provider.dart';
 
 import 'package:flora_desktop_app/screens/user_screen.dart';
 import 'package:flora_desktop_app/screens/donation_campaigns_screen.dart';
@@ -128,7 +129,37 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
   }
 
   void _logout() {
-    Navigator.pushReplacementNamed(context, '/admin-login');
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+                AuthProvider.logout();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color.fromARGB(255, 170, 46, 92),
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

@@ -167,18 +167,30 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Container(
-        color: Colors.white,
+      color: Colors.white,
+      child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Jednostavan header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Reservation details'),
+                const Text(
+                  'Reservation Details',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.pinkAccent),
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.pinkAccent,
+                    size: 24,
+                  ),
                   onPressed: () {
                     final adminLayoutState = AdminMainLayout.of(context);
                     adminLayoutState.showCustomChild(
@@ -188,12 +200,23 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Expanded(
               child: SingleChildScrollView(
-                child: Card(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade300,
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(32.0),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -201,323 +224,562 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildDetailRow(
-                                'Reservation date:',
-                                DateFormat(
-                                  'dd.MM.yyyy',
-                                ).format(widget.reservation.eventDate),
-                              ),
-                              _buildDetailRow(
-                                'Event type:',
-                                widget.reservation.eventType,
-                              ),
-                              _buildDetailRow(
-                                'Venue type:',
-                                widget.reservation.venueType,
-                              ),
-                              _buildDetailRow(
-                                'Number of guests:',
-                                widget.reservation.numberOfGuests.toString(),
-                              ),
-                              _buildDetailRow(
-                                'Number of tables:',
-                                widget.reservation.numberOfTables.toString(),
-                              ),
-                              _buildDetailRow(
-                                'Decoration theme:',
-                                widget.reservation.themeOrColors,
-                              ),
-                              _buildDetailRow(
-                                'Amount:',
-                                '${widget.reservation.budget.toStringAsFixed(2)} KM',
-                              ),
-                              const SizedBox(height: 24),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'Decoration Ideas:',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                              // Info section
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.pink.shade50,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.pink.shade200,
+                                    width: 1,
                                   ),
-                                  if (_selectedDecoration != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: Colors.pink.shade600,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Event Information',
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.pink.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildDetailRow(
+                                      'Reservation date:',
+                                      DateFormat(
+                                        'dd.MM.yyyy',
+                                      ).format(widget.reservation.eventDate),
+                                      Icons.calendar_today,
+                                    ),
+                                    _buildDetailRow(
+                                      'Event type:',
+                                      widget.reservation.eventType,
+                                      Icons.celebration,
+                                    ),
+                                    _buildDetailRow(
+                                      'Venue type:',
+                                      widget.reservation.venueType,
+                                      Icons.location_city,
+                                    ),
+                                    _buildDetailRow(
+                                      'Number of guests:',
+                                      widget.reservation.numberOfGuests
+                                          .toString(),
+                                      Icons.people,
+                                    ),
+                                    _buildDetailRow(
+                                      'Number of tables:',
+                                      widget.reservation.numberOfTables
+                                          .toString(),
+                                      Icons.table_restaurant,
+                                    ),
+                                    _buildDetailRow(
+                                      'Decoration theme:',
+                                      widget.reservation.themeOrColors,
+                                      Icons.palette,
+                                    ),
+                                    _buildDetailRow(
+                                      'Amount:',
+                                      '${widget.reservation.budget.toStringAsFixed(2)} KM',
+                                      Icons.attach_money,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              // Decoration ideas section
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.pink.shade50,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.pink.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.lightbulb_outline,
+                                              color: Colors.pink.shade600,
+                                              size: 24,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Decoration Ideas',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.pink.shade700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (_selectedDecoration != null)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.pink.shade100,
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: Colors.pink.shade300,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Icon(
+                                                  Icons.check_circle,
+                                                  color: Colors.pink,
+                                                  size: 18,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                const Text(
+                                                  'Client Selected',
+                                                  style: TextStyle(
+                                                    color: Colors.pink,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 20),
+                                    if (_isLoading)
+                                      const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.pink,
+                                        ),
+                                      )
+                                    else if (_suggestions.isEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade50,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade200,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.info_outline,
+                                              color: Colors.grey.shade600,
+                                              size: 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'No decoration ideas yet',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: _suggestions.map((
+                                          suggestion,
+                                        ) {
+                                          // Check if this is the selected suggestion
+                                          final bool isSelected =
+                                              _selectedDecoration != null &&
+                                              _selectedDecoration!
+                                                      .decorationSuggestionId ==
+                                                  suggestion.id;
+
+                                          return Card(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            color: isSelected
+                                                ? Colors.pink.shade50
+                                                : null,
+                                            shape: isSelected
+                                                ? RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    side: BorderSide(
+                                                      color:
+                                                          Colors.pink.shade300,
+                                                      width: 2,
+                                                    ),
+                                                  )
+                                                : null,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(16),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          suggestion
+                                                              .description,
+                                                          style: TextStyle(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                isSelected
+                                                                ? FontWeight
+                                                                      .bold
+                                                                : FontWeight
+                                                                      .normal,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Delete button - disabled if this is the selected suggestion
+                                                      IconButton(
+                                                        icon: Icon(
+                                                          Icons.delete_outline,
+                                                          color: isSelected
+                                                            ? Colors.grey.shade400  // Disabled color
+                                                            : Color.fromARGB(255, 170, 46, 92),
+                                                        ),
+                                                        onPressed: isSelected
+                                                            ? null  // Disable the button if selected
+                                                            : () => _confirmDelete(suggestion),
+                                                        tooltip: isSelected
+                                                            ? 'Cannot delete selected suggestion'
+                                                            : 'Delete suggestion',
+                                                      ),
+                                                      if (isSelected)
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 12,
+                                                                vertical: 6,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.pink,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  20,
+                                                                ),
+                                                          ),
+                                                          child: const Row(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: [
+                                                              Icon(
+                                                                Icons.check,
+                                                                color: Colors
+                                                                    .white,
+                                                                size: 16,
+                                                              ),
+                                                              SizedBox(
+                                                                width: 4,
+                                                              ),
+                                                              Text(
+                                                                'CLIENT SELECTION',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  if (suggestion
+                                                      .imageUrl
+                                                      .isNotEmpty) ...[
+                                                    const SizedBox(height: 12),
+                                                    Image.network(
+                                                      suggestion.imageUrl,
+                                                      width: 200,
+                                                      height: 200,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) => Container(
+                                                            width: 200,
+                                                            height: 200,
+                                                            color: Colors
+                                                                .grey[200],
+                                                            child: const Icon(
+                                                              Icons
+                                                                  .broken_image,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                    ),
+                                                  ],
+                                                  if (isSelected) ...[
+                                                    const SizedBox(height: 16),
+                                                    const Divider(),
+                                                    const SizedBox(height: 8),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.calendar_today,
+                                                          size: 16,
+                                                          color: Colors.pink,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 6,
+                                                        ),
+                                                        Text(
+                                                          'Selected on: ${DateFormat('dd.MM.yyyy - HH:mm').format(_selectedDecoration!.createdAt)}',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade700,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 8),
+                                                    if (_selectedDecoration!
+                                                                .comments !=
+                                                            null &&
+                                                        _selectedDecoration!
+                                                            .comments!
+                                                            .isNotEmpty) ...[
+                                                      Text(
+                                                        'Client Comments:',
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                          color: Colors
+                                                              .grey
+                                                              .shade700,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              12,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors
+                                                              .pink
+                                                              .shade50,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: Colors
+                                                                .pink
+                                                                .shade200,
+                                                          ),
+                                                        ),
+                                                        child: Text(
+                                                          _selectedDecoration!
+                                                              .comments!,
+                                                          style: TextStyle(
+                                                            fontStyle: FontStyle
+                                                                .italic,
+                                                            fontSize: 14,
+                                                            color: Colors
+                                                                .grey
+                                                                .shade800,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ],
+                                                  const SizedBox(height: 8),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
                                       ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 32),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Location section
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Colors.pink.shade50,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border: Border.all(
+                                    color: Colors.pink.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.location_on,
+                                          color: Colors.pink.shade600,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Location Details',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.pink.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.green.shade100,
-                                        borderRadius: BorderRadius.circular(20),
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: Colors.green.shade300,
+                                          color: Colors.grey.shade200,
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          const Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green,
-                                            size: 18,
+                                          Icon(
+                                            Icons.place,
+                                            color: Colors.grey.shade600,
+                                            size: 20,
                                           ),
-                                          const SizedBox(width: 6),
-                                          const Text(
-                                            'Client has selected a decoration',
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              widget.reservation.location,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey.shade800,
+                                              ),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              if (_isLoading)
-                                const Center(
-                                  child: CircularProgressIndicator(
-                                    color: Colors.pink,
-                                  ),
-                                )
-                              else if (_suggestions.isEmpty)
-                                const Text('No decoration ideas yet')
-                              else
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: _suggestions.map((suggestion) {
-                                    // Check if this is the selected suggestion
-                                    final bool isSelected =
-                                        _selectedDecoration != null &&
-                                        _selectedDecoration!
-                                                .decorationSuggestionId ==
-                                            suggestion.id;
-
-                                    return Card(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      color: isSelected
-                                          ? Colors.green.shade50
-                                          : null,
-                                      shape: isSelected
-                                          ? RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              side: BorderSide(
-                                                color: Colors.green.shade300,
-                                                width: 2,
-                                              ),
-                                            )
-                                          : null,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    suggestion.description,
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight: isSelected
-                                                          ? FontWeight.bold
-                                                          : FontWeight.normal,
-                                                    ),
-                                                  ),
-                                                ),
-                                                // Dodajemo dugme za brisanje
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.delete_outline,
-                                                    color: Color.fromARGB(
-                                                      255,
-                                                      170,
-                                                      46,
-                                                      92,
-                                                    ),
-                                                  ),
-                                                  onPressed: () =>
-                                                      _confirmDelete(
-                                                        suggestion,
-                                                      ),
-                                                  tooltip: 'Obriši sugestiju',
-                                                ),
-                                                if (isSelected)
-                                                  Container(
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 6,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.green,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            20,
-                                                          ),
-                                                    ),
-                                                    child: const Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          Icons.check,
-                                                          color: Colors.white,
-                                                          size: 16,
-                                                        ),
-                                                        SizedBox(width: 4),
-                                                        Text(
-                                                          'CLIENT SELECTION',
-                                                          style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            fontSize: 12,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                            if (suggestion
-                                                .imageUrl
-                                                .isNotEmpty) ...[
-                                              const SizedBox(height: 12),
-                                              Image.network(
-                                                suggestion.imageUrl,
-                                                width: 200,
-                                                height: 200,
-                                                fit: BoxFit.cover,
-                                                errorBuilder:
-                                                    (
-                                                      context,
-                                                      error,
-                                                      stackTrace,
-                                                    ) => Container(
-                                                      width: 200,
-                                                      height: 200,
-                                                      color: Colors.grey[200],
-                                                      child: const Icon(
-                                                        Icons.broken_image,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                              ),
-                                            ],
-                                            if (isSelected) ...[
-                                              const SizedBox(height: 16),
-                                              const Divider(),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.calendar_today,
-                                                    size: 16,
-                                                    color: Colors.green,
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    'Selected on: ${DateFormat('dd.MM.yyyy - HH:mm').format(_selectedDecoration!.createdAt)}',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color:
-                                                          Colors.grey.shade700,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 8),
-                                              if (_selectedDecoration!
-                                                          .comments !=
-                                                      null &&
-                                                  _selectedDecoration!
-                                                      .comments!
-                                                      .isNotEmpty) ...[
-                                                Text(
-                                                  'Client Comments:',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                    color: Colors.grey.shade700,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Container(
-                                                  padding: const EdgeInsets.all(
-                                                    12,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.green.shade50,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                    border: Border.all(
-                                                      color:
-                                                          Colors.green.shade200,
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    _selectedDecoration!
-                                                        .comments!,
-                                                    style: TextStyle(
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      fontSize: 14,
-                                                      color:
-                                                          Colors.grey.shade800,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                            const SizedBox(height: 8),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  ],
                                 ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 40),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Reservation address',
-                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              Text(widget.reservation.location),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 24),
+                              // Special requests section
                               if (widget.reservation.specialRequests != null &&
                                   widget
                                       .reservation
                                       .specialRequests!
                                       .isNotEmpty)
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Special instructions:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.pink.shade50,
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: Colors.pink.shade200,
+                                      width: 1,
                                     ),
-                                    Text(widget.reservation.specialRequests!),
-                                  ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.note_alt,
+                                            color: Colors.pink.shade600,
+                                            size: 24,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'Special Instructions',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.pink.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.grey.shade200,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          widget.reservation.specialRequests!,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey.shade800,
+                                            height: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                             ],
                           ),
@@ -528,12 +790,36 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
+            const SizedBox(height: 32),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.pink.shade50,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.pink.shade100),
+              ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.tips_and_updates,
+                        color: Colors.pink.shade400,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Want to send decoration ideas?',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
                   ElevatedButton(
                     onPressed: () {
                       final adminLayoutState = context
@@ -547,8 +833,28 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.pinkAccent,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                     ),
-                    child: const Text('Send Ideas'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.send, size: 18),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Send Ideas',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -559,14 +865,40 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: RichText(
-        text: TextSpan(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
           children: [
-            TextSpan(text: label),
-            TextSpan(text: ' $value'),
+            Icon(icon, color: Colors.pink.shade400, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: RichText(
+                text: TextSpan(
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
+                  children: [
+                    TextSpan(
+                      text: label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' $value',
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -596,18 +928,18 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Dekoraciona sugestija je uspješno obrisana'),
+            content: Text('Decoration suggestion successfully deleted'),
             backgroundColor: Color.fromARGB(255, 170, 46, 92),
           ),
         );
       } else {
-        // Greška pri brisanju
-        throw Exception('Greška pri brisanju: ${response.statusCode}');
+        // Error during deletion
+        throw Exception('Error deleting suggestion: ${response.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Greška pri brisanju: $e'),
+          content: Text('Error deleting suggestion: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -624,14 +956,14 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Potvrda brisanja'),
+          title: const Text('Confirm Deletion'),
           content: const Text(
-            'Da li ste sigurni da želite obrisati ovu dekoracionu sugestiju?',
+            'Are you sure you want to delete this decoration suggestion?',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Odustani'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -639,7 +971,7 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                 _deleteDecorationSuggestion(suggestion.id);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Obriši'),
+              child: const Text('Delete'),
             ),
           ],
         );

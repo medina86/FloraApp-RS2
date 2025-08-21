@@ -181,9 +181,11 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
         }
       } catch (e) {
         print('Došlo je do greške: $e');
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Došlo je do greške: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to submit request. Please try again.'),
+          ),
+        );
       } finally {
         setState(() {
           _isSubmitting = false;
@@ -441,6 +443,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -455,8 +458,8 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
           ? null
           : validator ??
                 (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ovo polje je obavezno';
+                  if (value == null || value.trim().isEmpty) {
+                    return 'This field is required';
                   }
                   return null;
                 },

@@ -69,43 +69,6 @@ class DonationConfirmationScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, color: Colors.black87),
               ),
               const SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 170, 46, 92),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Back to Home',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 15),
-              TextButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Donation history not yet implemented.'),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'View Donation History',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color.fromARGB(255, 170, 46, 92),
-                  ),
-                ),
-              ),
             ],
           ),
         ),

@@ -81,8 +81,10 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading flowers: $e'),
+        const SnackBar(
+          content: Text(
+            'Failed to load flowers. Please check your connection and try again.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -451,7 +453,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    maxLines: null, // Omogućava više linija
+                    maxLines: null,
                     keyboardType: TextInputType.multiline,
                   ),
                   const SizedBox(height: 16),

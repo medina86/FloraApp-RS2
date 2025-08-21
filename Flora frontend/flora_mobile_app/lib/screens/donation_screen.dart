@@ -67,7 +67,7 @@ class _DonationScreenState extends State<DonationScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to process donation: $e'),
+          content: const Text('Failed to process donation. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -166,6 +166,7 @@ class _DonationScreenState extends State<DonationScreen> {
                 TextFormField(
                   controller: _amountController,
                   keyboardType: TextInputType.number,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(
                       RegExp(r'^\d*\.?\d{0,2}'),

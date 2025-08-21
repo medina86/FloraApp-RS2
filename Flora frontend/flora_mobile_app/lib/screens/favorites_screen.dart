@@ -144,7 +144,12 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text(
+            'Failed to remove item from favorites. Please try again.',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       setState(() {

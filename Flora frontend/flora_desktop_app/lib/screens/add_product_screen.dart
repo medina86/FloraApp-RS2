@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flora_desktop_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flora_desktop_app/layouts/constants.dart';
 import 'package:flora_desktop_app/providers/product_provider.dart';
-
 
 class AddProductPage extends StatefulWidget {
   final List<Category> categories;
@@ -16,18 +16,18 @@ class AddProductPage extends StatefulWidget {
 }
 
 class _AddProductPageState extends State<AddProductPage> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   int? selectedCategoryId;
-  int? selectedOccasionId; 
+  int? selectedOccasionId;
   bool isNew = false;
   bool isFeatured = false;
   bool active = true;
   bool isAvailable = true;
   List<File> selectedImages = [];
   bool isUploadingImages = false;
-  
 
   List<Occasion> occasions = [];
   bool occasionsLoading = true;
@@ -35,39 +35,41 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   void initState() {
     super.initState();
-    _fetchOccasions(); 
+    _fetchOccasions();
   }
-Future<void> _fetchOccasions() async {
-  try {
-    final response = await http.get(Uri.parse('$baseUrl/Occasion'));
-    
-    print('Response status: ${response.statusCode}'); 
-    print('Response body: ${response.body}'); 
-    
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = json.decode(response.body);
-      
-      final List<dynamic> items = jsonResponse['items'] ?? [];
-      
+
+  Future<void> _fetchOccasions() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/Occasion'));
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        final List<dynamic> items = jsonResponse['items'] ?? [];
+
+        setState(() {
+          occasions = items.map((json) => Occasion.fromJson(json)).toList();
+          occasionsLoading = false;
+        });
+
+        print('Loaded ${occasions.length} occasions');
+      } else {
+        setState(() {
+          occasionsLoading = false;
+        });
+        print('Failed to load occasions: ${response.statusCode}');
+      }
+    } catch (e) {
       setState(() {
-        occasions = items.map((json) => Occasion.fromJson(json)).toList();
         occasionsLoading = false;
       });
-      
-      print('Loaded ${occasions.length} occasions'); 
-    } else {
-      setState(() {
-        occasionsLoading = false;
-      });
-      print('Failed to load occasions: ${response.statusCode}');
+      print('Error fetching occasions: $e');
     }
-  } catch (e) {
-    setState(() {
-      occasionsLoading = false;
-    });
-    print('Error fetching occasions: $e');
   }
-}
+
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
@@ -132,7 +134,7 @@ Future<void> _fetchOccasions() async {
             : _descriptionController.text.trim(),
         'price': double.parse(_priceController.text),
         'categoryId': selectedCategoryId,
-        'occasionId': selectedOccasionId, // DODANO - može biti null
+        'occasionId': selectedOccasionId, 
         'isNew': isNew,
         'isFeatured': isFeatured,
         'active': active,
@@ -142,7 +144,7 @@ Future<void> _fetchOccasions() async {
 
       final response = await http.post(
         Uri.parse('$baseUrl/Product'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AuthProvider.getHeaders(),
         body: json.encode(productData),
       );
 
@@ -420,42 +422,70 @@ Future<void> _fetchOccasions() async {
                     ),
                   ],
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(40),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left Column
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Product category
-                            Text(
-                              'Product category',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: DropdownButton<int>(
-                                value: selectedCategoryId,
-                                hint: Text(
-                                  'Select Category',
-                                  style: TextStyle(color: Colors.grey.shade600),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(40),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left Column
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Product category
+                              Text(
+                                'Product category',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                underline: SizedBox(),
-                                isExpanded: true,
+                              ),
+                              SizedBox(height: 8),
+                              DropdownButtonFormField<int>(
+                                value: selectedCategoryId,
+                                validator: (value) {
+                                  if (value == null) {
+                                    return 'Please select a category';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  hintText: 'Select Category',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFE91E63),
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                ),
                                 items: widget.categories.map((category) {
                                   return DropdownMenuItem<int>(
                                     value: category.id,
@@ -468,411 +498,416 @@ Future<void> _fetchOccasions() async {
                                   });
                                 },
                               ),
-                            ),
-                            SizedBox(height: 24),
+                              SizedBox(height: 24),
 
-                            // DODANO - Occasion dropdown
-                            Text(
-                              'Occasion (Optional)',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
+                              // DODANO - Occasion dropdown
+                              Text(
+                                'Occasion (Optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              width: double.infinity,
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: occasionsLoading
-                                  ? Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 16),
-                                      child: Row(
-                                        children: [
-                                          SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                Color(0xFFE91E63),
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text('Loading occasions...'),
-                                        ],
-                                      ),
-                                    )
-                                  : DropdownButton<int>(
-                                      value: selectedOccasionId,
-                                      hint: Text(
-                                        'Select Occasion (Optional)',
-                                        style: TextStyle(color: Colors.grey.shade600),
-                                      ),
-                                      underline: SizedBox(),
-                                      isExpanded: true,
-                                      items: [
-                                        // "None" opcija
-                                        DropdownMenuItem<int>(
-                                          value: null,
-                                          child: Text(
-                                            'None',
-                                            style: TextStyle(
-                                              color: Colors.grey.shade600,
-                                              fontStyle: FontStyle.italic,
-                                            ),
-                                          ),
+                              SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: occasionsLoading
+                                    ? Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 16,
                                         ),
-                                        // Occasions iz baze
-                                        ...occasions.map((occasion) {
-                                          return DropdownMenuItem<int>(
-                                            value: occasion.occasionId,
-                                            child: Text(occasion.name),
-                                          );
-                                        }).toList(),
-                                      ],
-                                      onChanged: (value) {
-                                        setState(() {
-                                          selectedOccasionId = value;
-                                        });
-                                      },
-                                    ),
-                            ),
-                            SizedBox(height: 24),
-
-                            // Product name
-                            Text(
-                              'Product name',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            TextField(
-                              controller: _nameController,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Color(0xFFE91E63),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 24),
-
-                            // Price
-                            Text(
-                              'Price (KM)',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            TextField(
-                              controller: _priceController,
-                              keyboardType: TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Color(0xFFE91E63),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 40),
-                      // Right Column - ostaje isto kao prije
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Description
-                            Text(
-                              'Description',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            TextField(
-                              controller: _descriptionController,
-                              maxLines: 4,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(
-                                    color: Color(0xFFE91E63),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(height: 24),
-                            Text(
-                              'Status:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isNew,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isNew = value ?? false;
-                                          });
-                                        },
-                                        activeColor: Color(0xFFE91E63),
-                                      ),
-                                      Expanded(child: Text('New Product')),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isFeatured,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isFeatured = value ?? false;
-                                          });
-                                        },
-                                        activeColor: Color(0xFFE91E63),
-                                      ),
-                                      Expanded(child: Text('Featured')),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: active,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            active = value ?? true;
-                                          });
-                                        },
-                                        activeColor: Color(0xFFE91E63),
-                                      ),
-                                      Expanded(child: Text('Active')),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isAvailable,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            isAvailable = value ?? true;
-                                          });
-                                        },
-                                        activeColor: Color(0xFFE91E63),
-                                      ),
-                                      Expanded(child: Text('Available')),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 24),
-                            // Product images
-                            Text(
-                              'Product images',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFFE91E63),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              width: double.infinity,
-                              constraints: BoxConstraints(minHeight: 120),
-                              child: selectedImages.isEmpty
-                                  ? _buildAddImageButton()
-                                  : _buildImageGrid(),
-                            ),
-                            SizedBox(height: 30),
-                            // CREATE Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFFE91E63),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(25),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                onPressed: isUploadingImages
-                                    ? null
-                                    : () async {
-                                        // Validation
-                                        if (_nameController.text
-                                            .trim()
-                                            .isEmpty) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Product name is required',
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Color(0xFFE91E63)),
                                               ),
-                                              backgroundColor: Colors.red,
                                             ),
-                                          );
-                                          return;
-                                        }
-                                        if (_priceController.text
-                                            .trim()
-                                            .isEmpty) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Price is required',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return;
-                                        }
-                                        if (selectedCategoryId == null) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Category is required',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return;
-                                        }
-                                        final price = double.tryParse(
-                                          _priceController.text,
-                                        );
-                                        if (price == null || price < 0) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Please enter a valid price',
-                                              ),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return;
-                                        }
-
-                                        await createProduct();
-                                      },
-                                child: isUploadingImages
-                                    ? Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    Colors.white,
-                                                  ),
-                                            ),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text('Creating...'),
-                                        ],
+                                            SizedBox(width: 8),
+                                            Text('Loading occasions...'),
+                                          ],
+                                        ),
                                       )
-                                    : Text(
-                                        'CREATE PRODUCT',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                                    : DropdownButton<int>(
+                                        value: selectedOccasionId,
+                                        hint: Text(
+                                          'Select Occasion (Optional)',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                          ),
                                         ),
+                                        underline: SizedBox(),
+                                        isExpanded: true,
+                                        items: [
+                                          // "None" opcija
+                                          DropdownMenuItem<int>(
+                                            value: null,
+                                            child: Text(
+                                              'None',
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                          ),
+                                          // Occasions iz baze
+                                          ...occasions.map((occasion) {
+                                            return DropdownMenuItem<int>(
+                                              value: occasion.occasionId,
+                                              child: Text(occasion.name),
+                                            );
+                                          }).toList(),
+                                        ],
+                                        onChanged: (value) {
+                                          setState(() {
+                                            selectedOccasionId = value;
+                                          });
+                                        },
                                       ),
                               ),
-                            ),
-                          ],
+                              SizedBox(height: 24),
+
+                              // Product name
+                              Text(
+                                'Product name',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              TextFormField(
+                                controller: _nameController,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Product name is required';
+                                  }
+                                  if (value.trim().length < 2) {
+                                    return 'Product name must be at least 2 characters';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFE91E63),
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 24),
+
+                              // Price
+                              Text(
+                                'Price (KM)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              TextFormField(
+                                controller: _priceController,
+                                keyboardType: TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Price is required';
+                                  }
+                                  final price = double.tryParse(value.trim());
+                                  if (price == null) {
+                                    return 'Please enter a valid number';
+                                  }
+                                  if (price <= 0) {
+                                    return 'Price must be greater than 0';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFE91E63),
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.red.shade400,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 40),
+                        // Right Column - ostaje isto kao prije
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Description
+                              Text(
+                                'Description',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              TextFormField(
+                                controller: _descriptionController,
+                                maxLines: 4,
+                                validator: (value) {
+                                  // Description nije obavezno, ali ako je uneseno, mora imati najmanje 10 karaktera
+                                  if (value != null &&
+                                      value.trim().isNotEmpty &&
+                                      value.trim().length < 10) {
+                                    return 'Description must be at least 10 characters if provided';
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration(
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide(
+                                      color: Color(0xFFE91E63),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 24),
+                              Text(
+                                'Status:',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: isNew,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              isNew = value ?? false;
+                                            });
+                                          },
+                                          activeColor: Color(0xFFE91E63),
+                                        ),
+                                        Expanded(child: Text('New Product')),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: isFeatured,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              isFeatured = value ?? false;
+                                            });
+                                          },
+                                          activeColor: Color(0xFFE91E63),
+                                        ),
+                                        Expanded(child: Text('Featured')),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: active,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              active = value ?? true;
+                                            });
+                                          },
+                                          activeColor: Color(0xFFE91E63),
+                                        ),
+                                        Expanded(child: Text('Active')),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: isAvailable,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              isAvailable = value ?? true;
+                                            });
+                                          },
+                                          activeColor: Color(0xFFE91E63),
+                                        ),
+                                        Expanded(child: Text('Available')),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 24),
+                              // Product images
+                              Text(
+                                'Product images',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFFE91E63),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                width: double.infinity,
+                                constraints: BoxConstraints(minHeight: 120),
+                                child: selectedImages.isEmpty
+                                    ? _buildAddImageButton()
+                                    : _buildImageGrid(),
+                              ),
+                              SizedBox(height: 30),
+                              // CREATE Button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFFE91E63),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: isUploadingImages
+                                      ? null
+                                      : () async {
+                                          // Validacija forme
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            await createProduct();
+                                          }
+                                        },
+                                  child: isUploadingImages
+                                      ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
+                                              ),
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text('Creating...'),
+                                          ],
+                                        )
+                                      : Text(
+                                          'CREATE PRODUCT',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

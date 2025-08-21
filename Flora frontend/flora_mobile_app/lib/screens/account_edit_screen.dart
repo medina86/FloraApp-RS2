@@ -118,12 +118,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
-              title: const Text("Uspješno"),
-              content: const Text("Podaci su uspješno izmijenjeni."),
+              title: const Text("Profile Updated"),
+              content: const Text(
+                "Your profile has been successfully updated with the new information.",
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text("OK"),
+                  child: const Text("Continue"),
                 ),
               ],
             ),
@@ -131,13 +133,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       } else {
         print('Failed to update profile: ${response.statusCode}');
+        String errorMessage = "Failed to update profile. Please try again.";
+
+        if (response.statusCode == 400) {
+          errorMessage =
+              "Invalid data provided. Please check all fields and try again.";
+        } else if (response.statusCode == 409) {
+          errorMessage =
+              "Email or username already exists. Please choose different values.";
+        } else if (response.statusCode == 500) {
+          errorMessage = "Server error occurred. Please try again later.";
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Greška pri ažuriranju profila: ${response.statusCode}',
-              ),
+              content: Text(errorMessage),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
             ),
           );
         }
@@ -146,7 +159,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       print('Error updating profile: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Greška: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text(
+              'Network error occurred. Please check your connection and try again.',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
         );
       }
     }
@@ -214,6 +233,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildTextInput(TextEditingController controller, String label) {
     final bool isEmail = label.toLowerCase() == "email";
     final bool isPhone = label.toLowerCase() == "phone";
+    final bool isUsername = label.toLowerCase() == "username";
+    final bool isName = label.toLowerCase().contains("name");
 
     return TextFormField(
       controller: controller,
@@ -222,32 +243,84 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           : isPhone
           ? TextInputType.phone
           : TextInputType.text,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: (value) {
-        if (value == null || value.isEmpty) {
-          return '$label je obavezno polje';
+        // Validacija za imena
+        if (isName) {
+          if (value == null || value.trim().isEmpty) {
+            return '$label is required';
+          }
+          if (value.trim().length < 2) {
+            return '$label must be at least 2 characters long';
+          }
+          if (value.trim().length > 50) {
+            return '$label cannot exceed 50 characters';
+          }
+          final nameRegex = RegExp(r'^[a-zA-ZšđčćžŠĐČĆŽ\s]+$');
+          if (!nameRegex.hasMatch(value.trim())) {
+            return '$label can only contain letters and spaces';
+          }
+          return null;
         }
 
+        // Validacija za email
         if (isEmail) {
-          // Email regex validation
-          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-          if (!emailRegex.hasMatch(value)) {
-            return 'Email nije u ispravnom formatu';
+          if (value == null || value.trim().isEmpty) {
+            return 'Email is required';
           }
+          final emailRegex = RegExp(
+            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+          );
+          if (!emailRegex.hasMatch(value.trim())) {
+            return 'Please enter a valid email address (e.g., user@example.com)';
+          }
+          if (value.trim().length > 254) {
+            return 'Email address cannot exceed 254 characters';
+          }
+          return null;
         }
 
         if (isPhone) {
-          // Phone number regex validation
-          final phoneRegex = RegExp(
-            r'^[+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{3,6}$',
-          );
-          if (!phoneRegex.hasMatch(value)) {
-            return 'Broj telefona nije u ispravnom formatu\nPrimjeri: +387 33 123 456, 033/123-456';
+          if (value == null || value.trim().isEmpty) {
+            return 'Phone number is required';
           }
+          final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
+          if (digitsOnly.length < 8) {
+            return 'Phone number must be at least 8 digits long';
+          }
+          if (digitsOnly.length > 15) {
+            return 'Phone number cannot exceed 15 digits';
+          }
+          final phoneRegex = RegExp(r'^[\+]?[\d\s\-\(\)\/]{8,20}$');
+          if (!phoneRegex.hasMatch(value.trim())) {
+            return 'Please enter a valid phone number\n(e.g., +387 33 123 456, 033/123-456)';
+          }
+          return null;
+        }
+
+        if (isUsername) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Username is required';
+          }
+          if (value.trim().length < 3) {
+            return 'Username must be at least 3 characters long';
+          }
+          if (value.trim().length > 20) {
+            return 'Username cannot exceed 20 characters';
+          }
+          final usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
+          if (!usernameRegex.hasMatch(value.trim())) {
+            return 'Username can only contain letters, numbers, and underscores';
+          }
+          return null;
+        }
+
+        if (value == null || value.trim().isEmpty) {
+          return '$label is required';
         }
 
         return null;
       },
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         labelText: label,
         filled: true,
@@ -260,13 +333,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           borderRadius: BorderRadius.circular(10),
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        // Show helper text for email and phone fields
+
         helperText: isEmail
-            ? 'Unesite važeću email adresu'
+            ? 'Enter a valid email address'
             : isPhone
-            ? 'Unesite broj u formatu: +387 33 123 456'
+            ? 'Enter phone number (e.g., +387 33 123 456)'
+            : isUsername
+            ? 'Letters, numbers, and underscores only'
+            : isName
+            ? 'Letters and spaces only'
             : null,
-        helperStyle: TextStyle(
+        helperStyle: const TextStyle(
           color: Color.fromARGB(255, 117, 117, 117),
           fontSize: 12,
         ),

@@ -65,9 +65,7 @@ class _CustomBouquetCartItemWidgetState
           _isLoading = false;
         });
       } else {
-        throw Exception(
-          'Failed to load bouquet details: ${response.statusCode}',
-        );
+        throw Exception('Failed to load bouquet details');
       }
     } catch (e) {
       setState(() {

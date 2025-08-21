@@ -66,7 +66,9 @@ class _AccountScreenState extends State<AccountScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Error: ${userProvider.error}'),
+                  const Text(
+                    'Unable to load account information. Please try again.',
+                  ),
                   ElevatedButton(
                     onPressed: () => userProvider.loadUser(widget.userId),
                     child: const Text('Retry'),

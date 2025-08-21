@@ -48,6 +48,7 @@ class _DecorationSuggestionsScreenState
   String? _error;
   int? _selectedSuggestionId;
   bool _isSaving = false;
+  bool _isSelectionLocked = false; // Nova varijabla za zaključavanje
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -74,7 +75,9 @@ class _DecorationSuggestionsScreenState
         setState(() {
           _selectedSuggestionId = selection.decorationSuggestionId;
           _commentController.text = selection.comments ?? '';
+          _isSelectionLocked = true; // Zaključaj izbor ako već postoji
         });
+        print('✅ Existing selection found - locked: $_isSelectionLocked');
       }
     } catch (e) {
       print('Error checking existing selection: $e');
@@ -161,14 +164,12 @@ class _DecorationSuggestionsScreenState
             : _commentController.text,
       );
 
-      // Find the selected suggestion
       final selectedSuggestion = _suggestions.firstWhere(
         (s) => s.id == _selectedSuggestionId,
         orElse: () => throw Exception('Selected suggestion not found'),
       );
 
       if (mounted) {
-        // Navigate to confirmation screen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -186,7 +187,7 @@ class _DecorationSuggestionsScreenState
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to save selection: $e'),
+          content: const Text('Failed to save selection. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -206,7 +207,10 @@ class _DecorationSuggestionsScreenState
             fontWeight: FontWeight.bold,
           ),
         ),
-        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.floralPink),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Container(
         color: Colors.white,
@@ -280,67 +284,81 @@ class _DecorationSuggestionsScreenState
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedSuggestionId = suggestion.id;
-                                });
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: AppColors.floralPink,
-                                          width: 2,
-                                        )
-                                      : null,
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8.0,
-                                            ),
-                                            child: Image.network(
-                                              suggestion.imageUrl,
-                                              width: 80,
-                                              height: 80,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => Container(
-                                                    width: 80,
-                                                    height: 80,
-                                                    color: Colors.grey[200],
-                                                    child: const Icon(
-                                                      Icons.broken_image,
-                                                      color: Colors.grey,
+                              onTap: _isSelectionLocked
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _selectedSuggestionId = suggestion.id;
+                                      });
+                                    },
+                              child: Opacity(
+                                opacity: _isSelectionLocked && !isSelected
+                                    ? 0.5
+                                    : 1.0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: isSelected
+                                        ? Border.all(
+                                            color: _isSelectionLocked
+                                                ? Colors.green
+                                                : AppColors.floralPink,
+                                            width: 2,
+                                          )
+                                        : null,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8.0),
+                                              child: Image.network(
+                                                suggestion.imageUrl,
+                                                width: 80,
+                                                height: 80,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => Container(
+                                                      width: 80,
+                                                      height: 80,
+                                                      color: Colors.grey[200],
+                                                      child: const Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors.grey,
+                                                      ),
                                                     ),
-                                                  ),
+                                              ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Text(suggestion.description),
-                                          ),
-                                          if (isSelected)
-                                            const Icon(
-                                              Icons.check_circle,
-                                              color: AppColors.floralPink,
-                                              size: 24,
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Text(
+                                                suggestion.description,
+                                              ),
                                             ),
-                                        ],
-                                      ),
-                                    ],
+                                            if (isSelected)
+                                              Icon(
+                                                _isSelectionLocked
+                                                    ? Icons.lock
+                                                    : Icons.check_circle,
+                                                color: _isSelectionLocked
+                                                    ? Colors.green
+                                                    : AppColors.floralPink,
+                                                size: 24,
+                                              ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -363,6 +381,7 @@ class _DecorationSuggestionsScreenState
                       TextFormField(
                         controller: _commentController,
                         maxLines: 3,
+                        enabled: !_isSelectionLocked, // Onemogući kad je locked
                         decoration: InputDecoration(
                           hintText:
                               'Any special requests or comments for your selected decoration...',
@@ -381,11 +400,16 @@ class _DecorationSuggestionsScreenState
                     const SizedBox(height: 30),
                     Center(
                       child: ElevatedButton(
-                        onPressed: _suggestions.isEmpty || _isSaving
+                        onPressed:
+                            _suggestions.isEmpty ||
+                                _isSaving ||
+                                _isSelectionLocked
                             ? null
                             : _saveSelection,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.floralPink,
+                          backgroundColor: _isSelectionLocked
+                              ? Colors.green
+                              : AppColors.floralPink,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 60,
                             vertical: 12,
@@ -400,7 +424,9 @@ class _DecorationSuggestionsScreenState
                                 color: Colors.white,
                               )
                             : Text(
-                                _selectedSuggestionId != null
+                                _isSelectionLocked
+                                    ? 'SELECTION CONFIRMED ✓'
+                                    : _selectedSuggestionId != null
                                     ? 'SAVE SELECTION'
                                     : 'SELECT A DECORATION',
                                 style: const TextStyle(

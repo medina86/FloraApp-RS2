@@ -28,6 +28,7 @@ class CategoryManagementDialog extends StatefulWidget {
 
 class _CategoryManagementDialogState extends State<CategoryManagementDialog> {
   late List<Category> categories;
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _newCategoryController = TextEditingController();
   final TextEditingController _editCategoryController = TextEditingController();
   bool isLoading = false;
@@ -47,8 +48,12 @@ class _CategoryManagementDialogState extends State<CategoryManagementDialog> {
   }
 
   Future<void> _addCategory() async {
+    // Prvo provjeri form validaciju
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     final name = _newCategoryController.text.trim();
-    if (name.isEmpty) return;
 
     setState(() {
       isLoading = true;
@@ -102,7 +107,7 @@ class _CategoryManagementDialogState extends State<CategoryManagementDialog> {
     });
 
     try {
-      final response = await BaseApiService.put<Map<String, dynamic>>(
+      await BaseApiService.put<Map<String, dynamic>>(
         '/Category/${category.id}',
         {'categoryId': category.id, 'name': name},
         (data) => data as Map<String, dynamic>,
@@ -276,46 +281,77 @@ class _CategoryManagementDialogState extends State<CategoryManagementDialog> {
                   style: TextStyle(color: Colors.red.shade900),
                 ),
               ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _newCategoryController,
-                    decoration: InputDecoration(
-                      labelText: 'New Category',
-                      hintText: 'Enter category name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+            Form(
+              key: _formKey,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _newCategoryController,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Category name is required';
+                        }
+                        if (value.trim().length < 2) {
+                          return 'Category name must be at least 2 characters';
+                        }
+                        return null;
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'New Category',
+                        hintText: 'Enter category name',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.grey.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Color(0xFFE91E63)),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.red.shade400),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.red.shade400),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: isLoading ? null : _addCategory,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFE91E63),
-                    foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: isLoading ? null : _addCategory,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFE91E63),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  ),
-                  child: isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                    child: isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
                             ),
-                          ),
-                        )
-                      : Text('Add'),
-                ),
-              ],
-            ),
+                          )
+                        : Text('Add'),
+                  ),
+                ], // zatvaranje Row children
+              ), // zatvaranje Row
+            ), // zatvaranje Form
             SizedBox(height: 24),
             Text(
               'Existing Categories',

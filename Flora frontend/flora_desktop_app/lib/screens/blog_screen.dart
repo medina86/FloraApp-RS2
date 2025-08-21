@@ -253,11 +253,11 @@ class _BlogScreenState extends State<BlogScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Flora Blog',
+            'Blog',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF333333),
+              color: Color.fromARGB(255, 170, 46, 92),
             ),
           ),
           const SizedBox(height: 24),

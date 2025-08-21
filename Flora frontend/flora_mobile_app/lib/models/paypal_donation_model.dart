@@ -59,3 +59,23 @@ class PayPalDonationResponse {
     );
   }
 }
+
+class PayPalDonationResponse2 {
+  final String approvalUrl;
+  final String paymentId;
+  final int donationId;
+
+  PayPalDonationResponse2({
+    required this.approvalUrl,
+    required this.paymentId,
+    required this.donationId,
+  });
+
+  factory PayPalDonationResponse2.fromJson(Map<String, dynamic> json) {
+    return PayPalDonationResponse2(
+      approvalUrl: json['approvalUrl'] ?? '',
+      paymentId: json['paymentId'] ?? '',
+      donationId: json['donationId'] ?? 0,
+    );
+  }
+}

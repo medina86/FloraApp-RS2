@@ -15,7 +15,7 @@ namespace Flora.Services.Interfaces
         Task<DonationResponse> InitiateDonationAsync(DonationPayPalRequest request);
         Task<DonationResponse> CreatePayPalDonationAsync(DonationPayPalRequest request);
         Task<DonationResponse> ConfirmDonationPaymentAsync(int donationId, string paymentId);
-
+        Task<PayPalDonationResponse> InitiatePayPalDonationAsync(PayPalDonationRequest request);
+        Task<DonationResponse> ConfirmPayPalDonationAsync(int donationId, string paymentId);
     }
-
 }

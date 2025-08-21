@@ -1,3 +1,4 @@
+import 'package:flora_desktop_app/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../layouts/admin_main_layout.dart';
@@ -66,10 +67,23 @@ class _BlogPostDetailsScreenState extends State<BlogPostDetailsScreen> {
     }
 
     try {
-      await BlogProvider.addComment(widget.blogPostId, _commentController.text);
+      final int? currentUserId = AuthProvider.userId;
+
+      if (currentUserId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: User not logged in')),
+        );
+        return;
+      }
+
+      await BlogProvider.addComment(
+        widget.blogPostId,
+        _commentController.text,
+        currentUserId,
+      );
 
       _commentController.clear();
-      _fetchBlogPost(); // Refresh to show new comment
+      _fetchBlogPost();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -171,7 +185,7 @@ class _BlogPostDetailsScreenState extends State<BlogPostDetailsScreen> {
                         height: 300,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          // Filtriramo prazne URL-ove
+
                           itemCount: _blogPost!.imageUrls
                               .where((url) => url.isNotEmpty)
                               .length,

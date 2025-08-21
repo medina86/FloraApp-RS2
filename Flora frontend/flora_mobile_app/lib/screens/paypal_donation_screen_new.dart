@@ -1,3 +1,4 @@
+import 'package:flora_mobile_app/models/donation.dart';
 import 'package:flora_mobile_app/models/donation_campaign.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/providers/donation_api.dart';
@@ -41,28 +42,38 @@ class _PayPalDonationScreenState extends State<PayPalDonationScreen> {
       print('  User ID: ${widget.userId}');
       print('  Amount: ${widget.amount}');
 
-      // Debug: Proveravamo da li userId postoji
-      if (widget.userId <= 0) {
-        throw Exception('Invalid user ID: ${widget.userId}');
-      }
+      // Prvo kreiraj donaciju
+      final donationResponse = await DonationApiService.makeDonation(
+        Donation(
+          donorName: 'PayPal Donor',
+          email: 'donor@example.com',
+          amount: widget.amount,
+          purpose: 'Donation to ${widget.campaign.title}',
+          campaignId: widget.campaign.id,
+          userId: widget.userId,
+          status: 'Pending',
+        ),
+      );
 
-      final payPalResponse = await DonationApiService.initiatePayPalDonation(
-        campaignId: widget.campaign.id,
-        userId: widget.userId,
+      _donationId = donationResponse.id;
+      print('  Created donation ID: $_donationId');
+
+      // Zatim inicijalizuj PayPal sa donation ID
+      final payPalResponse = await DonationApiService.initiatePayPalDonation2(
+        donationId: _donationId!,
         amount: widget.amount,
+        currency: 'USD',
         returnUrl: 'floraapp://paypal/donation/success',
         cancelUrl: 'floraapp://paypal/donation/cancel',
       );
 
       print('Received PayPal response:');
-      print('  Donation ID: ${payPalResponse.id}');
-      print('  Payment URL: ${payPalResponse.paymentUrl}');
-      print('  Transaction ID: ${payPalResponse.transactionId}');
+      print('  Approval URL: ${payPalResponse.approvalUrl}');
+      print('  Payment ID: ${payPalResponse.paymentId}');
 
       setState(() {
-        _approvalUrl = payPalResponse.paymentUrl;
-        _paymentId = payPalResponse.transactionId ?? 'TEMP_PAYMENT_ID';
-        _donationId = payPalResponse.id;
+        _approvalUrl = payPalResponse.approvalUrl;
+        _paymentId = payPalResponse.paymentId;
         _isLoading = false;
       });
 
@@ -128,11 +139,9 @@ class _PayPalDonationScreenState extends State<PayPalDonationScreen> {
     });
 
     try {
-      // Koristi stari pristup
-      await DonationApiService.confirmPayPalDonation(
+      await DonationApiService.confirmPayPalDonation2(
         donationId: _donationId!,
         paymentId: _paymentId!,
-        status: 'Completed',
       );
 
       setState(() {

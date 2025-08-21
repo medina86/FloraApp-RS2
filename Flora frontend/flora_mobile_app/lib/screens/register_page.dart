@@ -48,35 +48,52 @@ class _RegisterPageState extends State<RegisterPage> {
       final userId = userResponse['id'];
 
       try {
-        // Kreiramo cart za novog korisnika
         await CartApiService.createCartForUser(userId);
         print('Cart successfully created for user $userId');
       } catch (e) {
         print('Warning: Failed to create cart for user $userId: $e');
-        // Ne prekidamo proces registracije zbog ovoga
       }
 
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("Success"),
-          content: const Text("Successfully registered"),
+          title: const Text("Registration Successful"),
+          content: const Text(
+            "Your account has been created successfully! You can now log in with your credentials.",
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
-              child: const Text("OK"),
+              child: const Text("Continue to Login"),
             ),
           ],
         ),
       );
     } else {
+      // Detaljnije error handling
+      String errorMessage =
+          "Registration failed. Please check your information and try again.";
+
+      if (response.statusCode == 400) {
+        errorMessage =
+            "Invalid data provided. Please check all fields and try again.";
+      } else if (response.statusCode == 409) {
+        errorMessage = "An account with this email or username already exists.";
+      } else if (response.statusCode == 500) {
+        errorMessage = "Server error occurred. Please try again later.";
+      }
+
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
-          title: const Text("Warning"),
-          content: Text(
-            "Register was not successful: ${response.reasonPhrase}",
-          ),
+          title: const Text("Registration Failed"),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Try Again"),
+            ),
+          ],
         ),
       );
     }
@@ -106,20 +123,88 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  String? _requiredValidator(String? value, String fieldName) {
+  String? _emailValidator(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required.';
+      return 'Email is required';
     }
+
+    // Detaljnija email validacija
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'Please enter a valid email address (e.g., user@example.com)';
+    }
+
+    if (value.trim().length > 254) {
+      return 'Email address cannot exceed 254 characters';
+    }
+
     return null;
   }
 
-  String? _emailValidator(String? value) {
-    final pattern = r'^[^@]+@[^@]+\.[^@]+';
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    } else if (!RegExp(pattern).hasMatch(value)) {
-      return 'Insert email again.';
+  String? _phoneValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Phone number is required';
     }
+
+    final digitsOnly = value.replaceAll(RegExp(r'[^\d]'), '');
+
+    if (digitsOnly.length < 8) {
+      return 'Phone number must be at least 8 digits long';
+    }
+
+    if (digitsOnly.length > 15) {
+      return 'Phone number cannot exceed 15 digits';
+    }
+
+    final phoneRegex = RegExp(r'^[\+]?[\d\s\-\(\)\/]{8,20}$');
+    if (!phoneRegex.hasMatch(value.trim())) {
+      return 'Please enter a valid phone number\n(e.g., +387 33 123 456, 033/123-456)';
+    }
+
+    return null;
+  }
+
+  String? _usernameValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Username is required';
+    }
+
+    if (value.trim().length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+
+    if (value.trim().length > 20) {
+      return 'Username cannot exceed 20 characters';
+    }
+
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
+    if (!usernameRegex.hasMatch(value.trim())) {
+      return 'Username can only contain letters, numbers, and underscores';
+    }
+
+    return null;
+  }
+
+  String? _nameValidator(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+
+    if (value.trim().length < 2) {
+      return '$fieldName must be at least 2 characters long';
+    }
+
+    if (value.trim().length > 50) {
+      return '$fieldName cannot exceed 50 characters';
+    }
+
+    final nameRegex = RegExp(r'^[a-zA-ZšđčćžŠĐČĆŽ\s]+$');
+    if (!nameRegex.hasMatch(value.trim())) {
+      return '$fieldName can only contain letters and spaces';
+    }
+
     return null;
   }
 
@@ -127,7 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (value == null || value.isEmpty) {
       return 'Password is required.';
     } else if (value.length < 6) {
-      return 'Minimum 6 characters';
+      return 'Password must be at least 6 characters long.';
     }
     return null;
   }
@@ -170,32 +255,38 @@ class _RegisterPageState extends State<RegisterPage> {
                   TextFormField(
                     controller: _firstName,
                     decoration: _inputDecoration("First Name"),
-                    validator: (value) => _requiredValidator(value, "Ime"),
+                    validator: (value) => _nameValidator(value, "First Name"),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
                     controller: _lastName,
                     decoration: _inputDecoration("Last Name"),
-                    validator: (value) => _requiredValidator(value, "Prezime"),
+                    validator: (value) => _nameValidator(value, "Last Name"),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
                     controller: _email,
                     decoration: _inputDecoration("Email"),
                     validator: _emailValidator,
+                    keyboardType: TextInputType.emailAddress,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
                     controller: _phone,
                     decoration: _inputDecoration("Phone"),
-                    validator: (value) => _requiredValidator(value, "Telefon"),
+                    validator: _phoneValidator,
+                    keyboardType: TextInputType.phone,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
                     controller: _username,
                     decoration: _inputDecoration("Username"),
-                    validator: (value) =>
-                        _requiredValidator(value, "Korisničko ime"),
+                    validator: _usernameValidator,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 15),
                   TextFormField(
@@ -203,6 +294,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     obscureText: true,
                     decoration: _inputDecoration("Password"),
                     validator: _passwordValidator,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                   ),
                   const SizedBox(height: 25),
                   SizedBox(

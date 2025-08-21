@@ -16,16 +16,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   bool isLoading = true;
   int totalUsers = 0;
   int totalOrders = 0;
-  
+
+
   DateTime startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime endDate = DateTime.now();
-  
+
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
-  
+
   List<MonthlyCountData> ordersByMonth = [];
   List<MonthlyCountData> reservationsByMonth = [];
-  
+
   // Summary data
   int orderCount = 0;
   int reservationCount = 0;
@@ -51,7 +52,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     setState(() {
       isLoading = true;
     });
-    
+
     try {
       await Future.wait([
         _fetchTotalUsers(),
@@ -158,13 +159,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         'startDate': DateFormat('yyyy-MM-dd').format(startDate),
         'endDate': DateFormat('yyyy-MM-dd').format(endDate),
       };
-      
+
       final result = await BaseApiService.getWithParams<Map<String, dynamic>>(
         '/Statistics/summary',
         queryParams,
         (data) => data as Map<String, dynamic>,
       );
-      
+
       setState(() {
         orderCount = result['orderCount'] ?? 0;
         reservationCount = result['reservationCount'] ?? 0;
@@ -196,7 +197,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
     );
-    
+
     if (picked != null) {
       setState(() {
         if (isStartDate) {
@@ -207,7 +208,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           _endDateController.text = DateFormat('yyyy-MM-dd').format(picked);
         }
       });
-      
+
       // Automatically apply filter when date is changed
       _applyDateFilter();
     }
@@ -223,7 +224,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       );
       return;
     }
-    
+
     _fetchSummary();
   }
 
@@ -233,41 +234,38 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         'startDate': DateFormat('yyyy-MM-dd').format(startDate),
         'endDate': DateFormat('yyyy-MM-dd').format(endDate),
       };
-      
+
       // Postavite loading stanje
       setState(() {
         isLoading = true;
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Generating report, please wait...'),
           duration: Duration(seconds: 2),
         ),
       );
-      
+
       try {
         // Koristimo BaseApiService za dohvatanje PDF-a
         final apiUrl = '/Statistics/generate-report';
         final pdfBytes = await BaseApiService.downloadFile(apiUrl, queryParams);
-        
+
         if (pdfBytes != null && pdfBytes.isNotEmpty) {
           // Generirajmo naziv datoteke s trenutnim datumom
           final now = DateTime.now();
           final formattedDate = DateFormat('yyyy-MM-dd_HHmm').format(now);
           final suggestedName = 'Flora_Report_${formattedDate}.pdf';
-          
+
           // Koristimo FileSaveLocation za odabir gdje će se datoteka spremiti
           final location = await getSaveLocation(
             suggestedName: suggestedName,
             acceptedTypeGroups: <XTypeGroup>[
-              XTypeGroup(
-                label: 'PDF',
-                extensions: ['pdf'],
-              ),
+              XTypeGroup(label: 'PDF', extensions: ['pdf']),
             ],
           );
-          
+
           if (location != null) {
             // Spremanje datoteke na odabranu lokaciju
             final file = XFile.fromData(
@@ -276,7 +274,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               mimeType: 'application/pdf',
             );
             await file.saveTo(location.path);
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -289,9 +287,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             // Korisnik je odustao od spremanja
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Report download cancelled'),
-                ),
+                const SnackBar(content: Text('Report download cancelled')),
               );
             }
           }
@@ -346,292 +342,340 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const Text(
             'Statistics',
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFE91E63),
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 170, 46, 92),
             ),
           ),
           const SizedBox(height: 25),
-          
+
           Expanded(
-            child: isLoading 
-              ? const Center(child: CircularProgressIndicator())
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Left section (charts)
-                    Expanded(
-                      flex: 3,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Total numbers section
-                          Row(
-                            children: [
-                              _buildTotalCard(
-                                'Total Users',
-                                totalUsers.toString(),
-                                const Color(0xFFE8EAFF),
-                                'assets/images/user_icon.png',
-                              ),
-                              const SizedBox(width: 15),
-                              _buildTotalCard(
-                                'Total Order number',
-                                totalOrders.toString(),
-                                const Color(0xFFFFF8E1),
-                                'assets/images/order_icon.png',
-                              ),
-                            ],
-                          ),
-                          
-                          const SizedBox(height: 25),
-                          
-                          // Orders by month chart
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(22),
-                              margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Orders by months',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Expanded(
-                                    child: ordersByMonth.isEmpty
-                                      ? const Center(child: Text('No data available'))
-                                      : LineChart(
-                                          _createOrdersLineChartData(),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 15),
-                          
-                          // Reservations by month chart
-                          Expanded(
-                            child: Container(
-                              padding: const EdgeInsets.all(22),
-                              margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Reservations by months',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Expanded(
-                                    child: reservationsByMonth.isEmpty
-                                      ? const Center(child: Text('No data available'))
-                                      : LineChart(
-                                          _createReservationsLineChartData(),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 30),
-                    
-                    // Right section (date filters and summary)
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: const EdgeInsets.all(24),
-                        margin: const EdgeInsets.only(top: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left section (charts)
+                      Expanded(
+                        flex: 3,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Select start date',
-                              style: TextStyle(fontSize: 15),
+                            // Total numbers section
+                            Row(
+                              children: [
+                                _buildTotalCard(
+                                  'Total Users',
+                                  totalUsers.toString(),
+                                  const Color(0xFFE8EAFF),
+                                  'assets/images/user_icon.png',
+                                ),
+                                const SizedBox(width: 15),
+                                _buildTotalCard(
+                                  'Total Order number',
+                                  totalOrders.toString(),
+                                  const Color(0xFFFFF8E1),
+                                  'assets/images/order_icon.png',
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _startDateController,
-                              readOnly: true,
-                              style: TextStyle(fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: 'yyyy-mm-dd',
-                                hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+
+                            const SizedBox(height: 25),
+
+                            // Orders by month chart
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(22),
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                  horizontal: 5,
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade400),
-                                ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                isDense: true,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.calendar_today, size: 16),
-                                  padding: EdgeInsets.zero,
-                                  constraints: BoxConstraints(minWidth: 30, minHeight: 30),
-                                  onPressed: () => _selectDate(context, true),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Orders by months',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Expanded(
+                                      child: ordersByMonth.isEmpty
+                                          ? const Center(
+                                              child: Text('No data available'),
+                                            )
+                                          : LineChart(
+                                              _createOrdersLineChartData(),
+                                            ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            
-                            const SizedBox(height: 14),
-                            
-                            const Text(
-                              'Select end date',
-                              style: TextStyle(fontSize: 15),
-                            ),
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _endDateController,
-                              readOnly: true,
-                              style: TextStyle(fontSize: 14),
-                              decoration: InputDecoration(
-                                hintText: 'yyyy-mm-dd',
-                                hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade400),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+
+                            const SizedBox(height: 15),
+
+                            // Reservations by month chart
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.all(22),
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                  horizontal: 5,
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                  borderSide: BorderSide(color: Colors.grey.shade400),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Reservations by months',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Expanded(
+                                      child: reservationsByMonth.isEmpty
+                                          ? const Center(
+                                              child: Text('No data available'),
+                                            )
+                                          : LineChart(
+                                              _createReservationsLineChartData(),
+                                            ),
+                                    ),
+                                  ],
                                 ),
-                                filled: true,
-                                fillColor: Colors.white,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 6,
-                                ),
-                                isDense: true,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.calendar_today, size: 16),
-                                  padding: EdgeInsets.zero,
-                                  constraints: BoxConstraints(minWidth: 30, minHeight: 30),
-                                  onPressed: () => _selectDate(context, false),
-                                ),
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 28),
-                            
-                            // Summary Cards
-                            _buildSummaryCard(
-                              'Orders',
-                              orderCount.toString(),
-                              Colors.green.shade50,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSummaryCard(
-                              'Donations',
-                              '${donationsTotal.toStringAsFixed(2)} KM',
-                              Colors.orange.shade50,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSummaryCard(
-                              'Reservations',
-                              reservationCount.toString(),
-                              Colors.blue.shade50,
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSummaryCard(
-                              'New users',
-                              newUserCount.toString(),
-                              Colors.purple.shade50,
-                            ),
-                            
-                            const Spacer(),
-                            
-                            // Make report button
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE91E63),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                  elevation: 1,
-                                ),
-                                onPressed: _generateReport,
-                                child: const Text('Make report'),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
+
+                      const SizedBox(width: 30),
+
+                      // Right section (date filters and summary)
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          margin: const EdgeInsets.only(top: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Select start date',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _startDateController,
+                                readOnly: true,
+                                style: TextStyle(fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'yyyy-mm-dd',
+                                  hintStyle: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  isDense: true,
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                    ),
+                                    onPressed: () => _selectDate(context, true),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              const Text(
+                                'Select end date',
+                                style: TextStyle(fontSize: 15),
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: _endDateController,
+                                readOnly: true,
+                                style: TextStyle(fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'yyyy-mm-dd',
+                                  hintStyle: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  isDense: true,
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(
+                                      minWidth: 30,
+                                      minHeight: 30,
+                                    ),
+                                    onPressed: () =>
+                                        _selectDate(context, false),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 28),
+
+                              // Summary Cards
+                              _buildSummaryCard(
+                                'Orders',
+                                orderCount.toString(),
+                                Colors.green.shade50,
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSummaryCard(
+                                'Donations',
+                                '${donationsTotal.toStringAsFixed(2)} KM',
+                                Colors.orange.shade50,
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSummaryCard(
+                                'Reservations',
+                                reservationCount.toString(),
+                                Colors.blue.shade50,
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSummaryCard(
+                                'New users',
+                                newUserCount.toString(),
+                                Colors.purple.shade50,
+                              ),
+
+                              const Spacer(),
+
+                              // Make report button
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFE91E63),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 1,
+                                  ),
+                                  onPressed: _generateReport,
+                                  child: const Text('Make report'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
     );
   }
-  
-  Widget _buildTotalCard(String title, String value, Color bgColor, String iconPath) {
+
+  Widget _buildTotalCard(
+    String title,
+    String value,
+    Color bgColor,
+    String iconPath,
+  ) {
     return Expanded(
       child: Container(
         height: 120,
@@ -657,10 +701,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -683,9 +724,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: Center(
                 child: Icon(
                   title.contains('User') ? Icons.person : Icons.shopping_bag,
-                  color: bgColor == const Color(0xFFE8EAFF) 
-                    ? Colors.blue 
-                    : Colors.orange,
+                  color: bgColor == const Color(0xFFE8EAFF)
+                      ? Colors.blue
+                      : Colors.orange,
                   size: 22,
                 ),
               ),
@@ -695,11 +736,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       ),
     );
   }
-  
+
   Widget _buildSummaryCard(String title, String value, Color bgColor) {
     IconData iconData;
     Color iconColor;
-    
+
     switch (title) {
       case 'Orders':
         iconData = Icons.shopping_bag_outlined;
@@ -721,7 +762,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         iconData = Icons.bar_chart;
         iconColor = Colors.grey;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -742,11 +783,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Center(
-                  child: Icon(
-                    iconData,
-                    color: iconColor,
-                    size: 14,
-                  ),
+                  child: Icon(iconData, color: iconColor, size: 14),
                 ),
               ),
               const SizedBox(width: 10),
@@ -761,39 +798,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ],
       ),
     );
   }
-  
+
   LineChartData _createOrdersLineChartData() {
     // Sort data by month to ensure chronological order
     final sortedData = List<MonthlyCountData>.from(ordersByMonth)
       ..sort((a, b) => a.month.compareTo(b.month));
-    
+
     final spots = sortedData.asMap().entries.map((entry) {
       final index = entry.key.toDouble();
       final item = entry.value;
       return FlSpot(index, item.count.toDouble());
     }).toList();
 
-    final maxY = sortedData.isEmpty ? 10.0 : (sortedData.map((e) => e.count).reduce((a, b) => a > b ? a : b) * 1.2).toDouble();
-    
+    final maxY = sortedData.isEmpty
+        ? 10.0
+        : (sortedData.map((e) => e.count).reduce((a, b) => a > b ? a : b) * 1.2)
+              .toDouble();
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: 1,
         getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: Colors.grey.shade100,
-            strokeWidth: 1,
-          );
+          return FlLine(color: Colors.grey.shade100, strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -807,10 +841,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Text(
                     value.toInt().toString(),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 10),
                   ),
                 );
               }
@@ -831,10 +862,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   axisSide: meta.axisSide,
                   child: Text(
                     DateFormat('MMM').format(sortedData[index].month),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 10),
                   ),
                 );
               }
@@ -869,25 +897,25 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     // Sort data by month to ensure chronological order
     final sortedData = List<MonthlyCountData>.from(reservationsByMonth)
       ..sort((a, b) => a.month.compareTo(b.month));
-    
+
     final spots = sortedData.asMap().entries.map((entry) {
       final index = entry.key.toDouble();
       final item = entry.value;
       return FlSpot(index, item.count.toDouble());
     }).toList();
-    
-    final maxY = sortedData.isEmpty ? 10.0 : (sortedData.map((e) => e.count).reduce((a, b) => a > b ? a : b) * 1.2).toDouble();
-    
+
+    final maxY = sortedData.isEmpty
+        ? 10.0
+        : (sortedData.map((e) => e.count).reduce((a, b) => a > b ? a : b) * 1.2)
+              .toDouble();
+
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: 1,
         getDrawingHorizontalLine: (value) {
-          return FlLine(
-            color: Colors.grey.shade100,
-            strokeWidth: 1,
-          );
+          return FlLine(color: Colors.grey.shade100, strokeWidth: 1);
         },
       ),
       titlesData: FlTitlesData(
@@ -901,10 +929,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Text(
                     value.toInt().toString(),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 10),
                   ),
                 );
               }
@@ -925,10 +950,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   axisSide: meta.axisSide,
                   child: Text(
                     DateFormat('MMM').format(sortedData[index].month),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 10),
                   ),
                 );
               }
@@ -963,12 +985,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 class MonthlyCountData {
   final DateTime month;
   final int count;
-  
-  MonthlyCountData({
-    required this.month,
-    required this.count,
-  });
-  
+
+  MonthlyCountData({required this.month, required this.count});
+
   factory MonthlyCountData.fromJson(Map<String, dynamic> json) {
     return MonthlyCountData(
       month: DateTime.parse(json['month']),

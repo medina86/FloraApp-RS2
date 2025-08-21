@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flora_desktop_app/providers/base_provider.dart';
 import 'package:flora_desktop_app/screens/add_product_screen.dart';
 import 'package:flora_desktop_app/screens/category_management_dialog.dart'
@@ -183,6 +182,10 @@ class _ProductsPageState extends State<ProductsPage> {
       if (availableFilter != null) {
         queryParams['isAvailable'] = availableFilter.toString();
       }
+      if (selectedCategory != 'All') {
+        queryParams['categoryName'] =
+            selectedCategory; // Dodaj kategoriju u API poziv
+      }
 
       final response = await BaseApiService.getWithParams<Map<String, dynamic>>(
         '/Product',
@@ -212,12 +215,8 @@ class _ProductsPageState extends State<ProductsPage> {
 
       setState(() {
         products = productsResponse;
-        if (selectedCategory != 'All') {
-          _applyLocalFilters(); // Koristimo lokalno filtriranje samo za kategoriju
-        } else {
-          filteredProducts =
-              productsResponse; // Za ostale filtere, API nam vraća već filtrirane rezultate
-        }
+        filteredProducts =
+            productsResponse; // API već vraća filtrirane proizvode
         isLoading = false;
       });
     } on UnauthorizedException catch (e) {
@@ -256,65 +255,30 @@ class _ProductsPageState extends State<ProductsPage> {
           backgroundColor: Colors.red,
         ),
       );
-      // Navigator.pushReplacementNamed(context, '/login');
     }
-  }
-
-  void _applyLocalFilters() {
-    List<Product> filtered = List.from(products);
-
-    if (selectedCategory != 'All') {
-      filtered = filtered
-          .where((product) => product.categoryName == selectedCategory)
-          .toList();
-    }
-
-    setState(() {
-      // Ažuriranje paginacije za lokalne filtere
-      totalItems = filtered.length;
-      totalPages = (totalItems! / pageSize).ceil();
-
-      // Osiguramo da currentPage ne ide izvan granica
-      if (currentPage >= totalPages! && totalPages! > 0) {
-        currentPage = totalPages! - 1;
-      }
-
-      // Primijenimo paginaciju na filtrirane proizvode
-      if (totalItems! > pageSize) {
-        int startIndex = currentPage * pageSize;
-        int endIndex = startIndex + pageSize;
-        if (endIndex > filtered.length) {
-          endIndex = filtered.length;
-        }
-
-        filteredProducts = filtered.sublist(startIndex, endIndex);
-      } else {
-        filteredProducts = filtered;
-      }
-    });
   }
 
   Future<void> searchProducts(String query) async {
     setState(() {
       searchQuery = query;
-      currentPage = 0; // Reset na prvu stranicu kada pretražujemo
+      currentPage = 0; 
     });
     await fetchProducts();
   }
 
   void _updateFilters() async {
     setState(() {
-      currentPage = 0; // Reset na prvu stranicu kada mijenjamo filtere
+      currentPage = 0; 
     });
     await fetchProducts();
   }
 
-  void filterByCategory(String category) {
+  void filterByCategory(String category) async {
     setState(() {
       selectedCategory = category;
-      currentPage = 0;
+      currentPage = 0; 
     });
-    _applyLocalFilters();
+    await fetchProducts(); 
   }
 
   String getInitials(String name) {
@@ -625,9 +589,9 @@ class _ProductsPageState extends State<ProductsPage> {
               Text(
                 'Products',
                 style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFFE91E63),
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 170, 46, 92),
                 ),
               ),
               ElevatedButton(
@@ -1157,11 +1121,7 @@ class _ProductsPageState extends State<ProductsPage> {
                             setState(() {
                               currentPage--;
                             });
-                            if (selectedCategory != 'All') {
-                              _applyLocalFilters(); // Lokalna paginacija za kategorije
-                            } else {
-                              fetchProducts(); // API paginacija za ostalo
-                            }
+                            fetchProducts(); // Sve ide preko API paginacije
                           }
                         : null,
                     color: currentPage > 0
@@ -1182,11 +1142,7 @@ class _ProductsPageState extends State<ProductsPage> {
                             setState(() {
                               currentPage++;
                             });
-                            if (selectedCategory != 'All') {
-                              _applyLocalFilters(); // Lokalna paginacija za kategorije
-                            } else {
-                              fetchProducts(); // API paginacija za ostalo
-                            }
+                            fetchProducts(); 
                           }
                         : null,
                     color: totalPages != null && currentPage < totalPages! - 1

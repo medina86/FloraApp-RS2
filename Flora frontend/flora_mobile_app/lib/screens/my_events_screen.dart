@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/constants.dart';
-import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/screens/decoration_request_screen.dart';
+import 'package:flora_mobile_app/screens/suggested_decoration_screen.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -34,58 +34,83 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
     });
 
     try {
+      print('🔸 Fetching events for user ID: ${widget.userId}');
+      final url = '$baseUrl/DecorationRequest?userId=${widget.userId}';
+      print('🔸 API URL: $url');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/DecorationRequest?userId=${widget.userId}'),
+        Uri.parse(url),
         headers: AuthProvider.getHeaders(),
       );
 
+      print('🔸 Response status: ${response.statusCode}');
+      print('🔸 Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final dynamic decodedData = json.decode(response.body);
+        print('🔸 Decoded data type: ${decodedData.runtimeType}');
+        print('🔸 Decoded data: $decodedData');
 
         List<dynamic> eventsJsonList = [];
 
         if (decodedData is Map && decodedData.containsKey('items')) {
           if (decodedData['items'] is List) {
             eventsJsonList = decodedData['items'];
+            print('🔸 Found ${eventsJsonList.length} events in items array');
           } else {
             eventsJsonList = [];
+            print('🔸 Items is not a list');
           }
         } else if (decodedData is List) {
           eventsJsonList = decodedData;
+          print('🔸 Found ${eventsJsonList.length} events as direct list');
         } else if (decodedData is Map && decodedData.isNotEmpty) {
           eventsJsonList = [decodedData];
+          print('🔸 Single event as map, converting to list');
         } else if (decodedData is Map && decodedData.isEmpty) {
           eventsJsonList = [];
+          print('🔸 Empty map, no events');
         }
 
+        print('🔸 Processing ${eventsJsonList.length} events...');
+
         setState(() {
-          _myEvents = eventsJsonList
-              .map(
-                (item) => DecorationRequest(
-                  id: 0,
-                  eventType: item['eventType'],
-                  eventDate: DateTime.parse(item['eventDate']),
-                  venueType: item['venueType'],
-                  numberOfGuests: item['numberOfGuests'],
-                  numberOfTables: item['numberOfTables'],
-                  themeOrColors: item['themeOrColors'],
-                  location: item['location'],
-                  specialRequests: item['specialRequests'],
-                  budget: item['budget'].toDouble(),
-                  userId: item['userId'],
-                ),
-              )
-              .toList();
+          _myEvents = eventsJsonList.map((item) {
+            print('🔸 Processing event: $item');
+            print('🔸 Event ID: ${item['id']}');
+            return DecorationRequest(
+              id: item['id'] ?? 0,
+              eventType: item['eventType'],
+              eventDate: DateTime.parse(item['eventDate']),
+              venueType: item['venueType'],
+              numberOfGuests: item['numberOfGuests'],
+              numberOfTables: item['numberOfTables'],
+              themeOrColors: item['themeOrColors'],
+              location: item['location'],
+              specialRequests: item['specialRequests'],
+              budget: item['budget'].toDouble(),
+              userId: item['userId'],
+            );
+          }).toList();
+          print('🔸 Successfully created ${_myEvents.length} events');
         });
       } else {
         setState(() {
-          _error = 'Failed to load events: ${response.statusCode}';
+          if (response.statusCode == 404) {
+            _error = 'No events found for your account.';
+          } else if (response.statusCode >= 500) {
+            _error = 'Server error occurred. Please try again later.';
+          } else {
+            _error =
+                'Failed to load events. Please check your connection and try again.';
+          }
         });
         print('Failed to load events: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       setState(() {
-        _error = 'An error occurred: $e';
+        _error =
+            'Network error occurred. Please check your connection and try again.';
       });
       print('Error fetching events: $e');
     } finally {
@@ -198,9 +223,24 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                                 alignment: Alignment.centerRight,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    MainLayout.openDecorationSuggestions(
+                                    print(
+                                      '🔸 View Suggestions button pressed for event ID: ${event.id}',
+                                    );
+                                    print(
+                                      '🔸 Event details: ${event.eventType} on ${DateFormat('dd.MM.yyyy').format(event.eventDate)}',
+                                    );
+
+                                    Navigator.push(
                                       context,
-                                      event,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DecorationSuggestionsScreen(
+                                              eventRequest: event,
+                                            ),
+                                      ),
+                                    );
+                                    print(
+                                      '✅ Navigating to DecorationSuggestionsScreen',
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(

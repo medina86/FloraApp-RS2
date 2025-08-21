@@ -129,9 +129,11 @@ class _BlogPostDetailScreenState extends State<BlogPostDetailScreen> {
           _isSubmittingComment = false;
         });
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to post comment: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to post comment. Please try again.'),
+          ),
+        );
       }
     }
   }
@@ -178,7 +180,6 @@ class _BlogPostDetailScreenState extends State<BlogPostDetailScreen> {
                     padding: const EdgeInsets.all(16.0),
                     children: [
                       if (_blogPost!.imageUrls.isNotEmpty) ...[
-                        
                         if (BlogProviderEnhanced.getValidImageUrl(
                               _blogPost!.imageUrls,
                             ) !=

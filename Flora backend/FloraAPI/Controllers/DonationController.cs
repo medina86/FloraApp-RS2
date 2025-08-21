@@ -24,10 +24,40 @@ namespace FloraAPI.Controllers
             return await _donationService.CreatePayPalDonationAsync(request);
         }
 
+        [HttpPost("initiatePayPalDonation")]
+        public async Task<ActionResult<PayPalDonationResponse>> InitiatePayPalDonation([FromBody] PayPalDonationRequest request)
+        {
+            try
+            {
+                var response = await _donationService.InitiatePayPalDonationAsync(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error initiating PayPal donation: {ex.Message}");
+            }
+        }
+
         [HttpPost("confirm-paypal")]
         public async Task<DonationResponse> ConfirmPayPalDonation([FromQuery] int donationId, [FromQuery] string paymentId)
         {
             return await _donationService.ConfirmDonationPaymentAsync(donationId, paymentId);
+        }
+
+        [HttpPost("confirm-paypal-donation")]
+        public async Task<ActionResult<DonationResponse>> ConfirmPayPalDonation2(
+            [FromQuery] int donationId,
+            [FromQuery] string paymentId)
+        {
+            try
+            {
+                var donation = await _donationService.ConfirmPayPalDonationAsync(donationId, paymentId);
+                return Ok(donation);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error confirming PayPal donation: {ex.Message}");
+            }
         }
 
     }

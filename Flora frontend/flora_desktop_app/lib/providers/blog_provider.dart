@@ -34,7 +34,6 @@ class BlogProvider {
       if (data is Map && data.containsKey('items')) {
         final items = data['items'] as List;
 
-        // Debugiranje URL-ova slika
         for (var item in items) {
           if (item.containsKey('imageUrls')) {
             print(
@@ -62,7 +61,6 @@ class BlogProvider {
     throw Exception('Failed to load blog post: ${response.statusCode}');
   }
 
-  // Kreiranje novog blog posta
   static Future<BlogPost> createBlogPost(
     String title,
     String content,
@@ -73,7 +71,6 @@ class BlogProvider {
       ..fields['Title'] = title
       ..fields['Content'] = content;
 
-    // Dodavanje slika u zahtjev
     for (var i = 0; i < images.length; i++) {
       var file = images[i];
       var fileExtension = file.path.split('.').last;
@@ -98,7 +95,6 @@ class BlogProvider {
     throw Exception('Failed to create blog post: $responseString');
   }
 
-  // Ažuriranje postojećeg blog posta
   static Future<BlogPost> updateBlogPost(
     int id,
     String title,
@@ -111,11 +107,9 @@ class BlogProvider {
     );
     var headers = AuthProvider.getHeaders();
 
-   
     headers.remove('Content-Type');
     request.headers.addAll(headers);
 
-  
     request.fields['Title'] = title;
     request.fields['Content'] = content;
 
@@ -126,50 +120,30 @@ class BlogProvider {
 
       request.files.add(
         await http.MultipartFile.fromPath(
-          'Images', // Naziv polja mora biti isti kao u Create metodi i odgovarati propertiju u BlogPostRequest
+          'Images',
           file.path,
           contentType: MediaType.parse(contentType),
         ),
       );
     }
 
-    // Debug informacije
-    print('Update request to: ${request.url}');
-    print('Update headers: ${request.headers}');
-    print('Update fields: ${request.fields}');
-    print('Update files count: ${request.files.length}');
-
     try {
-      // Dodatni debug za autentifikacijske podatke
-      print('Debug - Auth Headers: ${request.headers['Authorization']}');
-
       final response = await request.send();
       final responseData = await response.stream.toBytes();
       final responseString = String.fromCharCodes(responseData);
 
-      // Debug response
-      print('Update response status: ${response.statusCode}');
-      print('Update response body: $responseString');
-
       if (response.statusCode == 200) {
         return BlogPost.fromJson(json.decode(responseString));
       } else {
-        // Pokušamo razumjeti što je pošlo po zlu
-        print('Error status code: ${response.statusCode}');
-        print('Error response: $responseString');
-        print('Error headers: ${response.headers}');
-
         throw Exception(
           'Failed to update blog post: $responseString (Status: ${response.statusCode})',
         );
       }
     } catch (e) {
-      print('Error during blog update: $e');
       throw Exception('Failed to update blog post: $e');
     }
   }
 
-  // Brisanje blog posta
   static Future<bool> deleteBlogPost(int id) async {
     final response = await http.delete(
       Uri.parse('$baseUrl/BlogPost/$id'),
@@ -179,15 +153,22 @@ class BlogProvider {
     return response.statusCode == 200 || response.statusCode == 204;
   }
 
-  // Dodavanje komentara na blog post
-  static Future<BlogComment> addComment(int blogPostId, String content) async {
+  static Future<BlogComment> addComment(
+    int blogPostId,
+    String content,
+    int userId,
+  ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/BlogComment'),
       headers: {
         ...AuthProvider.getHeaders(),
         'Content-Type': 'application/json',
       },
-      body: json.encode({'blogPostId': blogPostId, 'content': content}),
+      body: json.encode({
+        'blogPostId': blogPostId,
+        'content': content,
+        'userId': userId,
+      }),
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {

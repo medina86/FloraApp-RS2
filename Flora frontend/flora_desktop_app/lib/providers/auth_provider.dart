@@ -4,6 +4,7 @@ class AuthProvider {
   static String? username;
   static String? password;
   static int? roleId;
+  static int? userId;
   static List<Map<String, dynamic>> roles = [];
 
   static Map<String, String> getHeaders() {
@@ -12,21 +13,19 @@ class AuthProvider {
     if (username != null && password != null) {
       final credentials = base64Encode(utf8.encode('$username:$password'));
       headers['Authorization'] = 'Basic $credentials';
-      print('Debug - Auth Headers: ${headers['Authorization']}'); 
+      print('Debug - Auth Headers: ${headers['Authorization']}');
     } else {
-      print('Debug - No credentials set in AuthProvider'); 
+      print('Debug - No credentials set in AuthProvider');
     }
 
     return headers;
   }
 
   static bool get isAuthenticated => username != null && password != null;
-  
-  // Provjera je li korisnik admin - može biti bazirana na roleId ili listi roles
+
   static bool get isAdmin {
-    // Provjera po roleId
     if (roleId == 1) return true;
-    
+
     return roles.any((role) => role['id'] == 1);
   }
 
@@ -34,6 +33,7 @@ class AuthProvider {
     username = null;
     password = null;
     roleId = null;
+    userId = null;
     roles = [];
   }
 
@@ -41,15 +41,14 @@ class AuthProvider {
     username = user;
     password = pass;
   }
-  
-  // Metod za postavljanje svih podataka o korisniku
-  static void setUserData(String user, String pass, int? role) {
+
+  static void setUserData(String user, String pass, int? role, int? id) {
     username = user;
     password = pass;
     roleId = role;
+    userId = id;
   }
-  
-  // Dodatni metod za postavljanje uloga korisnika
+
   static void setRoles(List<Map<String, dynamic>> userRoles) {
     roles = userRoles;
   }

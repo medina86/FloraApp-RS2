@@ -27,6 +27,12 @@ namespace FloraAPI.Controllers
             var result = await _service.CreateAsync(request);
             return result;
         }
+        [HttpPut("{id}")]
+        public override async Task<DonationCampaignResponse> Update(int id, [FromForm] DonationCampaignRequest request)
+        {
+            var result = await _service.UpdateAsync(id, request);
+            return result;
+        }
     }
     
 

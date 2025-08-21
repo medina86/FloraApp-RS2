@@ -24,7 +24,8 @@ class OrderListTable extends StatefulWidget {
 
 class _OrderListTableState extends State<OrderListTable> {
   final Set<int> _processingOrderIds = {}; // Prati koje narudžbe se obrađuju
-  final Map<int, UserModel> _userCache = {}; // Keširanje korisničkih podataka po ID-u
+  final Map<int, UserModel> _userCache =
+      {}; // Keširanje korisničkih podataka po ID-u
 
   Future<void> _processOrder(OrderModel order) async {
     setState(() {
@@ -133,7 +134,9 @@ class _OrderListTableState extends State<OrderListTable> {
         if (!_userCache.containsKey(order.userId)) {
           print('Fetching user data for userId: ${order.userId}');
           final user = await UserApiService.getUserById(order.userId);
-          print('Successfully fetched user data: ${user.firstName} ${user.lastName}');
+          print(
+            'Successfully fetched user data: ${user.firstName} ${user.lastName}',
+          );
           setState(() {
             _userCache[order.userId] = user;
           });
@@ -147,7 +150,6 @@ class _OrderListTableState extends State<OrderListTable> {
 
   @override
   Widget build(BuildContext context) {
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,7 +183,7 @@ class _OrderListTableState extends State<OrderListTable> {
                     label: Text(
                       "User",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color.fromARGB(255, 100, 100, 100),
                       ),
@@ -191,7 +193,7 @@ class _OrderListTableState extends State<OrderListTable> {
                     label: Text(
                       "Date",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color.fromARGB(255, 100, 100, 100),
                       ),
@@ -201,7 +203,7 @@ class _OrderListTableState extends State<OrderListTable> {
                     label: Text(
                       "Amount",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color.fromARGB(255, 100, 100, 100),
                       ),
@@ -211,7 +213,7 @@ class _OrderListTableState extends State<OrderListTable> {
                     label: Text(
                       "Status",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color.fromARGB(255, 100, 100, 100),
                       ),
@@ -221,7 +223,7 @@ class _OrderListTableState extends State<OrderListTable> {
                     label: Text(
                       "Action",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold, 
+                        fontWeight: FontWeight.bold,
                         fontSize: 14,
                         color: Color.fromARGB(255, 100, 100, 100),
                       ),
@@ -243,36 +245,68 @@ class _OrderListTableState extends State<OrderListTable> {
                             // Ako imamo podatke o korisniku, koristimo ih, inače koristimo podatke iz shipping adrese
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: _userCache.containsKey(order.userId)
-                                ? (_userCache[order.userId]!.firstName[0].toUpperCase() == 'A'
-                                  ? const Color.fromARGB(255, 205, 82, 255)
-                                  : _userCache[order.userId]!.firstName[0].toUpperCase() == 'E'
-                                  ? const Color.fromARGB(255, 255, 180, 82)
-                                  : _userCache[order.userId]!.firstName[0].toUpperCase() == 'H'
-                                  ? const Color.fromARGB(255, 82, 150, 255)
-                                  : const Color.fromARGB(255, 255, 102, 204))
-                                : const Color.fromARGB(255, 170, 46, 92),
+                              backgroundColor:
+                                  _userCache.containsKey(order.userId)
+                                  ? (_userCache[order.userId]!.firstName[0]
+                                                .toUpperCase() ==
+                                            'A'
+                                        ? const Color.fromARGB(
+                                            255,
+                                            205,
+                                            82,
+                                            255,
+                                          )
+                                        : _userCache[order.userId]!.firstName[0]
+                                                  .toUpperCase() ==
+                                              'E'
+                                        ? const Color.fromARGB(
+                                            255,
+                                            255,
+                                            180,
+                                            82,
+                                          )
+                                        : _userCache[order.userId]!.firstName[0]
+                                                  .toUpperCase() ==
+                                              'H'
+                                        ? const Color.fromARGB(
+                                            255,
+                                            82,
+                                            150,
+                                            255,
+                                          )
+                                        : const Color.fromARGB(
+                                            255,
+                                            255,
+                                            102,
+                                            204,
+                                          ))
+                                  : const Color.fromARGB(255, 170, 46, 92),
                               child: _userCache.containsKey(order.userId)
-                                ? Text(
-                                    _userCache[order.userId]!.firstName.isNotEmpty
-                                      ? _userCache[order.userId]!.firstName[0].toUpperCase()
-                                      : "?",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                  ? Text(
+                                      _userCache[order.userId]!
+                                              .firstName
+                                              .isNotEmpty
+                                          ? _userCache[order.userId]!
+                                                .firstName[0]
+                                                .toUpperCase()
+                                          : "?",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    )
+                                  : Text(
+                                      order.shippingAddress.firstName.isNotEmpty
+                                          ? order.shippingAddress.firstName[0]
+                                                .toUpperCase()
+                                          : "?",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                  )
-                                : Text(
-                                    order.shippingAddress.firstName.isNotEmpty
-                                      ? order.shippingAddress.firstName[0].toUpperCase()
-                                      : "?",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
                             ),
                             const SizedBox(width: 12),
                             Column(
@@ -282,8 +316,8 @@ class _OrderListTableState extends State<OrderListTable> {
                                 // Ako imamo podatke o korisniku, prikazujemo njegovo ime, inače koristimo shipping adresu
                                 Text(
                                   _userCache.containsKey(order.userId)
-                                    ? _userCache[order.userId]!.fullName
-                                    : "${order.shippingAddress.firstName} ${order.shippingAddress.lastName}",
+                                      ? _userCache[order.userId]!.fullName
+                                      : "${order.shippingAddress.firstName} ${order.shippingAddress.lastName}",
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
@@ -332,9 +366,14 @@ class _OrderListTableState extends State<OrderListTable> {
                       ),
                       DataCell(
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(order.status).withOpacity(0.15),
+                            color: _getStatusColor(
+                              order.status,
+                            ).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: _getStatusColor(order.status),
@@ -361,69 +400,89 @@ class _OrderListTableState extends State<OrderListTable> {
                                   color: Color.fromARGB(255, 170, 46, 92),
                                 ),
                               )
-                            : widget.orderStatus == "Completed" 
-                              ? Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: const Color.fromARGB(255, 51, 204, 51).withOpacity(0.1),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Color.fromARGB(255, 51, 204, 51),
-                                        size: 18,
-                                      ),
+                            : widget.orderStatus == "Completed"
+                            ? Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                        255,
+                                        51,
+                                        204,
+                                        51,
+                                      ).withOpacity(0.1),
+                                      shape: BoxShape.circle,
                                     ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      "Completed",
-                                      style: TextStyle(
-                                        color: Color.fromARGB(255, 51, 204, 51),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : ElevatedButton(
-                                  onPressed: () {
-                                    if (order.status == "Pending") {
-                                      _processOrder(order);
-                                    } else if (order.status == "Processed") {
-                                      _deliverOrder(order);
-                                    } else if (order.status == "Delivered") {
-                                      _completeOrder(order);
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: order.status == "Pending"
-                                        ? const Color.fromARGB(255, 255, 102, 204) // Pink za Process
-                                        : order.status == "Processed"
-                                        ? const Color.fromARGB(255, 102, 204, 255) // Plava za Deliver
-                                        : const Color.fromARGB(255, 51, 204, 51), // Zelena za Complete
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 18,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
+                                    child: const Icon(
+                                      Icons.check,
+                                      color: Color.fromARGB(255, 51, 204, 51),
+                                      size: 18,
                                     ),
                                   ),
-                                  child: Text(
-                                    order.status == "Pending"
-                                        ? "Process"
-                                        : order.status == "Processed"
-                                        ? "Deliver"
-                                        : "Complete",
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    "Completed",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 51, 204, 51),
+                                      fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                ],
+                              )
+                            : ElevatedButton(
+                                onPressed: () {
+                                  if (order.status == "Pending") {
+                                    _processOrder(order);
+                                  } else if (order.status == "Processed") {
+                                    _deliverOrder(order);
+                                  } else if (order.status == "Delivered") {
+                                    _completeOrder(order);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: order.status == "Pending"
+                                      ? const Color.fromARGB(
+                                          255,
+                                          255,
+                                          102,
+                                          204,
+                                        ) // Pink za Process
+                                      : order.status == "Processed"
+                                      ? const Color.fromARGB(
+                                          255,
+                                          102,
+                                          204,
+                                          255,
+                                        ) // Plava za Deliver
+                                      : const Color.fromARGB(
+                                          255,
+                                          51,
+                                          204,
+                                          51,
+                                        ), // Zelena za Complete
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
                                 ),
+                                child: Text(
+                                  order.status == "Pending"
+                                      ? "Process"
+                                      : order.status == "Processed"
+                                      ? "Deliver"
+                                      : "Complete",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
                       ),
                     ],
                   );

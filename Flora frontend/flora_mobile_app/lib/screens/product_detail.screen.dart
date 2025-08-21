@@ -207,7 +207,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _showAuthError();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          const SnackBar(
+            content: Text('Failed to add to favorites. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -290,8 +293,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _showAuthError();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error adding to cart: $e'),
+          const SnackBar(
+            content: Text('Failed to add item to cart. Please try again.'),
             backgroundColor: Colors.red,
           ),
         );

@@ -96,7 +96,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       print('Caught error in _placeOrder: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error placing order: $e'),
+          content: const Text(
+            'Failed to place order. Please check your information and try again.',
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -259,6 +261,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   TextFormField(
                     controller: _firstNameController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'First name',
                       border: OutlineInputBorder(),
@@ -273,6 +276,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _lastNameController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'Last name',
                       border: OutlineInputBorder(),
@@ -287,6 +291,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _cityController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'City',
                       border: OutlineInputBorder(),
@@ -301,6 +306,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _streetController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'Street',
                       border: OutlineInputBorder(),
@@ -315,6 +321,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _houseNumberController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'House number',
                       border: OutlineInputBorder(),
@@ -329,6 +336,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _postalCodeController,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     decoration: const InputDecoration(
                       labelText: 'Postal Code',
                       border: OutlineInputBorder(),

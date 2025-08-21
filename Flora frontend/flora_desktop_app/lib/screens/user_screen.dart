@@ -1,4 +1,6 @@
 import 'package:flora_desktop_app/layouts/constants.dart';
+import 'package:flora_desktop_app/providers/auth_provider.dart';
+import 'package:flora_desktop_app/screens/add_admin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -102,7 +104,6 @@ class _UsersPageState extends State<UsersPage> {
     }
   }
 
-  // Method to confirm user deletion
   void _confirmDeleteUser(User user) {
     showDialog(
       context: context,
@@ -139,10 +140,10 @@ class _UsersPageState extends State<UsersPage> {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl/Users/${user.id}'),
-        headers: {'Content-Type': 'application/json'},
+        headers: AuthProvider.getHeaders(),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 204) {
         setState(() {
           users.removeWhere((u) => u.id == user.id);
           filteredUsers.removeWhere((u) => u.id == user.id);
@@ -150,14 +151,15 @@ class _UsersPageState extends State<UsersPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('User deleted successfully'),
+            SnackBar(
+              content: Text('User ${user.firstname} ${user.lastname} successfully deleted'),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
             ),
           );
         }
       } else {
-        throw Exception('Failed to delete user: ${response.statusCode}');
+        throw Exception('Failed to delete user. Status code: ${response.statusCode}');
       }
     } catch (e) {
       if (mounted) {
@@ -172,6 +174,18 @@ class _UsersPageState extends State<UsersPage> {
       setState(() {
         isDeleting = false;
       });
+    }
+  }
+  
+  Future<void> _navigateToAddAdminScreen() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddAdminScreen()),
+    );
+    
+    // If admin was created successfully, refresh the user list
+    if (result == true) {
+      _loadUsers();
     }
   }
 
@@ -190,37 +204,54 @@ class _UsersPageState extends State<UsersPage> {
                   Text(
                     'Users',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFE91E63),
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 170, 46, 92),
                     ),
                   ),
-                  Container(
-                    width: 300,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search user',
-                        hintStyle: TextStyle(color: Colors.grey[400]),
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                  Row(
+                    children: [
+                      Container(
+                        width: 300,
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search user',
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              searchQuery = value;
+                            });
+                            searchUsers(value);
+                          },
                         ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          searchQuery = value;
-                        });
-                        searchUsers(value);
-                      },
-                    ),
+                      SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: _navigateToAddAdminScreen,
+                        icon: Icon(Icons.admin_panel_settings, color: Colors.white),
+                        label: Text('Add Admin', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color.fromARGB(255, 170, 46, 92),
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

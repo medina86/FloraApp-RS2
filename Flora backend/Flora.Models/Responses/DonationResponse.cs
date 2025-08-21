@@ -19,6 +19,7 @@ namespace Flora.Models.Responses
         public string Status { get; set; } = string.Empty;
         public string PaymentUrl { get;set; } = string.Empty;
         public string CampaignTitle { get; set; } = string.Empty;
+        public string? TransactionId { get; set; }
     }
 
 }

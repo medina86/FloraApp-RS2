@@ -13,7 +13,7 @@ namespace Flora.Services.Database
         public string Description { get; set; } = string.Empty;
         public DateTime EndDate { get; set; }
         public string? ImageUrl { get; set; }
-
+        public decimal TotalAmount { get; set; }
         public virtual ICollection<Donation> Donations { get; set; } = new List<Donation>();
     }
 }

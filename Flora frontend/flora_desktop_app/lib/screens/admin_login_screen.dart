@@ -1,7 +1,6 @@
 import 'package:flora_desktop_app/layouts/admin_main_layout.dart';
 import 'package:flora_desktop_app/providers/auth_provider.dart';
 import 'package:flora_desktop_app/providers/base_provider.dart';
-import 'package:flora_desktop_app/screens/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 
 class AdminLoginScreen extends StatefulWidget {
@@ -55,10 +54,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       if (isAdmin) {
         // Korisnik je admin, postavimo podatke i pristupimo admin sučelju
         int? adminRoleId = 1; // Definitivno znamo da je korisnik admin
+        int? currentUserId =
+            loginResponse['userId'] ??
+            loginResponse['id']; // Dohvati userId iz odgovora
+
         AuthProvider.setUserData(
           credentials['username']!,
           credentials['password']!,
           adminRoleId,
+          currentUserId,
         );
 
         // Ako postoji lista uloga, pohrani je također
@@ -152,19 +156,39 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _username,
-                      decoration: const InputDecoration(labelText: 'Username'),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Unesite korisničko ime'
-                          : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Username is required';
+                        }
+                        if (value.trim().length < 3) {
+                          return 'Username must be at least 3 characters';
+                        }
+                        return null;
+                      },
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _password,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Unesite lozinku'
-                          : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Password is required';
+                        }
+                        if (value.trim().length < 4) {
+                          return 'Password must be at least 4 characters';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(

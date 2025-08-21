@@ -6,7 +6,9 @@ class Donation {
   final String purpose;
   final DateTime? date;
   final int campaignId;
+  final int? userId;
   final String? campaignTitle;
+  final String? status;
 
   Donation({
     this.id,
@@ -16,7 +18,9 @@ class Donation {
     required this.purpose,
     this.date,
     required this.campaignId,
+    this.userId,
     this.campaignTitle,
+    this.status,
   });
 
   factory Donation.fromJson(Map<String, dynamic> json) {
@@ -28,7 +32,9 @@ class Donation {
       purpose: json['purpose'],
       date: json['date'] != null ? DateTime.parse(json['date']) : null,
       campaignId: json['campaignId'],
+      userId: json['userId'],
       campaignTitle: json['campaignTitle'],
+      status: json['status'],
     );
   }
 
@@ -39,6 +45,8 @@ class Donation {
       'amount': amount,
       'purpose': purpose,
       'campaignId': campaignId,
+      'userId': userId,
+      'status': status,
     };
   }
 }
