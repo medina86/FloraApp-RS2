@@ -444,6 +444,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       autovalidateMode: AutovalidateMode.onUserInteraction,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -458,6 +459,8 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
           ? null
           : validator ??
                 (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'This field is required';
                   if (value == null || value.trim().isEmpty) {
                     return 'This field is required';
                   }

@@ -69,6 +69,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       );
     } else {
+      // Detaljnije error handling
       String errorMessage =
           "Registration failed. Please check your information and try again.";
 

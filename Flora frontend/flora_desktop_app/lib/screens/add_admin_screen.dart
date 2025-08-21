@@ -12,16 +12,15 @@ class AddAdminScreen extends StatefulWidget {
 
 class _AddAdminScreenState extends State<AddAdminScreen> {
   final _formKey = GlobalKey<FormState>();
-
+  
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
-
+  
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -60,18 +59,16 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Admin user ${_firstNameController.text} ${_lastNameController.text} successfully created',
-            ),
+            content: Text('Admin user ${_firstNameController.text} ${_lastNameController.text} successfully created'),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 3),
           ),
         );
-        Navigator.of(context).pop(true); 
+        Navigator.of(context).pop(true); // Return true to indicate success
       }
     } catch (e) {
       String errorMsg = 'Error creating admin user';
-
+      
       if (e.toString().contains('email')) {
         errorMsg = 'Email address already exists in the system';
       } else if (e.toString().contains('username')) {
@@ -79,7 +76,7 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
       } else if (e.toString().contains('phone')) {
         errorMsg = 'Phone number is not in a valid format';
       }
-
+      
       setState(() {
         _errorMessage = errorMsg;
       });
@@ -187,9 +184,7 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Email is required';
                     }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
                       return 'Enter a valid email address (e.g. name.surname@domain.com)';
                     }
                     return null;
@@ -227,9 +222,7 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
                           if (value.length < 6) {
                             return 'Password must be at least 6 characters';
                           }
-                          if (!RegExp(
-                            r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$',
-                          ).hasMatch(value)) {
+                          if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$').hasMatch(value)) {
                             return 'Password must contain at least one letter and one number';
                           }
                           return null;
@@ -311,7 +304,9 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
       obscureText: isPassword,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         filled: true,
         fillColor: Colors.white,
         errorStyle: TextStyle(
@@ -319,8 +314,7 @@ class _AddAdminScreenState extends State<AddAdminScreen> {
           fontWeight: FontWeight.w500,
         ),
         errorMaxLines: 2,
-        helperText:
-            ' ', // This creates space for the error message to appear without shifting the layout
+        helperText: ' ', // This creates space for the error message to appear without shifting the layout
         helperStyle: const TextStyle(height: 0.5),
       ),
       validator: validator,

@@ -336,8 +336,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _postalCodeController,
-                    autovalidateMode: AutovalidateMode.onUserInteraction,
-                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: 'Postal Code',
                       border: OutlineInputBorder(),
