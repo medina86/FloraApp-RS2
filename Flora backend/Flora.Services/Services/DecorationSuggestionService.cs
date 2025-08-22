@@ -22,19 +22,6 @@ namespace Flora.Services.Services
         {
             _blobService = blobService;
         }
-        
-        protected override IQueryable<DecorationSuggestion> ApplyFilter(IQueryable<DecorationSuggestion> query, DecorationSuggestionSearchObject search)
-        {
-            var filteredQuery = base.ApplyFilter(query, search);
-
-            // Filtriranje po DecorationRequestId
-            if (search.DecorationRequestId.HasValue)
-            {
-                filteredQuery = filteredQuery.Where(ds => ds.DecorationRequestId == search.DecorationRequestId.Value);
-            }
-
-            return filteredQuery;
-        }
 
         public override async Task<DecorationSuggestionResponse> CreateAsync(DecorationSuggestionRequest request)
         {

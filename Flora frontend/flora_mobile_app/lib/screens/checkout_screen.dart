@@ -337,19 +337,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   TextFormField(
                     controller: _postalCodeController,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: 'Postal Code',
                       border: OutlineInputBorder(),
-                      hintText: 'Enter numeric postal code',
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter postal code';
-                      }
-                      // Proveri da li sadrži samo brojeve
-                      if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                        return 'Postal code must contain only numbers';
                       }
                       return null;
                     },

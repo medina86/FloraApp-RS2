@@ -28,14 +28,17 @@ class OrderDetailModel {
 
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
     List<CustomBouquetComponent>? components;
-    
+
     // Debug print da vidimo što backend šalje
     print('DEBUG - OrderDetail JSON: $json');
-    if (json['productName']?.toString().toLowerCase().contains('custom') == true) {
+    if (json['productName']?.toString().toLowerCase().contains('custom') ==
+        true) {
       print('DEBUG - Custom bouquet detected!');
       print('DEBUG - customBouquetId: ${json['customBouquetId']}');
       print('DEBUG - specialInstructions: ${json['specialInstructions']}');
-      print('DEBUG - customBouquetComponents: ${json['customBouquetComponents']}');
+      print(
+        'DEBUG - customBouquetComponents: ${json['customBouquetComponents']}',
+      );
     }
 
     // Pokušaj parsirati custom bouquet komponente

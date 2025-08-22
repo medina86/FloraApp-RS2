@@ -24,12 +24,7 @@ class CartApiService {
           (data) => data,
         );
 
-        print('🔍 Raw cart items response: $itemsData');
-
         if (itemsData['items'] != null) {
-          for (var item in itemsData['items']) {
-            print('🔍 Raw cart item JSON: $item');
-          }
           items = (itemsData['items'] as List)
               .map((item) => CartItemModel.fromJson(item))
               .toList();
@@ -179,16 +174,6 @@ class CartApiService {
         return false;
       }
       throw ApiException('Error adding to cart: $e');
-    }
-  }
-
-  static Future<bool> clearCartItems(int cartId) async {
-    try {
-      // Poziva API endpoint za brisanje svih stavki iz korpe
-      return await BaseApiService.delete('/cart/$cartId/items');
-    } catch (e) {
-      print('Error clearing cart items: $e');
-      return false;
     }
   }
 

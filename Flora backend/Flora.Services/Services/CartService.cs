@@ -46,8 +46,7 @@ namespace Flora.Services.Services
                 {
                     Id = i.Id,
                     ProductId = i.ProductId?? 0, 
-                    CustomBouquetId = i.CustomBouquetId,
-                    ProductName = GetItemName(i),
+                    ProductName = " ",
                     Price = GetItemPrice(i),
                     Quantity = i.Quantity,
                     CardMessage = i.CardMessage,
@@ -76,17 +75,6 @@ namespace Flora.Services.Services
                 return item.Product.Images.FirstOrDefault()?.ImageUrl;
 
             return null;
-        }
-
-        private string GetItemName(CartItem item)
-        {
-            if (item.Product != null)
-                return item.Product.Name;
-
-            if (item.CustomBouquet != null)
-                return "Custom Bouquet";
-
-            return item.ProductName ?? "Unknown Item";
         }
     }
 }

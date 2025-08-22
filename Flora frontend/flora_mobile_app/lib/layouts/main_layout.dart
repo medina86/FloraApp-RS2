@@ -425,6 +425,7 @@ class _MainLayoutState extends State<MainLayout> {
             : _selectedIndex == 4
             ? 'Account'
             : 'Flora',
+        notificationCount: 0,
       ),
       drawer: AppDrawer(
         userId: widget.userId,

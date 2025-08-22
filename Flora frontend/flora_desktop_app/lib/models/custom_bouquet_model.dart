@@ -23,7 +23,10 @@ class CustomBouquetModel {
       specialInstructions: json['specialInstructions'] as String?,
       totalPrice: (json['totalPrice'] as num).toDouble(),
       items: (json['items'] as List? ?? [])
-          .map((item) => CustomBouquetItemModel.fromJson(item as Map<String, dynamic>))
+          .map(
+            (item) =>
+                CustomBouquetItemModel.fromJson(item as Map<String, dynamic>),
+          )
           .toList(),
     );
   }

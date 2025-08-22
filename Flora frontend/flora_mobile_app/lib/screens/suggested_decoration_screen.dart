@@ -91,38 +91,26 @@ class _DecorationSuggestionsScreenState
     });
 
     try {
-      print('🔍 Fetching suggestions for request ID: ${widget.eventRequest.id}');
-      final url = '$baseUrl/DecorationSuggestion?decorationRequestId=${widget.eventRequest.id}';
-      print('🔍 URL: $url');
-      
       final response = await http.get(
-        Uri.parse(url),
+        Uri.parse(
+          '$baseUrl/DecorationSuggestion?DecorationRequestId=${widget.eventRequest.id}',
+        ),
         headers: AuthProvider.getHeaders(),
       );
 
-      print('🔍 Response status code: ${response.statusCode}');
-      print('🔍 Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final dynamic decodedData = json.decode(response.body);
-        print('🔍 Decoded data type: ${decodedData.runtimeType}');
-        
         List<dynamic> suggestionsJsonList = [];
 
         if (decodedData is Map && decodedData.containsKey('items')) {
-          print('🔍 Data contains items key');
           if (decodedData['items'] is List) {
             suggestionsJsonList = decodedData['items'];
-            print('🔍 Items is a list with ${suggestionsJsonList.length} items');
           } else {
-            print('🔍 Items is not a list: ${decodedData['items'].runtimeType}');
             suggestionsJsonList = [];
           }
         } else if (decodedData is List) {
-          print('🔍 Data is a list with ${decodedData.length} items');
           suggestionsJsonList = decodedData;
         } else {
-          print('🔍 Data is neither a map with items nor a list: ${decodedData.runtimeType}');
           suggestionsJsonList = [];
         }
 
@@ -130,7 +118,6 @@ class _DecorationSuggestionsScreenState
           _suggestions = suggestionsJsonList
               .map((item) => DecorationSuggestion.fromJson(item))
               .toList();
-          print('🔍 Parsed ${_suggestions.length} suggestions');
         });
       } else {
         setState(() {
@@ -144,7 +131,7 @@ class _DecorationSuggestionsScreenState
       setState(() {
         _error = 'An error occurred: $e';
       });
-      print('❌ Error fetching suggestions: $e');
+      print('Error fetching suggestions: $e');
     } finally {
       setState(() {
         _isLoading = false;

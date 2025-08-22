@@ -40,7 +40,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
 
     try {
       final response = await http.get(
-
         Uri.parse('$baseUrl/DecorationRequest?RetrieveAll=true'),
         headers: AuthProvider.getHeaders(),
       );
@@ -97,7 +96,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
   }
 
   Future<void> _fetchUserNames() async {
-    // Dohvati unique user ID-jeve
     Set<int> userIds = _allReservations.map((r) => r.userId).toSet();
 
     for (int userId in userIds) {
@@ -128,77 +126,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
             .toList();
       }
     });
-  }
-
-  void _confirmDeleteReservation(Reservation reservation) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text(
-            'Are you sure you want to delete reservation for "${reservation.eventType}"?',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _deleteReservation(reservation);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteReservation(Reservation reservation) async {
-    setState(() {
-      _isDeleting = true;
-    });
-
-    try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/DecorationRequest/${reservation.id}'),
-        headers: AuthProvider.getHeaders(),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _allReservations.removeWhere((r) => r.id == reservation.id);
-          _filteredReservations.removeWhere((r) => r.id == reservation.id);
-        });
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Reservation deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        throw Exception('Failed to delete reservation: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting reservation: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isDeleting = false;
-      });
-    }
   }
 
   @override
@@ -536,18 +463,6 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                                                 }
                                               },
                                               tooltip: 'View details',
-                                            ),
-                                            IconButton(
-                                              icon: Icon(
-                                                Icons.delete_outline,
-                                                color: Colors.red.shade400,
-                                                size: 20,
-                                              ),
-                                              onPressed: () =>
-                                                  _confirmDeleteReservation(
-                                                    reservation,
-                                                  ),
-                                              tooltip: 'Delete reservation',
                                             ),
                                           ],
                                         ),

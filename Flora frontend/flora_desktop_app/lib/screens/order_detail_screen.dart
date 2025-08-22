@@ -147,6 +147,13 @@ class OrderDetailsScreen extends StatelessWidget {
                     const SizedBox(height: 30),
                     const Divider(color: Colors.grey),
                     const SizedBox(height: 20),
+                    
+                    // Special Instructions and Card Message Section
+                    _buildOrderSpecialInfo(order),
+                    
+                    const SizedBox(height: 30),
+                    const Divider(color: Colors.grey),
+                    const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
@@ -165,6 +172,124 @@ class OrderDetailsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+  
+  // Helper method to build special instructions and card message section
+  Widget _buildOrderSpecialInfo(OrderModel order) {
+    // Check if any order details have special instructions or card messages
+    bool hasSpecialInstructions = order.orderDetails.any((detail) => 
+        detail.specialInstructions != null && detail.specialInstructions!.isNotEmpty);
+    
+    bool hasCardMessages = order.orderDetails.any((detail) => 
+        detail.cardMessage != null && detail.cardMessage!.isNotEmpty);
+    
+    if (!hasSpecialInstructions && !hasCardMessages) {
+      return const SizedBox.shrink(); // Don't show anything if no special info exists
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Additional Information:',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 15),
+        
+        // Display card messages if any
+        if (hasCardMessages) ...[
+          for (var detail in order.orderDetails)
+            if (detail.cardMessage != null && detail.cardMessage!.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 15),
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.pink.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.pink.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.card_giftcard, 
+                          color: Color.fromARGB(255, 170, 46, 92), size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Card Message for ${detail.productName}:',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Color.fromARGB(255, 170, 46, 92),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      detail.cardMessage!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+        
+        // Display special instructions if any
+        if (hasSpecialInstructions) ...[
+          for (var detail in order.orderDetails)
+            if (detail.specialInstructions != null && 
+                detail.specialInstructions!.isNotEmpty &&
+                !detail.isCustomBouquet) // Skip custom bouquets as they show instructions in their card
+              Container(
+                margin: const EdgeInsets.only(bottom: 15),
+                padding: const EdgeInsets.all(15),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.info_outline, 
+                          color: Colors.blue, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Special Instructions for ${detail.productName}:',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      detail.specialInstructions!,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+        ],
+      ],
     );
   }
 }

@@ -49,7 +49,7 @@ class DecorationRequest {
 }
 
 class DecorationRequestScreen extends StatefulWidget {
-  final int userId; // Receives userId from HomeScreen
+  final int userId; // Prima userId od HomeScreen-a
 
   const DecorationRequestScreen({Key? key, required this.userId})
     : super(key: key);
@@ -60,7 +60,7 @@ class DecorationRequestScreen extends StatefulWidget {
 }
 
 class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
-  final _formKey = GlobalKey<FormState>(); // Form validation key
+  final _formKey = GlobalKey<FormState>(); // Ključ za validaciju forme
 
   String? _selectedEventType;
   final TextEditingController _eventDateController = TextEditingController();
@@ -90,7 +90,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
     'Other',
   ];
 
-  // Function for selecting date using date picker
+  // Funkcija za odabir datuma pomoću date pickera
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -158,7 +158,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
 
         if (response.statusCode == 200 || response.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Request submitted successfully!')),
+            const SnackBar(content: Text('Zahtev uspešno poslat!')),
           );
 
           _formKey.currentState?.reset();
@@ -169,18 +169,18 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
           });
         } else {
           print(
-            'Error submitting request: ${response.statusCode} ${response.body}',
+            'Greška pri slanju zahteva: ${response.statusCode} ${response.body}',
           );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Error submitting request: ${response.statusCode}',
+                'Greška pri slanju zahteva: ${response.statusCode}',
               ),
             ),
           );
         }
       } catch (e) {
-        print('Error occurred: $e');
+        print('Došlo je do greške: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to submit request. Please try again.'),
@@ -257,7 +257,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                       vertical: 8,
                     ),
                   ),
-                  hint: const Text('Select event type'),
+                  hint: const Text('Odaberite tip događaja'),
                   items: _eventTypes.map((String type) {
                     return DropdownMenuItem<String>(
                       value: type,
@@ -270,7 +270,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                     });
                   },
                   validator: (value) =>
-                      value == null ? 'Please select event type' : null,
+                      value == null ? 'Molimo odaberite tip događaja' : null,
                 ),
                 const SizedBox(height: 16),
                 _buildLabel('Event date'),
@@ -297,7 +297,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                         ),
                       ),
                       validator: (value) => value!.isEmpty
-                          ? 'Please select event date'
+                          ? 'Molimo odaberite datum događaja'
                           : null,
                     ),
                   ),
@@ -306,7 +306,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                 _buildLabel('Venue type'),
                 _buildTextFormField(
                   _venueTypeController,
-                  'Enter venue type',
+                  'Unesite tip lokacije',
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -322,9 +322,9 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'Required field';
+                                return 'Obavezno polje';
                               if (int.tryParse(value) == null)
-                                return 'Invalid number';
+                                return 'Nevažeći broj';
                               return null;
                             },
                           ),
@@ -343,9 +343,9 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty)
-                                return 'Required field';
+                                return 'Obavezno polje';
                               if (int.tryParse(value) == null)
-                                return 'Invalid number';
+                                return 'Nevažeći broj';
                               return null;
                             },
                           ),
@@ -377,8 +377,8 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                     decimal: true,
                   ),
                   validator: (value) {
-                    if (value == null || value.isEmpty) return 'Required field';
-                    if (double.tryParse(value) == null) return 'Invalid amount';
+                    if (value == null || value.isEmpty) return 'Obavezno polje';
+                    if (double.tryParse(value) == null) return 'Nevažeći iznos';
                     return null;
                   },
                 ),

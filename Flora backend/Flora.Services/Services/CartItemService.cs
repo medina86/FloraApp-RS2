@@ -112,7 +112,6 @@ namespace Flora.Services.Services
             {
                 Id = entity.Id,
                 ProductId = entity.ProductId ?? 0,
-                CustomBouquetId = entity.CustomBouquetId,
                 ProductName = GetItemName(entity),
                 Price = GetItemPrice(entity),
                 Quantity = entity.Quantity,

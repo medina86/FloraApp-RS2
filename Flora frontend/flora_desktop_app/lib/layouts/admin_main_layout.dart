@@ -129,10 +129,36 @@ class AdminMainLayoutState extends State<AdminMainLayout> {
   }
 
   void _logout() {
-    AuthProvider.logout();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to log out?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(); // Close the dialog
+                AuthProvider.logout();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminLoginScreen()),
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color.fromARGB(255, 170, 46, 92),
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
     );
   }
 

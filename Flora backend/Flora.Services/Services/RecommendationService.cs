@@ -4,8 +4,6 @@ using Flora.Services.Database;
 using Flora.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.ML.Trainers;
-using Microsoft.ML;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,20 +23,6 @@ namespace Flora.Services.Services
             _context = context;
             _logger = logger;
             _similarityMap = new Dictionary<(int, int), double>();
-            
-            // Pokreni inicijalizaciju similarity map-a u background-u
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(5000); // Čekaj 5 sekundi da se aplikacija potpuno učita
-                    await RecalculateSimilarityMapAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Greška pri inicijalizaciji similarity map-a");
-                }
-            });
         }
         public async Task<List<ProductResponse>> GetRecommendedProductsAsync(int productId, int topN = 5)
         {
@@ -144,61 +128,54 @@ namespace Flora.Services.Services
         {
             try
             {
-                _logger.LogInformation("Započinje treniranje ML.NET item-based preporuka");
-
+                _logger.LogInformation("Započinje izračun mape sličnosti proizvoda");
+                
                 var userProductPurchases = await _context.OrderDetails
                     .Include(od => od.Order)
                     .Where(od => od.ProductId.HasValue)
                     .AsNoTracking()
-                    .Select(od => new RecommendationInput
+                    .Select(od => new
                     {
-                        userId = od.Order.UserId.ToString(),
-                        productId = od.ProductId.Value.ToString(),
-                        Label = 1f 
+                        UserId = od.Order.UserId,
+                        ProductId = od.ProductId.Value
                     })
                     .Distinct()
                     .ToListAsync();
 
-                var mlContext = new MLContext();
-                var dataView = mlContext.Data.LoadFromEnumerable(userProductPurchases);
-
-                var options = new MatrixFactorizationTrainer.Options
-                {
-                    MatrixColumnIndexColumnName = nameof(RecommendationInput.userId),
-                    MatrixRowIndexColumnName = nameof(RecommendationInput.productId),
-                    LabelColumnName = nameof(RecommendationInput.Label),
-                    NumberOfIterations = 20,
-                    ApproximationRank = 100
-                };
-
-                var pipeline = mlContext.Recommendation().Trainers.MatrixFactorization(options);
-                var model = pipeline.Fit(dataView);
-                var predictionEngine = mlContext.Model.CreatePredictionEngine<RecommendationInput, RecommendationPrediction>(model);
+                var productUserMap = userProductPurchases
+                    .GroupBy(p => p.ProductId)
+                    .ToDictionary(g => g.Key, g => g.Select(p => p.UserId).ToHashSet());
 
                 _similarityMap = new Dictionary<(int, int), double>();
-                var productIds = userProductPurchases.Select(p => int.Parse(p.productId)).Distinct().ToList();
 
-                foreach (var p1 in productIds)
+                var productIds = productUserMap.Keys.ToList();
+                for (int i = 0; i < productIds.Count; i++)
                 {
-                    foreach (var p2 in productIds)
+                    for (int j = 0; j < productIds.Count; j++)
                     {
-                        if (p1 == p2) continue;
+                        if (i == j) continue;
 
-                        var prediction = predictionEngine.Predict(new RecommendationInput
-                        {
-                            userId = p1.ToString(),
-                            productId = p2.ToString()
-                        });
+                        int productA = productIds[i];
+                        int productB = productIds[j];
 
-                        _similarityMap[(p1, p2)] = prediction.Score;
+                        var usersA = productUserMap[productA];
+                        var usersB = productUserMap[productB];
+
+                        var intersection = usersA.Intersect(usersB).Count();
+                        var union = usersA.Count + usersB.Count - intersection;
+
+                        if (union == 0) continue;
+
+                        double similarity = (double)intersection / union;
+                        _similarityMap[(productA, productB)] = similarity;
                     }
                 }
 
-                _logger.LogInformation("ML.NET sličnosti proizvoda izračunate. Ukupno parova: {Count}", _similarityMap.Count);
+                _logger.LogInformation("Izračun mape sličnosti proizvoda uspješno završen. Ukupno parova: {Count}", _similarityMap.Count);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Greška prilikom izračunavanja ML.NET sličnosti proizvoda");
+                _logger.LogError(ex, "Greška prilikom izračunavanja mape sličnosti proizvoda");
             }
         }
 
@@ -206,14 +183,11 @@ namespace Flora.Services.Services
         {
             try
             {
-                _logger.LogInformation("Dohvaćanje preporuka za korisnika ID: {UserId}", userId);
-                
                 // Provjerimo ima li korisnik narudžbe
                 var hasOrders = await _context.Orders.AnyAsync(o => o.UserId == userId);
                 
                 if (!hasOrders)
                 {
-                    _logger.LogInformation("Korisnik ID: {UserId} nema narudžbe, vraćamo featured proizvode", userId);
                     // Ako korisnik nema narudžbe, vraćamo popularne/featured proizvode
                     return await GetFeaturedProductsAsync(maxResults);
                 }
@@ -253,8 +227,6 @@ namespace Flora.Services.Services
                     .ToListAsync();
 
                 // Mapiraj u DTO
-                _logger.LogInformation("Korisnik ID: {UserId} ima {OrderCount} narudžbi, preporučuje se {ProductCount} proizvoda", userId, lastOrders.Count, recommendedProducts.Count);
-                
                 var result = recommendedProducts.Select(p => new ProductResponse
                 {
                     Id = p.Id,
@@ -283,7 +255,7 @@ namespace Flora.Services.Services
 
         private async Task<List<ProductResponse>> GetFeaturedProductsAsync(int count)
         {
-            // Prvo pokušaj featured ili new proizvode
+            // Vraća popularne/featured proizvode za korisnike koji nemaju narudžbe
             var featuredProducts = await _context.Products
                 .Where(p => p.IsAvailable && p.Active && (p.IsFeatured || p.IsNew))
                 .Include(p => p.Images)
@@ -291,19 +263,6 @@ namespace Flora.Services.Services
                 .Include(p => p.Occasion)
                 .Take(count)
                 .ToListAsync();
-
-            // Ako nema featured/new proizvoda, uzmi bilo koje dostupne proizvode
-            if (featuredProducts.Count == 0)
-            {
-                featuredProducts = await _context.Products
-                    .Where(p => p.IsAvailable && p.Active)
-                    .Include(p => p.Images)
-                    .Include(p => p.Category)
-                    .Include(p => p.Occasion)
-                    .OrderBy(p => p.Id)
-                    .Take(count)
-                    .ToListAsync();
-            }
 
             return featuredProducts.Select(p => new ProductResponse
             {
@@ -322,17 +281,5 @@ namespace Flora.Services.Services
                 ImageUrls = p.Images.Select(i => i.ImageUrl).ToList()
             }).ToList();
         }
-    }
-
-    public class RecommendationInput
-    {
-        public string userId { get; set; }
-        public string productId { get; set; }
-        public float Label { get; set; }
-    }
-
-    public class RecommendationPrediction
-    {
-        public float Score { get; set; }
     }
 }

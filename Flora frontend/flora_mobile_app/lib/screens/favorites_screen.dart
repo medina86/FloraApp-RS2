@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flora_mobile_app/models/favorite_product.dart';
 import 'package:flora_mobile_app/providers/favorites_api.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<FavoriteProduct> _allFavorites = [];
   List<FavoriteProduct> _filteredFavorites = [];
-
+  List<int> _selectedProducts = [];
   bool _isLoading = false;
 
   @override
@@ -57,7 +58,43 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     });
   }
 
+  void _toggleProductSelection(int productId) {
+    setState(() {
+      if (_selectedProducts.contains(productId)) {
+        _selectedProducts.remove(productId);
+      } else {
+        _selectedProducts.add(productId);
+      }
+    });
+  }
 
+  void _addSelectedToCart() {
+    if (_selectedProducts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select products to add to cart'),
+          backgroundColor: Color(0xFFE91E63),
+        ),
+      );
+      return;
+    }
+
+    final selectedProductNames = _filteredFavorites
+        .where((product) => _selectedProducts.contains(product.productId))
+        .map((product) => product.productName ?? 'Unknown')
+        .join(', ');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Added to cart: $selectedProductNames'),
+        backgroundColor: const Color(0xFFE91E63),
+      ),
+    );
+
+    setState(() {
+      _selectedProducts.clear();
+    });
+  }
 
   Future<void> _removeFromFavorites(FavoriteProduct product) async {
     setState(() {
@@ -75,7 +112,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
           _filteredFavorites.removeWhere(
             (p) => p.productId == product.productId,
           );
-
+          _selectedProducts.remove(product.productId);
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +239,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                 },
               ),
             ),
-
+            if (_filteredFavorites.isNotEmpty) _buildAddToCartButton(),
           ],
         ),
       ),
@@ -245,11 +282,11 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
             itemCount: _filteredFavorites.length,
             itemBuilder: (context, index) {
               final product = _filteredFavorites[index];
-
+              final isSelected = _selectedProducts.contains(product.productId);
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 15),
-                child: _buildFavoriteItem(product),
+                child: _buildFavoriteItem(product, isSelected),
               );
             },
           ),
@@ -258,7 +295,7 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     );
   }
 
-  Widget _buildFavoriteItem(FavoriteProduct product) {
+  Widget _buildFavoriteItem(FavoriteProduct product, bool isSelected) {
     final imageUrl = product.imageUrls.isNotEmpty
         ? product.imageUrls.first
         : 'https://via.placeholder.com/80x80/FFB6C1/FFFFFF?text=No+Image';
@@ -273,7 +310,9 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: null,
+          border: isSelected
+              ? Border.all(color: const Color(0xFFE91E63), width: 2)
+              : null,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -322,7 +361,25 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
                 ],
               ),
             ),
-
+            // Selection Checkbox
+            GestureDetector(
+              onTap: () => _toggleProductSelection(product.productId),
+              child: Container(
+                width: 24,
+                height: 24,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFFE91E63)
+                      : Colors.transparent,
+                  border: Border.all(color: const Color(0xFFE91E63), width: 2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: isSelected
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    : null,
+              ),
+            ),
             // Heart Icon with loading state
             GestureDetector(
               onTap: _isLoading ? null : () => _removeFromFavorites(product),
@@ -347,7 +404,32 @@ class _FavouritesScreenState extends State<FavouritesScreen> {
     );
   }
 
-
+  Widget _buildAddToCartButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(20),
+      child: ElevatedButton(
+        onPressed: _addSelectedToCart,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFE91E63),
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+        ),
+        child: Text(
+          _selectedProducts.isEmpty
+              ? 'ADD TO CART'
+              : 'ADD TO CART (${_selectedProducts.length})',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     return Center(

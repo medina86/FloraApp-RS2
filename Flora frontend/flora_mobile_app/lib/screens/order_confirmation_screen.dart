@@ -1,44 +1,19 @@
 import 'package:flora_mobile_app/models/order.dart';
+import 'package:flora_mobile_app/screens/my_orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
-import 'package:flora_mobile_app/providers/cart_api.dart';
-import 'dart:math';
+import 'dart:math'; // Dodaj import za min funkciju
 
-class OrderConfirmationScreen extends StatefulWidget {
+class OrderConfirmationScreen extends StatelessWidget {
   final OrderModel order;
 
   const OrderConfirmationScreen({super.key, required this.order});
 
   @override
-  State<OrderConfirmationScreen> createState() => _OrderConfirmationScreenState();
-}
-
-class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
-  @override
-  void initState() {
-    super.initState();
-    // Očisti stavke iz korpe nakon uspešne narudžbe
-    _clearCartItems();
-  }
-
-  Future<void> _clearCartItems() async {
-    try {
-      // Prvo dobavi cart ID za korisnika
-      final cartId = await CartApiService.getCartIdByUser(widget.order.userId);
-      if (cartId != null) {
-        // Očisti stavke iz korpe ali zadrži samu korpu
-        await CartApiService.clearCartItems(cartId);
-      }
-    } catch (e) {
-      print('Error clearing cart items: $e');
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final String orderIdDisplay = widget.order.id
+    final String orderIdDisplay = order.id
         .toString()
-        .substring(0, min(widget.order.id.toString().length, 8))
+        .substring(0, min(order.id.toString().length, 8))
         .toUpperCase();
 
     return Scaffold(
@@ -67,13 +42,13 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Your order #$orderIdDisplay has been successfully placed and confirmed.',
+                'Your order #$orderIdDisplay has been successfully placed and confirmed.', // Koristi novu varijablu
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 18, color: Colors.black87),
               ),
               const SizedBox(height: 10),
               Text(
-                'Total Amount: ${widget.order.totalAmount.toStringAsFixed(2)} KM',
+                'Total Amount: ${order.totalAmount.toStringAsFixed(2)} KM',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -83,13 +58,7 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
               const SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
-                  // Direktno navigiraj na MainLayout sa userId
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(
-                      builder: (context) => MainLayout(userId: widget.order.userId),
-                    ),
-                    (route) => false, // Ukloni sve prethodne ekrane iz steka
-                  );
+                  MainLayout.of(context)?.goBackToHome();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 170, 46, 92),
@@ -107,7 +76,40 @@ class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
               ),
-
+              const SizedBox(height: 15),
+              TextButton(
+                onPressed: () {
+                  // Navigate to My Orders screen
+                  Navigator.of(context)
+                      .pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              MainLayout(userId: order.userId),
+                        ),
+                      )
+                      .then((_) {
+                        // Use a slight delay to ensure MainLayout is built
+                        Future.delayed(Duration(milliseconds: 100), () {
+                          final mainLayout = MainLayout.of(context);
+                          if (mainLayout != null) {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    MyOrdersScreen(userId: order.userId),
+                              ),
+                            );
+                          }
+                        });
+                      });
+                },
+                child: const Text(
+                  'View Order History',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Color.fromARGB(255, 170, 46, 92),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

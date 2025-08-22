@@ -190,14 +190,8 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
     final adminLayoutState = context
         .findAncestorStateOfType<AdminMainLayoutState>();
     if (adminLayoutState != null) {
-      // Za sada ćemo samo prikazati poruku jer trebamo implementirati edit screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Edit functionality will be implemented in the next phase',
-          ),
-          backgroundColor: Colors.orange,
-        ),
+      adminLayoutState.setContent(
+        AddDonationCampaignScreen(campaign: campaign),
       );
     }
   }
@@ -296,14 +290,7 @@ class _DonationCampaignsScreenState extends State<DonationCampaignsScreen> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          '${campaign.totalAmount.toStringAsFixed(2)} KM',
-                          style: const TextStyle(
-                            color: Colors.pink,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
+
                       ],
                     ),
                   ),

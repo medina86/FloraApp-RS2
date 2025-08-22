@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
+import 'package:flora_mobile_app/screens/selected_category_products_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/models/custom_bouquet_model.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
-import 'dart:convert';
 
 class CustomBouquetApiService {
   
@@ -35,6 +36,8 @@ class CustomBouquetApiService {
         body: requestBody,
       );
 
+      print('Custom Bouquet API Response Status Code: ${response.statusCode}');
+      print('Custom Bouquet API Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = json.decode(response.body);
@@ -51,6 +54,7 @@ class CustomBouquetApiService {
   static Future<List<Product>> getAvailableFlowers() async {
     try {
       final url = Uri.parse('$baseUrl/Product?categoryName=Flower');
+      print('Fetching available flowers from: $url');
 
       final response = await http.get(url, headers: AuthProvider.getHeaders());
 
@@ -96,15 +100,12 @@ class CustomBouquetApiService {
     int quantity = 1,
     String? cardMessage,
     String? specialInstructions,
-    double? price,
   }) async {
     try {
       final requestBody = json.encode({
         'cartId': cartId,
-        'productName': 'Custom Bouquet',
         'customBouquetId': customBouquetId,
         'quantity': quantity,
-        'price': price ?? 0.0,
         'cardMessage': cardMessage ?? '',
         'specialInstructions': specialInstructions ?? '',
       });
@@ -173,7 +174,6 @@ class CustomBouquetApiService {
         quantity: cartQuantity,
         cardMessage: cardMessage,
         specialInstructions: specialInstructions,
-        price: totalPrice,
       );
 
       if (addedToCart) {

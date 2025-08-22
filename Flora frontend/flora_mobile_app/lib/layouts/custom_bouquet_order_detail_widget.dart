@@ -70,7 +70,6 @@ class _CustomBouquetOrderDetailWidgetState
         : 'https://via.placeholder.com/80x80/FFB6C1/FFFFFF?text=Custom+Bouquet';
 
     return Container(
-      width: MediaQuery.of(context).size.width,
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
@@ -112,6 +111,7 @@ class _CustomBouquetOrderDetailWidgetState
                         ),
                       ),
                     ),
+                    // Special marker za custom buket
                     Positioned(
                       top: 0,
                       right: 0,
@@ -132,82 +132,61 @@ class _CustomBouquetOrderDetailWidgetState
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 5.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                "Custom Bouquet",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text(
+                              "Custom Bouquet",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(
-                                _isExpanded
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                color: Color.fromARGB(255, 170, 46, 92),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              _isExpanded
+                                  ? Icons.keyboard_arrow_up
+                                  : Icons.keyboard_arrow_down,
+                              color: Color.fromARGB(255, 170, 46, 92),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isExpanded = !_isExpanded;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      if (_bouquetDetails != null)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.color_lens,
+                              size: 16,
+                              color: Color.fromARGB(255, 170, 46, 92),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Color: ${_bouquetDetails?.color}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _isExpanded = !_isExpanded;
-                                });
-                              },
                             ),
                           ],
                         ),
-                        if (_bouquetDetails != null)
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.color_lens,
-                                size: 16,
-                                color: Color.fromARGB(255, 170, 46, 92),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "Color: ${_bouquetDetails?.color}",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        if (_bouquetDetails != null)
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.local_florist,
-                                size: 16,
-                                color: Color.fromARGB(255, 170, 46, 92),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "${_bouquetDetails!.items.length} different flowers",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        Text(
-                          'Quantity: ${widget.orderDetail.quantity}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
+                      Text(
+                        'Quantity: ${widget.orderDetail.quantity}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 Text(
@@ -220,6 +199,7 @@ class _CustomBouquetOrderDetailWidgetState
                 ),
               ],
             ),
+            // Expanded view with details
             if (_isExpanded)
               _isLoading
                   ? Container(
@@ -231,202 +211,74 @@ class _CustomBouquetOrderDetailWidgetState
                       ),
                     )
                   : _bouquetDetails == null
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          alignment: Alignment.center,
-                          child: const Text('No details available'),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Divider(),
-                              const Text(
-                                'Bouquet Contents:',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color.fromARGB(255, 170, 46, 92),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color.fromARGB(255, 170, 46, 92)
-                                      .withOpacity(0.05),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: const Color.fromARGB(255, 170, 46, 92)
-                                        .withOpacity(0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  children: _bouquetDetails!.items
-                                      .map(
-                                        (item) => Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 2),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.local_florist,
-                                                      size: 14,
-                                                      color: Color.fromARGB(
-                                                          255, 170, 46, 92),
-                                                    ),
-                                                    const SizedBox(width: 6),
-                                                    Expanded(
-                                                      child: Text(
-                                                        item.productName,
-                                                        style: const TextStyle(
-                                                          fontSize: 13,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 2,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: const Color.fromARGB(
-                                                      255, 170, 46, 92),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Text(
-                                                  '${item.quantity}x',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              ),
-                              if (widget.orderDetail.cardMessage != null &&
-                                  widget.orderDetail.cardMessage!.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.blue.withOpacity(0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(
-                                        Icons.card_giftcard,
-                                        size: 16,
-                                        color: Colors.blue,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Card Message:',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue,
-                                              ),
-                                            ),
-                                            Text(
-                                              widget.orderDetail.cardMessage!,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              if (widget.orderDetail.specialInstructions !=
-                                      null &&
-                                  widget.orderDetail.specialInstructions!
-                                      .isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.withOpacity(0.05),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.orange.withOpacity(0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Icon(
-                                        Icons.info_outline,
-                                        size: 16,
-                                        color: Colors.orange,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Special Instructions:',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.orange,
-                                              ),
-                                            ),
-                                            Text(
-                                              widget.orderDetail
-                                                  .specialInstructions!,
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      alignment: Alignment.center,
+                      child: const Text('No details available'),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Divider(),
+                          const Text(
+                            'Bouquet Contents:',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          ..._bouquetDetails!.items.map(
+                            (item) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.fiber_manual_record,
+                                    size: 8,
+                                    color: Color.fromARGB(255, 170, 46, 92),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${item.quantity}x ${item.productName}',
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (widget.orderDetail.specialInstructions != null &&
+                              widget
+                                  .orderDetail
+                                  .specialInstructions!
+                                  .isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Special Instructions: ${widget.orderDetail.specialInstructions}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          if (widget.orderDetail.cardMessage != null &&
+                              widget.orderDetail.cardMessage!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Card Message: ${widget.orderDetail.cardMessage}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
           ],
         ),
       ),
