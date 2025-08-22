@@ -275,22 +275,39 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-
                       Text(
-                        'Total Donations',
+                        'Target amount',
                         style: TextStyle(
                           color: Colors.grey[600],
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${widget.campaign.totalAmount.toStringAsFixed(2)} KM',
+                        style: const TextStyle(
+                          color: Colors.pink,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Collected so far',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '${_calculateTotalDonated().toStringAsFixed(2)} KM',
                         style: TextStyle(
-                          color: Colors.pink[700],
+                          color: Colors.green[700],
                           fontWeight: FontWeight.bold,
-                          fontSize: 32,
+                          fontSize: 24,
                         ),
                       ),
                     ],
@@ -374,52 +391,42 @@ class _DonationDetailsScreenState extends State<DonationDetailsScreen> {
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: MediaQuery.of(context).size.width,
+                  child: DataTable(
+                    headingTextStyle: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF666666),
                     ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: DataTable(
-                        headingTextStyle: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF666666),
-                        ),
-                        dataTextStyle: TextStyle(color: Colors.grey[800]),
-                        horizontalMargin: 24,
-                        columns: const [
-                          DataColumn(label: Text('Donor')),
-                          DataColumn(label: Text('Email')),
-                          DataColumn(label: Text('Amount')),
-                          DataColumn(label: Text('Purpose')),
-                          DataColumn(label: Text('Date')),
+                    dataTextStyle: TextStyle(color: Colors.grey[800]),
+                    horizontalMargin: 24,
+                    columns: const [
+                      DataColumn(label: Text('Donor')),
+                      DataColumn(label: Text('Email')),
+                      DataColumn(label: Text('Amount')),
+                      DataColumn(label: Text('Purpose')),
+                      DataColumn(label: Text('Date')),
+                    ],
+                    rows: _donations.map((donation) {
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(donation.donorName)),
+                          DataCell(Text(donation.email)),
+                          DataCell(
+                            Text(
+                              '${donation.amount.toStringAsFixed(2)} KM',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          DataCell(Text(donation.purpose)),
+                          DataCell(
+                            Text(
+                              DateFormat('dd.MM.yyyy').format(donation.date),
+                            ),
+                          ),
                         ],
-                        rows: _donations.map((donation) {
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(donation.donorName)),
-                              DataCell(Text(donation.email)),
-                              DataCell(
-                                Text(
-                                  '${donation.amount.toStringAsFixed(2)} KM',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              DataCell(Text(donation.purpose)),
-                              DataCell(
-                                Text(
-                                  DateFormat(
-                                    'dd.MM.yyyy',
-                                  ).format(donation.date),
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ),

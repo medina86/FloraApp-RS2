@@ -8,12 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import '../layouts/constants.dart';
 import '../layouts/admin_main_layout.dart';
 import '../providers/auth_provider.dart';
-import '../models/donation_campaign_model.dart';
 
 class AddDonationCampaignScreen extends StatefulWidget {
-  final DonationCampaign? campaign; // For editing existing campaign
-
-  const AddDonationCampaignScreen({Key? key, this.campaign}) : super(key: key);
+  const AddDonationCampaignScreen({Key? key}) : super(key: key);
 
   @override
   State<AddDonationCampaignScreen> createState() =>
@@ -29,23 +26,7 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
-  bool get _isEditMode => widget.campaign != null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (_isEditMode) {
-      _populateFieldsForEdit();
-    }
-  }
-
-  void _populateFieldsForEdit() {
-    final campaign = widget.campaign!;
-    _titleController.text = campaign.title;
-    _descriptionController.text = campaign.description;
-    _selectedEndDate = campaign.endDate;
-  }
+  final TextEditingController _totalAmountController = TextEditingController();
 
   Future<void> _selectDate(BuildContext context) async {
     if (!mounted) return;
@@ -102,17 +83,13 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final uri = _isEditMode
-          ? Uri.parse('$baseUrl/DonationCampaign/${widget.campaign!.id}')
-          : Uri.parse('$baseUrl/DonationCampaign');
-
-      final method = _isEditMode ? 'PUT' : 'POST';
-
-      var request = http.MultipartRequest(method, uri)
-        ..headers.addAll(AuthProvider.getHeaders())
-        ..fields['title'] = _titleController.text
-        ..fields['description'] = _descriptionController.text
-        ..fields['endDate'] = _selectedEndDate!.toIso8601String();
+      var request =
+          http.MultipartRequest('POST', Uri.parse('$baseUrl/DonationCampaign'))
+            ..headers.addAll(AuthProvider.getHeaders())
+            ..fields['title'] = _titleController.text
+            ..fields['description'] = _descriptionController.text
+            ..fields['endDate'] = _selectedEndDate!.toIso8601String()
+            ..fields['totalAmount'] = _totalAmountController.text;
 
       if (_selectedImage != null) {
         final file = await http.MultipartFile.fromPath(
@@ -132,16 +109,12 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (!mounted) return;
 
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditMode
-                  ? 'Campaign updated successfully'
-                  : 'Campaign created successfully',
-            ),
-          ),
+          const SnackBar(content: Text('Campaign created successfully')),
         );
 
+        // Return to the donation campaigns screen
         final adminLayoutState = context
             .findAncestorStateOfType<AdminMainLayoutState>();
         if (adminLayoutState != null) {
@@ -150,19 +123,13 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
           Navigator.of(context).pop(true); // Fallback
         }
       } else {
-        throw Exception(
-          'Failed to ${_isEditMode ? "update" : "create"} campaign: $responseString',
-        );
+        throw Exception('Failed to create campaign: $responseString');
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error ${_isEditMode ? "updating" : "creating"} campaign: $e',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creating campaign: $e')));
     } finally {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -180,31 +147,9 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.pink),
-                    tooltip: 'Back',
-                    onPressed: () {
-                      final adminLayoutState = context
-                          .findAncestorStateOfType<AdminMainLayoutState>();
-                      if (adminLayoutState != null) {
-                        adminLayoutState.setSelectedIndex(3);
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEditMode ? 'Edit Campaign' : 'Create New Campaign',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFD81B60), // Pink title
-                    ),
-                  ),
-                ],
+              const Text(
+                'Create New Campaign',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 32),
               Expanded(
@@ -243,7 +188,32 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
                           },
                         ),
                         const SizedBox(height: 16),
-
+                        TextFormField(
+                          controller: _totalAmountController,
+                          decoration: const InputDecoration(
+                            labelText: 'Target Amount (KM)',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}'),
+                            ),
+                          ],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a target amount';
+                            }
+                            if (double.tryParse(value) == null) {
+                              return 'Please enter a valid amount';
+                            }
+                            if (double.parse(value) <= 0) {
+                              return 'Amount must be greater than 0';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
                         InkWell(
                           onTap: () => _selectDate(context),
                           child: InputDecorator(
@@ -305,11 +275,7 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
                             ),
                             child: _isLoading
                                 ? const CircularProgressIndicator()
-                                : Text(
-                                    _isEditMode
-                                        ? 'Update Campaign'
-                                        : 'Create Campaign',
-                                  ),
+                                : const Text('Create Campaign'),
                           ),
                         ),
                       ],
@@ -328,6 +294,7 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _totalAmountController.dispose();
     super.dispose();
   }
 }

@@ -241,13 +241,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       bool success;
       if (_isCustomBouquet) {
-        // For custom bouquet, you might need a different API call
-        // This is just an example - adjust according to your API
         success = await CustomBouquetApiService.addCustomBouquetToCart(
           cartId: cartId,
           customBouquetId: widget.customBouquet!.id,
           cardMessage: _cardMessageController.text.trim(),
           specialInstructions: _specialInstructionsController.text.trim(),
+          price: widget.customBouquet!.totalPrice,
         );
       } else {
         success = await CartApiService.addToCart(
@@ -309,7 +308,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Removed duplicate header
             Expanded(
               child: SingleChildScrollView(
                 child: Column(

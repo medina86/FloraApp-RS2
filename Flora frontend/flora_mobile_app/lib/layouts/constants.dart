@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-const String baseUrl = 'http://10.0.2.2:5014/api';
+const String baseUrl = 'http://192.168.0.12:5014/api';
 
 class AppColors {
   static const floralPink = Color(0xFFAA2E5C);

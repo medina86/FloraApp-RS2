@@ -74,21 +74,61 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _fetchRecommendedProducts() async {
     try {
+      print('🔍 Fetching recommendations for user: ${widget.userId}');
+      print('🔍 Auth headers: ${AuthProvider.getHeaders()}');
+      print('🔍 Is authenticated: ${AuthProvider.isAuthenticated}');
       setState(() {
         isLoadingRecommendations = true;
       });
 
+      // Prvo pokušaj sa starim endpoint-om
       final url = Uri.parse(
         '$baseUrl/Recommendations/user/${widget.userId}?maxResults=5',
       );
+      print('🔍 Recommendations URL: $url');
       final response = await http.get(url, headers: AuthProvider.getHeaders());
+
+      print('🔍 Recommendations response: ${response.statusCode}');
+      print('🔍 Recommendations body: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
+        print('🔍 Parsed recommendations data: ${jsonData.length} items');
 
         if (jsonData.isEmpty) {
+          print('⚠️ No recommendations found - trying alternative endpoint');
+          
+          // Pokušaj sa alternativnim endpoint-om
+          final altUrl = Uri.parse('$baseUrl/Product/recommended/${widget.userId}');
+          print('🔍 Alternative URL: $altUrl');
+          final altResponse = await http.get(altUrl, headers: AuthProvider.getHeaders());
+          
+          print('🔍 Alternative response: ${altResponse.statusCode}');
+          print('🔍 Alternative body: ${altResponse.body}');
+          
+          if (altResponse.statusCode == 200) {
+            final altJsonData = json.decode(altResponse.body);
+            if (altJsonData is List && altJsonData.isNotEmpty) {
+              final products = altJsonData.map((item) => Product.fromJson(item)).toList();
+              
+              for (Product product in products) {
+                if (!mounted) return;
+                product.imageUrls = await _fetchImageUrls(product.id);
+              }
+              
+              if (!mounted) return;
+              setState(() {
+                recommendedProducts = products;
+                isLoadingRecommendations = false;
+              });
+              return;
+            }
+          }
+          
+          // Ako oba endpoint-a ne rade, koristi featured
+          print('⚠️ Both endpoints failed - using featured products as fallback');
           setState(() {
-            recommendedProducts = [];
+            recommendedProducts = featuredProducts.take(5).toList();
             isLoadingRecommendations = false;
           });
           return;

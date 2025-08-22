@@ -305,52 +305,6 @@ class _OrderDetailProductCardState extends State<OrderDetailProductCard> {
             style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
           const SizedBox(height: 4),
-          // Show card message indicator if exists
-          if (widget.item.cardMessage != null && widget.item.cardMessage!.isNotEmpty) ...[
-            Row(
-              children: [
-                const Icon(
-                  Icons.card_giftcard,
-                  size: 14,
-                  color: Color.fromARGB(255, 170, 46, 92),
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Has card message',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    color: Color.fromARGB(255, 170, 46, 92),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
-          // Show special instructions indicator if exists
-          if (widget.item.specialInstructions != null && 
-              widget.item.specialInstructions!.isNotEmpty && 
-              !widget.item.isCustomBouquet) ...[
-            Row(
-              children: [
-                const Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: Colors.blue,
-                ),
-                const SizedBox(width: 4),
-                const Text(
-                  'Has special instructions',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-          ],
           Text(
             '${widget.item.priceAtPurchase.toStringAsFixed(2)} KM',
             style: const TextStyle(
