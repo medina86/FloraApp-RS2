@@ -2,7 +2,6 @@ import 'package:flora_mobile_app/models/custom_bouquet_model.dart';
 import 'package:flora_mobile_app/providers/custom_bouquet_provider.dart';
 import 'package:flora_mobile_app/widgets/flower_quantity.dart';
 import 'package:flutter/material.dart';
-import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 
 class CreateCustomBouquetScreen extends StatefulWidget {
@@ -46,7 +45,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
   };
 
   List<Product> _availableFlowers = [];
-  Map<int, int> _flowerQuantities = {}; // productId -> quantity
+  Map<int, int> _flowerQuantities = {}; 
   bool _isLoadingFlowers = true;
   bool _isCreatingBouquet = false;
 
@@ -180,13 +179,13 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
         specialInstructions: _specialInstructionsController.text.trim().isEmpty
             ? null
             : _specialInstructionsController.text.trim(),
+        price: _calculateTotalPrice(),
       );
 
       if (!addedToCart) {
         throw Exception('Failed to add custom bouquet to cart');
       }
 
-      print('✅ Step 3 Complete: Custom bouquet added to cart successfully!');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -261,34 +260,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      bottomNavigationBar: Theme(
-        data: Theme.of(
-          context,
-        ).copyWith(canvasColor: Color.fromARGB(255, 170, 46, 92)),
-        child: BottomNavigationBar(
-          selectedItemColor: const Color.fromARGB(255, 255, 210, 233),
-          unselectedItemColor: Colors.white,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          type: BottomNavigationBarType.fixed,
-          currentIndex: 0,
-          onTap: (index) {
-            Navigator.pop(context);
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.store), label: "Shop"),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite),
-              label: "Favorites",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: "Cart",
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
-          ],
-        ),
-      ),
+
       body: _isLoadingFlowers
           ? const Center(
               child: CircularProgressIndicator(
@@ -467,7 +439,7 @@ class _CreateCustomBouquetScreenState extends State<CreateCustomBouquetScreen> {
                         color: Colors.grey[600],
                       ),
                     ),
-                    maxLines: null, // Omogućava više linija
+                    maxLines: null, 
                     keyboardType: TextInputType.multiline,
                   ),
                   const SizedBox(height: 30),

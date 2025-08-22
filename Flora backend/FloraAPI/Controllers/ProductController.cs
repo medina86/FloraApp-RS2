@@ -41,6 +41,15 @@ namespace FloraAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("recommended/{userId}")]
+        public async Task<ActionResult<List<ProductResponse>>> GetRecommendedProducts(int userId)
+        {
+            // Redirect to Recommendations controller
+            var products = await _productService.GetFeaturedProductsAsync();
+            var result = products.Select(p => _mapper.Map<ProductResponse>(p)).ToList();
+            return Ok(result);
+        }
+
         [HttpGet("by-category/{categoryId}")]
         public async Task<ActionResult<List<ProductResponse>>> GetByCategory(int categoryId)
         {

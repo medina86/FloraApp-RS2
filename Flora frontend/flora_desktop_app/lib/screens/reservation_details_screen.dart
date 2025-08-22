@@ -469,20 +469,23 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                                                           ),
                                                         ),
                                                       ),
-                                                      // Delete button - disabled if this is the selected suggestion
+                                                      // Dodajemo dugme za brisanje
                                                       IconButton(
-                                                        icon: Icon(
+                                                        icon: const Icon(
                                                           Icons.delete_outline,
-                                                          color: isSelected
-                                                            ? Colors.grey.shade400  // Disabled color
-                                                            : Color.fromARGB(255, 170, 46, 92),
+                                                          color: Color.fromARGB(
+                                                            255,
+                                                            170,
+                                                            46,
+                                                            92,
+                                                          ),
                                                         ),
-                                                        onPressed: isSelected
-                                                            ? null  // Disable the button if selected
-                                                            : () => _confirmDelete(suggestion),
-                                                        tooltip: isSelected
-                                                            ? 'Cannot delete selected suggestion'
-                                                            : 'Delete suggestion',
+                                                        onPressed: () =>
+                                                            _confirmDelete(
+                                                              suggestion,
+                                                            ),
+                                                        tooltip:
+                                                            'Obriši sugestiju',
                                                       ),
                                                       if (isSelected)
                                                         Container(
@@ -928,18 +931,18 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Decoration suggestion successfully deleted'),
+            content: Text('Dekoraciona sugestija je uspješno obrisana'),
             backgroundColor: Color.fromARGB(255, 170, 46, 92),
           ),
         );
       } else {
-        // Error during deletion
-        throw Exception('Error deleting suggestion: ${response.statusCode}');
+        // Greška pri brisanju
+        throw Exception('Greška pri brisanju: ${response.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error deleting suggestion: $e'),
+          content: Text('Greška pri brisanju: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -956,14 +959,14 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Deletion'),
+          title: const Text('Potvrda brisanja'),
           content: const Text(
-            'Are you sure you want to delete this decoration suggestion?',
+            'Da li ste sigurni da želite obrisati ovu dekoracionu sugestiju?',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Odustani'),
             ),
             TextButton(
               onPressed: () {
@@ -971,7 +974,7 @@ class _ReservationDetailsScreenState extends State<ReservationDetailsScreen> {
                 _deleteDecorationSuggestion(suggestion.id);
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
+              child: const Text('Obriši'),
             ),
           ],
         );

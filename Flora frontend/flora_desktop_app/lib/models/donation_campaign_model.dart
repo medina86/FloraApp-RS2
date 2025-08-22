@@ -4,7 +4,7 @@ class DonationCampaign {
   final String description;
   final DateTime endDate;
   final String? imageUrl;
-  final double totalAmount; // This is the total amount of donations received
+  final double totalAmount;
 
   DonationCampaign({
     required this.id,

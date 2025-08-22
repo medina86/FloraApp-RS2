@@ -43,7 +43,6 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (response.statusCode == 201) {
-      // Dobijamo podatke o kreiranom korisniku
       final userResponse = jsonDecode(response.body);
       final userId = userResponse['id'];
 
@@ -70,7 +69,6 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
       );
     } else {
-      // Detaljnije error handling
       String errorMessage =
           "Registration failed. Please check your information and try again.";
 

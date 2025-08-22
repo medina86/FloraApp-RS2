@@ -145,7 +145,7 @@ try
     channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
 
     Console.WriteLine("[*] Waiting for order notification messages.");
-    // Infinite wait - subscriber runs until stopped manually
+    
     Thread.Sleep(Timeout.Infinite);
 }
 catch (Exception ex)

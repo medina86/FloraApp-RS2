@@ -262,46 +262,14 @@ class _OccasionProductsScreenState extends State<OccasionProductsScreen> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            '${product.price.toStringAsFixed(2)} KM',
-                            style: const TextStyle(
-                              fontSize: 14, // Reduced from 16
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFE91E63),
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 4), // Add small gap
-                        GestureDetector(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${product.name} added to cart!'),
-                                backgroundColor: const Color(0xFFE91E63),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            width: 28, // Slightly smaller from 30
-                            height: 28, // Slightly smaller from 30
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE91E63),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(
-                              Icons.add,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '${product.price.toStringAsFixed(2)} KM',
+                      style: const TextStyle(
+                        fontSize: 14, // Reduced from 16
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFE91E63),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
