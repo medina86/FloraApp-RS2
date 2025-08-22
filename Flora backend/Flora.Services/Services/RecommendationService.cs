@@ -26,12 +26,11 @@ namespace Flora.Services.Services
             _logger = logger;
             _similarityMap = new Dictionary<(int, int), double>();
             
-            // Pokreni inicijalizaciju similarity map-a u background-u
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await Task.Delay(5000); // Čekaj 5 sekundi da se aplikacija potpuno učita
+                    await Task.Delay(5000); 
                     await RecalculateSimilarityMapAsync();
                 }
                 catch (Exception ex)

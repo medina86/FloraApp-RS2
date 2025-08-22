@@ -173,9 +173,7 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
           );
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Error submitting request: ${response.statusCode}',
-              ),
+              content: Text('Error submitting request: ${response.statusCode}'),
             ),
           );
         }
@@ -296,18 +294,14 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
                           vertical: 8,
                         ),
                       ),
-                      validator: (value) => value!.isEmpty
-                          ? 'Please select event date'
-                          : null,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please select event date' : null,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 _buildLabel('Venue type'),
-                _buildTextFormField(
-                  _venueTypeController,
-                  'Enter venue type',
-                ),
+                _buildTextFormField(_venueTypeController, 'Enter venue type'),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -444,7 +438,6 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
       keyboardType: keyboardType,
       maxLines: maxLines,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
@@ -459,8 +452,6 @@ class _DecorationRequestScreenState extends State<DecorationRequestScreen> {
           ? null
           : validator ??
                 (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'This field is required';
                   if (value == null || value.trim().isEmpty) {
                     return 'This field is required';
                   }

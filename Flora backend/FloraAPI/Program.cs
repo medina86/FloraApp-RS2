@@ -38,11 +38,9 @@ builder.Services.AddMapster();
 TypeAdapterConfig<ProductRequest, Product>.NewConfig()
     .Ignore(dest => dest.Images);
 
-// Connection string
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDatabaseServices(connectionString);
 
-// Registracija servisa – SVI kao Transient
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
 builder.Services.AddTransient<ICategoryService, CategoryService>();
@@ -144,6 +142,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-//app.Run("http://192.168.0.12:5014");
+app.Run("http://192.168.0.12:5014");
 //app.Run("http://172.20.10.3:5014");
-app.Run();
+//app.Run();
