@@ -1,4 +1,3 @@
-using eCommerce.Services.Database;
 using Flora.Models.Requests;
 using Flora.Services;
 using Flora.Services.Database;
@@ -39,7 +38,10 @@ TypeAdapterConfig<ProductRequest, Product>.NewConfig()
     .Ignore(dest => dest.Images);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDatabaseServices(connectionString);
+
+// Dodajemo DbContextFactory za RecommendationService
+builder.Services.AddDbContextFactory<FLoraDbContext>(options =>
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IRoleService, RoleService>();
@@ -128,7 +130,7 @@ app.UseCors("AllowAll");
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FLoraDbContext>();
-   
+
 }
 
 if (app.Environment.IsDevelopment())

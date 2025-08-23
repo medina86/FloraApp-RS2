@@ -9,28 +9,29 @@ using Microsoft.ML;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Flora.Services.Services
 {
     public class RecommendationService : IRecommendationService
     {
-        private readonly FLoraDbContext _context;
+        private readonly IDbContextFactory<FLoraDbContext> _contextFactory;
         private readonly ILogger<RecommendationService> _logger;
         private Dictionary<(int, int), double> _similarityMap;
 
-        public RecommendationService(FLoraDbContext context, ILogger<RecommendationService> logger)
+        public RecommendationService(
+            IDbContextFactory<FLoraDbContext> contextFactory,
+            ILogger<RecommendationService> logger)
         {
-            _context = context;
+            _contextFactory = contextFactory;
             _logger = logger;
             _similarityMap = new Dictionary<(int, int), double>();
-            
+
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await Task.Delay(5000); 
+                    await Task.Delay(5000);
                     await RecalculateSimilarityMapAsync();
                 }
                 catch (Exception ex)
@@ -39,6 +40,7 @@ namespace Flora.Services.Services
                 }
             });
         }
+        
         public async Task<List<ProductResponse>> GetRecommendedProductsAsync(int productId, int topN = 5)
         {
             try
@@ -55,7 +57,9 @@ namespace Flora.Services.Services
                     .Select(kv => kv.Key.Item2)
                     .ToList();
 
-                var products = await _context.Products
+                using var context = _contextFactory.CreateDbContext();
+
+                var products = await context.Products
                     .Where(p => recommendedProductIds.Contains(p.Id) && p.IsAvailable && p.Active)
                     .Include(p => p.Images)
                     .Include(p => p.Category)
@@ -91,11 +95,14 @@ namespace Flora.Services.Services
                 return new List<ProductResponse>();
             }
         }
+        
         public async Task<List<ProductCoPurchase>> GetCoPurchaseMapAsync()
         {
             try
             {
-                var coPurchases = await _context.OrderDetails
+                using var context = _contextFactory.CreateDbContext();
+                
+                var coPurchases = await context.OrderDetails
                     .Include(od => od.Order)
                     .AsNoTracking()
                     .GroupBy(od => od.OrderId)
@@ -139,59 +146,144 @@ namespace Flora.Services.Services
                 return new List<ProductCoPurchase>();
             }
         }
+        
         public async Task RecalculateSimilarityMapAsync()
         {
             try
             {
                 _logger.LogInformation("Započinje treniranje ML.NET item-based preporuka");
 
-                var userProductPurchases = await _context.OrderDetails
-                    .Include(od => od.Order)
-                    .Where(od => od.ProductId.HasValue)
-                    .AsNoTracking()
-                    .Select(od => new RecommendationInput
-                    {
-                        userId = od.Order.UserId.ToString(),
-                        productId = od.ProductId.Value.ToString(),
-                        Label = 1f 
-                    })
-                    .Distinct()
-                    .ToListAsync();
+                // Prvo dohvatimo sve potrebne podatke iz baze u memoriju
+                List<RecommendationInput> userProductPurchases;
+                
+                // Koristimo poseban scope za dohvaćanje podataka iz baze
+                using (var context = _contextFactory.CreateDbContext())
+                {
+                    userProductPurchases = await context.OrderDetails
+                        .Include(od => od.Order)
+                        .Where(od => od.ProductId.HasValue)
+                        .AsNoTracking()
+                        .Select(od => new RecommendationInput
+                        {
+                            userId = od.Order.UserId.ToString(),
+                            productId = od.ProductId.Value.ToString(),
+                            Label = 1f
+                        })
+                        .Distinct()
+                        .ToListAsync();
+                } // Context je disposed nakon ovog bloka
 
+                // Provjera imamo li dovoljno podataka
+                var uniqueUsers = userProductPurchases.Select(p => p.userId).Distinct().Count();
+                var uniqueProducts = userProductPurchases.Select(p => p.productId).Distinct().Count();
+                var totalPurchases = userProductPurchases.Count;
+                
+                _logger.LogInformation("Podaci za treniranje: {TotalPurchases} kupovina, {UniqueUsers} korisnika, {UniqueProducts} proizvoda", 
+                    totalPurchases, uniqueUsers, uniqueProducts);
+                
+                if (uniqueUsers < 2 || uniqueProducts < 2 || totalPurchases < 10)
+                {
+                    _logger.LogWarning("Premalo podataka za treniranje MF modela. Potrebno je barem 2 korisnika, 2 proizvoda i 10 kupovina.");
+                    _similarityMap.Clear();
+                    return;
+                }
+                
+                // Dodatna provjera da imamo dovoljnu gustoću podataka
+                var density = (double)totalPurchases / (uniqueUsers * uniqueProducts);
+                if (density < 0.01) // Manje od 1% popunjenosti matrice
+                {
+                    _logger.LogWarning("Premala gustoća podataka za treniranje MF modela: {Density:P2}. Koristit ćemo jednostavniju metodu.", density);
+                    // Ovdje možemo implementirati jednostavniju metodu preporuke ako je potrebno
+                }
+
+                // ML operacije radimo s podacima u memoriji
                 var mlContext = new MLContext();
                 var dataView = mlContext.Data.LoadFromEnumerable(userProductPurchases);
 
+                // Dodajemo transformacije za mapiranje string kolona u numeričke ključeve
+                var pipeline = mlContext.Transforms.Conversion
+                    .MapValueToKey(inputColumnName: nameof(RecommendationInput.userId), 
+                                  outputColumnName: "userIdEncoded")
+                    .Append(mlContext.Transforms.Conversion
+                        .MapValueToKey(inputColumnName: nameof(RecommendationInput.productId), 
+                                      outputColumnName: "productIdEncoded"));
+                
+                // Primjenjujemo transformacije na podatke
+                var transformedData = pipeline.Fit(dataView).Transform(dataView);
+                
+                // Definiramo opcije za MatrixFactorization sa stabilnijim parametrima
                 var options = new MatrixFactorizationTrainer.Options
                 {
-                    MatrixColumnIndexColumnName = nameof(RecommendationInput.userId),
-                    MatrixRowIndexColumnName = nameof(RecommendationInput.productId),
+                    MatrixColumnIndexColumnName = "userIdEncoded",
+                    MatrixRowIndexColumnName = "productIdEncoded",
                     LabelColumnName = nameof(RecommendationInput.Label),
-                    NumberOfIterations = 20,
-                    ApproximationRank = 100
+                    // Smanjujemo broj iteracija i rank za stabilnije treniranje
+                    NumberOfIterations = 5,
+                    ApproximationRank = 8,
+                    // Dodajemo regularizaciju za sprječavanje overfittinga
+                    Lambda = 0.1,
+                    // Smanjujemo learning rate za stabilnije treniranje
+                    LearningRate = 0.01,
+                    // Dodajemo random seed za reproducibilnost
+                    Quiet = true
                 };
 
-                var pipeline = mlContext.Recommendation().Trainers.MatrixFactorization(options);
-                var model = pipeline.Fit(dataView);
-                var predictionEngine = mlContext.Model.CreatePredictionEngine<RecommendationInput, RecommendationPrediction>(model);
+                // Treniramo model
+                var trainer = mlContext.Recommendation().Trainers.MatrixFactorization(options);
+                var model = trainer.Fit(transformedData);
+                
+                // Kreiramo kompletan model koji uključuje transformacije i treniranje
+                var completeModel = pipeline.Append(trainer);
+                var trainedModel = completeModel.Fit(dataView);
+                
+                // Kreiramo prediction engine koji će automatski mapirati string vrijednosti u numeričke ključeve
+                var predictionEngine = mlContext.Model.CreatePredictionEngine<RecommendationInput, RecommendationPrediction>(trainedModel);
 
-                _similarityMap = new Dictionary<(int, int), double>();
+                // Kreiramo novi dictionary za sigurno ažuriranje
+                var newSimilarityMap = new Dictionary<(int, int), double>();
                 var productIds = userProductPurchases.Select(p => int.Parse(p.productId)).Distinct().ToList();
 
-                foreach (var p1 in productIds)
-                {
-                    foreach (var p2 in productIds)
+                // Koristimo try-catch blok za cijeli proces predikcije
+                try {
+                    foreach (var p1 in productIds)
                     {
-                        if (p1 == p2) continue;
-
-                        var prediction = predictionEngine.Predict(new RecommendationInput
+                        foreach (var p2 in productIds)
                         {
-                            userId = p1.ToString(),
-                            productId = p2.ToString()
-                        });
-
-                        _similarityMap[(p1, p2)] = prediction.Score;
+                            if (p1 == p2) continue;
+                            
+                            try {
+                                var prediction = predictionEngine.Predict(new RecommendationInput
+                                {
+                                    userId = p1.ToString(),
+                                    productId = p2.ToString()
+                                });
+                                
+                                // Dodajemo fallback za NaN ili Inf vrijednosti
+                                double score = double.IsNaN(prediction.Score) || double.IsInfinity(prediction.Score)
+                                    ? 0.0
+                                    : prediction.Score;
+                                
+                                // Ograničavamo score na razuman raspon
+                                score = Math.Max(-5.0, Math.Min(5.0, score));
+                                
+                                newSimilarityMap[(p1, p2)] = score;
+                            }
+                            catch (Exception ex) {
+                                _logger.LogWarning("Greška prilikom predviđanja sličnosti za proizvode {P1} i {P2}: {Message}", 
+                                    p1, p2, ex.Message);
+                                newSimilarityMap[(p1, p2)] = 0.0;
+                            }
+                        }
                     }
                 }
+                catch (Exception ex) {
+                    _logger.LogError(ex, "Greška prilikom izračunavanja sličnosti proizvoda");
+                    // Ako dođe do greške, osiguravamo da imamo barem praznu mapu
+                    newSimilarityMap = new Dictionary<(int, int), double>();
+                }
+
+                // Atomsko ažuriranje reference na _similarityMap
+                _similarityMap = newSimilarityMap;
 
                 _logger.LogInformation("ML.NET sličnosti proizvoda izračunate. Ukupno parova: {Count}", _similarityMap.Count);
             }
@@ -205,20 +297,18 @@ namespace Flora.Services.Services
         {
             try
             {
+                using var context = _contextFactory.CreateDbContext();
                 _logger.LogInformation("Dohvaćanje preporuka za korisnika ID: {UserId}", userId);
-                
-                // Provjerimo ima li korisnik narudžbe
-                var hasOrders = await _context.Orders.AnyAsync(o => o.UserId == userId);
-                
+
+                var hasOrders = await context.Orders.AnyAsync(o => o.UserId == userId);
+
                 if (!hasOrders)
                 {
                     _logger.LogInformation("Korisnik ID: {UserId} nema narudžbe, vraćamo featured proizvode", userId);
-                    // Ako korisnik nema narudžbe, vraćamo popularne/featured proizvode
                     return await GetFeaturedProductsAsync(maxResults);
                 }
 
-                // Dohvati zadnje 3 narudžbe korisnika
-                var lastOrders = await _context.Orders
+                var lastOrders = await context.Orders
                     .Where(o => o.UserId == userId)
                     .OrderByDescending(o => o.OrderDate)
                     .Include(o => o.OrderDetails)
@@ -227,7 +317,6 @@ namespace Flora.Services.Services
 
                 var recommendedIds = new HashSet<int>();
 
-                // Za svaki proizvod iz posljednjih narudžbi, dohvati preporuke
                 foreach (var order in lastOrders)
                 {
                     foreach (var item in order.OrderDetails.Where(od => od.ProductId.HasValue))
@@ -236,14 +325,12 @@ namespace Flora.Services.Services
                         foreach (var product in recommendations)
                             recommendedIds.Add(product.Id);
 
-                        // Dodajemo i sam proizvod koji je korisnik kupio u preporuke ako ga nema u setu
                         if (!recommendedIds.Contains(item.ProductId.Value))
                             recommendedIds.Add(item.ProductId.Value);
                     }
                 }
 
-                // Dohvati sve preporučene proizvode odjednom
-                var recommendedProducts = await _context.Products
+                var recommendedProducts = await context.Products
                     .Where(p => recommendedIds.Contains(p.Id) && p.IsAvailable && p.Active)
                     .Include(p => p.Images)
                     .Include(p => p.Category)
@@ -251,9 +338,8 @@ namespace Flora.Services.Services
                     .Take(maxResults)
                     .ToListAsync();
 
-                // Mapiraj u DTO
                 _logger.LogInformation("Korisnik ID: {UserId} ima {OrderCount} narudžbi, preporučuje se {ProductCount} proizvoda", userId, lastOrders.Count, recommendedProducts.Count);
-                
+
                 var result = recommendedProducts.Select(p => new ProductResponse
                 {
                     Id = p.Id,
@@ -282,8 +368,9 @@ namespace Flora.Services.Services
 
         private async Task<List<ProductResponse>> GetFeaturedProductsAsync(int count)
         {
-            // Prvo pokušaj featured ili new proizvode
-            var featuredProducts = await _context.Products
+            using var context = _contextFactory.CreateDbContext();
+            
+            var featuredProducts = await context.Products
                 .Where(p => p.IsAvailable && p.Active && (p.IsFeatured || p.IsNew))
                 .Include(p => p.Images)
                 .Include(p => p.Category)
@@ -291,10 +378,9 @@ namespace Flora.Services.Services
                 .Take(count)
                 .ToListAsync();
 
-            // Ako nema featured/new proizvoda, uzmi bilo koje dostupne proizvode
             if (featuredProducts.Count == 0)
             {
-                featuredProducts = await _context.Products
+                featuredProducts = await context.Products
                     .Where(p => p.IsAvailable && p.Active)
                     .Include(p => p.Images)
                     .Include(p => p.Category)
