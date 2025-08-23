@@ -44,6 +44,87 @@ class OrderApiService {
     return BaseApiService.postEmpty('/Order/confirm-paypal-payment?orderId=$orderId&paymentId=$paymentId', (data) => OrderModel.fromJson(data));
   }
 
+  // Nova metoda za inicijalizaciju PayPal plaćanja bez kreiranja narudžbe
+  static Future<PayPalPaymentResponse> initiatePayPalPaymentFromCart({
+    required int userId,
+    required int cartId,
+    required ShippingAddressModel shippingAddress,
+    required double amount,
+    required String currency,
+    required String returnUrl,
+    required String cancelUrl,
+  }) async {
+    final body = {
+      'userId': userId,
+      'cartId': cartId,
+      'shippingAddress': shippingAddress.toJson(),
+      'amount': amount,
+      'currency': currency,
+      'returnUrl': returnUrl,
+      'cancelUrl': cancelUrl,
+    };
+
+    return BaseApiService.post('/Order/initiatePayPalPaymentWithoutOrder', body, (data) => PayPalPaymentResponse.fromJson(data));
+  }
+
+  // Nova metoda za potvrdu PayPal plaćanja i kreiranje narudžbe
+  static Future<OrderModel> confirmPayPalPaymentAndCreateOrder({
+    required int userId,
+    required int cartId,
+    required ShippingAddressModel shippingAddress,
+    required String paymentId,
+    required String payerId,
+  }) async {
+    final queryParams = 'userId=$userId&cartId=$cartId&paymentId=$paymentId&payerId=$payerId';
+    final body = shippingAddress.toJson();
+
+    return BaseApiService.post(
+      '/Order/confirm-paypal-payment-and-create-order?$queryParams', 
+      body, 
+      (data) => OrderModel.fromJson(data)
+    );
+  }
+  
+  // Nova metoda za inicijalizaciju PayPal plaćanja koristeći REST API
+  static Future<PayPalPaymentResponse> initiatePayPalPaymentFromCartRest({
+    required int userId,
+    required int cartId,
+    required ShippingAddressModel shippingAddress,
+    required double amount,
+    required String currency,
+    required String returnUrl,
+    required String cancelUrl,
+  }) async {
+    final body = {
+      'userId': userId,
+      'cartId': cartId,
+      'shippingAddress': shippingAddress.toJson(),
+      'amount': amount,
+      'currency': currency,
+      'returnUrl': returnUrl,
+      'cancelUrl': cancelUrl,
+    };
+
+    return BaseApiService.post('/Order/initiatePayPalPaymentRest', body, (data) => PayPalPaymentResponse.fromJson(data));
+  }
+
+  // Nova metoda za potvrdu PayPal plaćanja i kreiranje narudžbe koristeći REST API
+  static Future<OrderModel> confirmPayPalPaymentAndCreateOrderRest({
+    required int userId,
+    required int cartId,
+    required ShippingAddressModel shippingAddress,
+    required String orderId,
+  }) async {
+    final queryParams = 'userId=$userId&cartId=$cartId&orderId=$orderId';
+    final body = shippingAddress.toJson();
+
+    return BaseApiService.post(
+      '/Order/confirm-paypal-payment-and-create-order-rest?$queryParams', 
+      body, 
+      (data) => OrderModel.fromJson(data)
+    );
+  }
+
   static Future<List<OrderModel>> getOrdersByStatus(String status) async {
     final params = {'Status': status};
 

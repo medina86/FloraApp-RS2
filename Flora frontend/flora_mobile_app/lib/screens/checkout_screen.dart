@@ -27,7 +27,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _postalCodeController = TextEditingController();
 
   bool _isProcessingOrder = false;
-  OrderModel? _createdOrder;
 
   @override
   void dispose() {
@@ -53,6 +52,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() {
       _isProcessingOrder = true;
     });
+    
     try {
       final shippingAddress = ShippingAddressModel(
         firstName: _firstNameController.text,
@@ -62,36 +62,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         houseNumber: _houseNumberController.text,
         postalCode: _postalCodeController.text,
       );
-      print('Shipping Address prepared: ${shippingAddress.toJson()}');
-      print(
-        'Calling createOrderFromCart with userId: ${widget.userId}, cartId: ${widget.cart.id}',
-      );
-      final order = await OrderApiService.createOrderFromCart(
-        userId: widget.userId,
-        cartId: widget.cart.id,
-        shippingAddress: shippingAddress,
-      );
-
-      if (order != null) {
-        setState(() {
-          _createdOrder = order;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order placed successfully! Proceeding to payment.'),
-            backgroundColor: Color.fromARGB(255, 170, 46, 92),
-          ),
-        );
-        print('Order created: ${order.id}');
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => PayPalPaymentScreen(order: order),
-          ),
-        );
-      } else {
-        throw Exception('Order creation returned null.');
-      }
+      
+      // Novi tok: prvo PayPal, pa onda narudžba
+      await _placeOrderNewFlow(shippingAddress);
     } catch (e) {
       print('Caught error in _placeOrder: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,6 +82,82 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       print(
         'Order processing finished. isProcessingOrder: $_isProcessingOrder',
       );
+    }
+  }
+
+  // Stari tok plaćanja: prvo narudžba, pa onda PayPal
+  Future<void> _placeOrderOldFlow(ShippingAddressModel shippingAddress) async {
+    print('Shipping Address prepared: ${shippingAddress.toJson()}');
+    print(
+      'Calling createOrderFromCart with userId: ${widget.userId}, cartId: ${widget.cart.id}',
+    );
+    
+    final order = await OrderApiService.createOrderFromCart(
+      userId: widget.userId,
+      cartId: widget.cart.id,
+      shippingAddress: shippingAddress,
+    );
+
+    if (order != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Order placed successfully! Proceeding to payment.'),
+          backgroundColor: Color.fromARGB(255, 170, 46, 92),
+        ),
+      );
+      print('Order created: ${order.id}');
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PayPalPaymentScreen(order: order),
+        ),
+      );
+    } else {
+      throw Exception('Order creation returned null.');
+    }
+  }
+
+  // Novi tok plaćanja: prvo PayPal, pa onda narudžba
+  Future<void> _placeOrderNewFlow(ShippingAddressModel shippingAddress) async {
+    print('Shipping Address prepared: ${shippingAddress.toJson()}');
+    print(
+      'Calling initiatePayPalPaymentFromCartRest with userId: ${widget.userId}, cartId: ${widget.cart.id}',
+    );
+    
+    // Koristimo REST API za inicijalizaciju PayPal plaćanja
+    final payPalResponse = await OrderApiService.initiatePayPalPaymentFromCartRest(
+      userId: widget.userId,
+      cartId: widget.cart.id,
+      shippingAddress: shippingAddress,
+      amount: widget.cart.calculateTotalAmount(),
+      currency: 'USD',
+      returnUrl: 'floraapp://paypal/success',
+      cancelUrl: 'floraapp://paypal/cancel',
+    );
+
+    if (payPalResponse.approvalUrl.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Proceeding to PayPal payment...'),
+          backgroundColor: Color.fromARGB(255, 170, 46, 92),
+        ),
+      );
+      print('PayPal payment initiated: ${payPalResponse.paymentId}');
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => PayPalPaymentScreen(
+            userId: widget.userId,
+            cartId: widget.cart.id,
+            shippingAddress: shippingAddress,
+            approvalUrl: payPalResponse.approvalUrl,
+            paymentId: payPalResponse.paymentId,
+            totalAmount: widget.cart.calculateTotalAmount(),
+          ),
+        ),
+      );
+    } else {
+      throw Exception('PayPal payment initiation failed.');
     }
   }
 

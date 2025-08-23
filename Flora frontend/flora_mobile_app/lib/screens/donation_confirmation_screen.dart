@@ -70,6 +70,32 @@ class DonationConfirmationScreen extends StatelessWidget {
                 style: const TextStyle(fontSize: 18, color: Colors.black87),
               ),
               const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () {
+                  // Direktno navigiraj na MainLayout sa userId
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => MainLayout(userId: userId),
+                    ),
+                    (route) => false, // Ukloni sve prethodne ekrane iz steka
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 170, 46, 92),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Back to Home',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
             ],
           ),
         ),

@@ -1,13 +1,33 @@
 import 'package:flora_mobile_app/models/order.dart';
+import 'package:flora_mobile_app/models/shipping_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flora_mobile_app/providers/order_api.dart';
 import 'package:flora_mobile_app/screens/order_confirmation_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PayPalPaymentScreen extends StatefulWidget {
-  final OrderModel order;
+  // Originalni konstruktor koji prima OrderModel
+  final OrderModel? order;
+  
+  // Novi konstruktor koji prima podatke potrebne za novi tok plaćanja
+  final int? userId;
+  final int? cartId;
+  final ShippingAddressModel? shippingAddress;
+  final String? approvalUrl;
+  final String? paymentId;
+  final double? totalAmount;
+  final bool isNewFlow;
 
-  const PayPalPaymentScreen({super.key, required this.order});
+  const PayPalPaymentScreen({
+    super.key, 
+    this.order,
+    this.userId,
+    this.cartId,
+    this.shippingAddress,
+    this.approvalUrl,
+    this.paymentId,
+    this.totalAmount,
+  }) : isNewFlow = order == null;
 
   @override
   State<PayPalPaymentScreen> createState() => _PayPalPaymentScreenState();
@@ -23,18 +43,23 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    _initiatePayment();
+    if (widget.isNewFlow) {
+      _setupPayPalWebViewForNewFlow();
+    } else {
+      _initiatePayment();
+    }
   }
 
+  // Originalna metoda za stari tok plaćanja
   Future<void> _initiatePayment() async {
     try {
       print('--- PayPal Payment Initiation ---');
-      print('  Order ID: ${widget.order.id}');
-      print('  Amount: ${widget.order.totalAmount}');
+      print('  Order ID: ${widget.order!.id}');
+      print('  Amount: ${widget.order!.totalAmount}');
 
       final payPalResponse = await OrderApiService.initiatePayPalPayment(
-        orderId: widget.order.id,
-        amount: widget.order.totalAmount,
+        orderId: widget.order!.id,
+        amount: widget.order!.totalAmount,
         currency: 'USD',
         returnUrl: 'floraapp://paypal/success', // App će uhvatiti ovo
         cancelUrl: 'floraapp://paypal/cancel',
@@ -82,22 +107,71 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
     }
   }
 
+  // Nova metoda za novi tok plaćanja
+  void _setupPayPalWebViewForNewFlow() {
+    setState(() {
+      _approvalUrl = widget.approvalUrl;
+      _paymentId = widget.paymentId;
+    });
+
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (String url) {
+            print('Page started loading: $url');
+            _handleNavigation(url);
+          },
+          onNavigationRequest: (NavigationRequest request) {
+            print('Navigation request: ${request.url}');
+            if (_handleNavigation(request.url)) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+          onPageFinished: (String url) {
+            setState(() {
+              _isLoading = false;
+            });
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(_approvalUrl!));
+  }
+
   bool _handleNavigation(String url) {
     if (url.startsWith('floraapp://paypal/success')) {
       print('PayPal success detected!');
-      _confirmPayment();
-      return true; // Prevent WebView navigation
+      
+      // Ekstraktiramo PayerID iz URL-a
+      Uri uri = Uri.parse(url);
+      String? payerId = uri.queryParameters['PayerID'];
+      
+      if (payerId != null) {
+        if (widget.isNewFlow) {
+          _confirmPaymentNewFlow(payerId);
+        } else {
+          _confirmPayment();
+        }
+      } else {
+        _showPaymentResultDialog(
+          'Payment Error',
+          'Could not extract PayerID from the response.',
+        );
+      }
+      return true;
     } else if (url.startsWith('floraapp://paypal/cancel')) {
       print('PayPal cancel detected!');
       _showPaymentResultDialog(
         'Payment Cancelled',
         'You cancelled the PayPal payment.',
       );
-      return true; // Prevent WebView navigation
+      return true;
     }
-    return false; // Allow WebView navigation
+    return false;
   }
 
+  // Originalna metoda za stari tok plaćanja
   Future<void> _confirmPayment() async {
     if (_paymentId == null) {
       _showPaymentResultDialog(
@@ -113,7 +187,7 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
 
     try {
       final confirmedOrder = await OrderApiService.confirmPayPalPayment(
-        orderId: widget.order.id,
+        orderId: widget.order!.id,
         paymentId: _paymentId!,
       );
 
@@ -126,6 +200,48 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
           MaterialPageRoute(
             builder: (context) =>
                 OrderConfirmationScreen(order: confirmedOrder),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error confirming payment: $e');
+      setState(() {
+        _paymentStatus = 'failed';
+      });
+      _showPaymentResultDialog(
+        'Payment Confirmation Failed',
+        'Could not confirm your payment: $e',
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Nova metoda za novi tok plaćanja
+  Future<void> _confirmPaymentNewFlow(String payerId) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Koristimo REST API za potvrdu PayPal plaćanja i kreiranje narudžbe
+      final confirmedOrder = await OrderApiService.confirmPayPalPaymentAndCreateOrderRest(
+        userId: widget.userId!,
+        cartId: widget.cartId!,
+        shippingAddress: widget.shippingAddress!,
+        orderId: _paymentId!, // Koristimo paymentId kao orderId
+      );
+
+      setState(() {
+        _paymentStatus = 'success';
+      });
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => OrderConfirmationScreen(order: confirmedOrder),
           ),
         );
       }
@@ -221,7 +337,7 @@ class _PayPalPaymentScreenState extends State<PayPalPaymentScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Secure PayPal Payment - ${widget.order.totalAmount.toStringAsFixed(2)} KM',
+                          'Secure PayPal Payment - ${widget.isNewFlow ? widget.totalAmount!.toStringAsFixed(2) : widget.order!.totalAmount.toStringAsFixed(2)} KM',
                           style: const TextStyle(
                             color: Colors.blue,
                             fontWeight: FontWeight.w600,
