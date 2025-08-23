@@ -144,6 +144,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://192.168.0.12:5014");
-//app.Run("http://172.20.10.3:5014");
-//app.Run();
+app.Run();
