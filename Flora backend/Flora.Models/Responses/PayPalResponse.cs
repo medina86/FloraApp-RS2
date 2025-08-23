@@ -10,5 +10,9 @@ namespace Flora.Models.Responses
     {
         public string ApprovalUrl { get; set; }
         public string PaymentId { get; set; }
+        
+        // Dodatna polja za podršku novom toku plaćanja
+        public int? CartId { get; set; }
+        public int? UserId { get; set; }
     }
 }

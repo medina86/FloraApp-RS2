@@ -388,5 +388,184 @@ using System.Threading.Tasks;
                     throw new Exception($"Failed to confirm PayPal payment: {ex.Message}", ex);
                 }
             }
+
+            // Nova metoda za inicijalizaciju PayPal plaćanja bez kreiranja narudžbe
+            public async Task<PayPalPaymentResponse> InitiatePayPalPaymentWithoutOrderAsync(PayPalPaymentWithCartRequest request)
+            {
+                try
+                {
+                    // Validacija korpe
+                    var cart = await _context.Carts
+                        .Include(c => c.Items)
+                            .ThenInclude(ci => ci.Product)
+                                .ThenInclude(p => p.Images)
+                        .Include(c => c.Items)
+                            .ThenInclude(ci => ci.CustomBouquet)
+                        .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserId == request.UserId);
+
+                    if (cart == null || !cart.Items.Any())
+                        throw new Exception("Cart is invalid or empty.");
+
+                    // Validacija podataka za dostavu
+                    if (request.ShippingAddress == null)
+                        throw new Exception("Shipping address is required.");
+
+                    var description = $"Flora Order for Cart #{request.CartId}";
+
+                    var payment = await _payPalService.CreatePayment(
+                        request.Amount,
+                        request.Currency,
+                        description,
+                        request.ReturnUrl,
+                        request.CancelUrl
+                    );
+
+                    var approvalUrl = _payPalService.GetApprovalUrl(payment);
+
+                    if (string.IsNullOrEmpty(approvalUrl))
+                    {
+                        throw new Exception("Failed to get PayPal approval URL.");
+                    }
+
+                    return new PayPalPaymentResponse
+                    {
+                        PaymentId = payment.id,
+                        ApprovalUrl = approvalUrl,
+                        CartId = request.CartId,
+                        UserId = request.UserId
+                    };
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to initiate PayPal payment: {ex.Message}", ex);
+                }
+            }
+
+            // Nova metoda za potvrdu PayPal plaćanja i kreiranje narudžbe
+            public async Task<OrderResponse> ConfirmPayPalPaymentAndCreateOrderAsync(
+                int userId, int cartId, ShippingAddressRequest shippingAddressRequest, 
+                string paymentId, string payerId)
+            {
+                try
+                {
+                    // Validacija PayPal plaćanja
+                    if (string.IsNullOrEmpty(paymentId))
+                    {
+                        throw new Exception("Invalid PayPal payment ID.");
+                    }
+
+                    if (string.IsNullOrEmpty(payerId))
+                    {
+                        throw new Exception("Invalid PayPal payer ID.");
+                    }
+
+                    // Izvršavanje PayPal plaćanja
+                    await _payPalService.ExecutePayment(paymentId, payerId);
+
+                    // Kreiranje narudžbe nakon uspješnog plaćanja
+                    var orderRequest = new OrderRequest
+                    {
+                        UserId = userId,
+                        CartId = cartId,
+                        ShippingAddress = shippingAddressRequest
+                    };
+
+                    var order = await CreateOrderFromCart(orderRequest);
+                    
+                    return order;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to confirm PayPal payment and create order: {ex.Message}", ex);
+                }
+            }
+            
+            // Nova metoda za inicijalizaciju PayPal plaćanja koristeći REST API
+            public async Task<PayPalPaymentResponse> InitiatePayPalPaymentRestAsync(PayPalPaymentWithCartRequest request)
+            {
+                try
+                {
+                    // Validacija korpe
+                    var cart = await _context.Carts
+                        .Include(c => c.Items)
+                            .ThenInclude(ci => ci.Product)
+                                .ThenInclude(p => p.Images)
+                        .Include(c => c.Items)
+                            .ThenInclude(ci => ci.CustomBouquet)
+                        .FirstOrDefaultAsync(c => c.Id == request.CartId && c.UserId == request.UserId);
+
+                    if (cart == null || !cart.Items.Any())
+                        throw new Exception("Cart is invalid or empty.");
+
+                    // Validacija podataka za dostavu
+                    if (request.ShippingAddress == null)
+                        throw new Exception("Shipping address is required.");
+
+                    var description = $"Flora Order for Cart #{request.CartId}";
+
+                    // Koristi REST API za kreiranje PayPal narudžbe
+                    var approvalUrl = await _payPalService.CreateOrderViaRest(
+                        request.Amount,
+                        request.Currency,
+                        description,
+                        request.ReturnUrl,
+                        request.CancelUrl
+                    );
+
+                    if (string.IsNullOrEmpty(approvalUrl))
+                    {
+                        throw new Exception("Failed to get PayPal approval URL.");
+                    }
+
+                    // Ekstrahiraj orderId iz URL-a
+                    var uri = new Uri(approvalUrl);
+                    var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                    var token = queryParams["token"];
+
+                    return new PayPalPaymentResponse
+                    {
+                        PaymentId = token, // Koristimo token kao paymentId
+                        ApprovalUrl = approvalUrl,
+                        CartId = request.CartId,
+                        UserId = request.UserId
+                    };
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to initiate PayPal payment via REST API: {ex.Message}", ex);
+                }
+            }
+
+            // Nova metoda za potvrdu PayPal plaćanja i kreiranje narudžbe koristeći REST API
+            public async Task<OrderResponse> ConfirmPayPalPaymentAndCreateOrderRestAsync(
+                int userId, int cartId, ShippingAddressRequest shippingAddressRequest, 
+                string orderId)
+            {
+                try
+                {
+                    // Validacija PayPal narudžbe
+                    if (string.IsNullOrEmpty(orderId))
+                    {
+                        throw new Exception("Invalid PayPal order ID.");
+                    }
+
+                    // Kreiranje narudžbe nakon uspješnog plaćanja
+                    // Ovdje pretpostavljamo da je plaćanje već potvrđeno na PayPal strani
+                    var orderRequest = new OrderRequest
+                    {
+                        UserId = userId,
+                        CartId = cartId,
+                        ShippingAddress = shippingAddressRequest
+                    };
+
+                    var order = await CreateOrderFromCart(orderRequest);
+                    
+                    return order;
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Failed to confirm PayPal payment and create order via REST API: {ex.Message}", ex);
+                }
+            }
         }
     }

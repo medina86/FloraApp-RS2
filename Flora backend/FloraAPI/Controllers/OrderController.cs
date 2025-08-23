@@ -32,6 +32,7 @@ namespace FloraAPI.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        
         [HttpPost("initiatePayPalPayment")]
         public async Task<ActionResult<PayPalPaymentResponse>> InitiatePayPalPayment([FromBody] PayPalPaymentRequest request)
         {
@@ -59,6 +60,77 @@ namespace FloraAPI.Controllers
             catch (Exception ex)
             {
                 return BadRequest($"Error confirming PayPal payment: {ex.Message}");
+            }
+        }
+        
+        // Novi endpoint za inicijalizaciju PayPal plaćanja bez kreiranja narudžbe
+        [HttpPost("initiatePayPalPaymentWithoutOrder")]
+        public async Task<ActionResult<PayPalPaymentResponse>> InitiatePayPalPaymentWithoutOrder([FromBody] PayPalPaymentWithCartRequest request)
+        {
+            try
+            {
+                var response = await _orderService.InitiatePayPalPaymentWithoutOrderAsync(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error initiating PayPal payment: {ex.Message}");
+            }
+        }
+        
+        // Novi endpoint za potvrdu PayPal plaćanja i kreiranje narudžbe
+        [HttpPost("confirm-paypal-payment-and-create-order")]
+        public async Task<ActionResult<OrderResponse>> ConfirmPayPalPaymentAndCreateOrder(
+            [FromQuery] int userId,
+            [FromQuery] int cartId,
+            [FromQuery] string paymentId,
+            [FromQuery] string payerId,
+            [FromBody] ShippingAddressRequest shippingAddress)
+        {
+            try
+            {
+                var order = await _orderService.ConfirmPayPalPaymentAndCreateOrderAsync(
+                    userId, cartId, shippingAddress, paymentId, payerId);
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error confirming PayPal payment and creating order: {ex.Message}");
+            }
+        }
+        
+        // Novi endpoint za inicijalizaciju PayPal plaćanja koristeći REST API
+        [HttpPost("initiatePayPalPaymentRest")]
+        public async Task<ActionResult<PayPalPaymentResponse>> InitiatePayPalPaymentRest([FromBody] PayPalPaymentWithCartRequest request)
+        {
+            try
+            {
+                var response = await _orderService.InitiatePayPalPaymentRestAsync(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error initiating PayPal payment via REST API: {ex.Message}");
+            }
+        }
+        
+        // Novi endpoint za potvrdu PayPal plaćanja i kreiranje narudžbe koristeći REST API
+        [HttpPost("confirm-paypal-payment-and-create-order-rest")]
+        public async Task<ActionResult<OrderResponse>> ConfirmPayPalPaymentAndCreateOrderRest(
+            [FromQuery] int userId,
+            [FromQuery] int cartId,
+            [FromQuery] string orderId,
+            [FromBody] ShippingAddressRequest shippingAddress)
+        {
+            try
+            {
+                var order = await _orderService.ConfirmPayPalPaymentAndCreateOrderRestAsync(
+                    userId, cartId, shippingAddress, orderId);
+                return Ok(order);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error confirming PayPal payment and creating order via REST API: {ex.Message}");
             }
         }
         [HttpPost("{orderId}/process")]
