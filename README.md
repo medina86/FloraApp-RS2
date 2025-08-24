@@ -34,7 +34,7 @@ Vratiti se u FloraApp_RS2 root folder i locirati fit-build-2025-8-24.zip arhivu.
 Extract arhive daje dva foldera: Release i flutter-apk.
 
 U Release folderu pokrenuti:
-flora_desktop.exe
+flora_desktop_app.exe
 
 U flutter-apk folderu nalazi se fajl:
 app-release.apk
