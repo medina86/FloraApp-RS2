@@ -24,6 +24,7 @@ Sistem obuhvata **desktop i mobilnu aplikaciju**, te backend razvijen u **ASP.NE
 
 ```bash
 docker compose up --build
+```
 
 Sačekati da se sve uspješno build-a.⏳
 
