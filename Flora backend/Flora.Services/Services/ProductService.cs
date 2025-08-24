@@ -79,6 +79,32 @@ using System;
                     throw new InvalidOperationException("A product with this name already exists.");
                 }
             }
+            
+    protected override async Task BeforeDelete(Product entity)
+    {
+        // Pronađi i obriši sve CartItem zapise koji referenciraju ovaj proizvod
+        var cartItems = await _context.CartItems
+            .Where(ci => ci.ProductId == entity.Id)
+            .ToListAsync();
+            
+        if (cartItems.Any())
+        {
+            _context.CartItems.RemoveRange(cartItems);
+        }
+        
+        // Pronađi i postavi ProductId na null za sve OrderDetail zapise
+        var orderDetails = await _context.OrderDetails
+            .Where(od => od.ProductId == entity.Id)
+            .ToListAsync();
+            
+        foreach (var detail in orderDetails)
+        {
+            detail.ProductId = null;
+            detail.Product = null;
+        }
+        
+        await _context.SaveChangesAsync();
+    }
 
             public async Task<List<Product>> GetByCategoryIdAsync(int categoryId)
             {

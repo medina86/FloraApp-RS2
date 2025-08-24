@@ -91,10 +91,13 @@ class _DecorationSuggestionsScreenState
     });
 
     try {
-      print('🔍 Fetching suggestions for request ID: ${widget.eventRequest.id}');
-      final url = '$baseUrl/DecorationSuggestion?decorationRequestId=${widget.eventRequest.id}';
+      print(
+        '🔍 Fetching suggestions for request ID: ${widget.eventRequest.id}',
+      );
+      final url =
+          '$baseUrl/DecorationSuggestion?decorationRequestId=${widget.eventRequest.id}';
       print('🔍 URL: $url');
-      
+
       final response = await http.get(
         Uri.parse(url),
         headers: AuthProvider.getHeaders(),
@@ -106,23 +109,29 @@ class _DecorationSuggestionsScreenState
       if (response.statusCode == 200) {
         final dynamic decodedData = json.decode(response.body);
         print('🔍 Decoded data type: ${decodedData.runtimeType}');
-        
+
         List<dynamic> suggestionsJsonList = [];
 
         if (decodedData is Map && decodedData.containsKey('items')) {
           print('🔍 Data contains items key');
           if (decodedData['items'] is List) {
             suggestionsJsonList = decodedData['items'];
-            print('🔍 Items is a list with ${suggestionsJsonList.length} items');
+            print(
+              '🔍 Items is a list with ${suggestionsJsonList.length} items',
+            );
           } else {
-            print('🔍 Items is not a list: ${decodedData['items'].runtimeType}');
+            print(
+              '🔍 Items is not a list: ${decodedData['items'].runtimeType}',
+            );
             suggestionsJsonList = [];
           }
         } else if (decodedData is List) {
           print('🔍 Data is a list with ${decodedData.length} items');
           suggestionsJsonList = decodedData;
         } else {
-          print('🔍 Data is neither a map with items nor a list: ${decodedData.runtimeType}');
+          print(
+            '🔍 Data is neither a map with items nor a list: ${decodedData.runtimeType}',
+          );
           suggestionsJsonList = [];
         }
 
@@ -245,7 +254,7 @@ class _DecorationSuggestionsScreenState
                 ),
               )
             : _suggestions.isEmpty
-            ? Center(child: Text('Nema predloga za ovaj događaj.'))
+            ? Center(child: Text('No suggestions available.'))
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(

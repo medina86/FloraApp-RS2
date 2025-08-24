@@ -11,6 +11,24 @@ class OrderCardWidget extends StatelessWidget {
     required this.order,
     required this.onTap,
   });
+  
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case "Pending":
+      case "PaymentInitiated":
+        return const Color.fromARGB(255, 255, 102, 204); // Pink
+      case "Processed":
+        return const Color.fromARGB(255, 102, 204, 255); // Blue
+      case "Delivered":
+        return const Color.fromARGB(255, 255, 165, 0); // Orange
+      case "Completed":
+        return const Color.fromARGB(255, 51, 204, 51); // Green
+      case "Cancelled":
+        return const Color.fromARGB(255, 255, 0, 0); // Red
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +66,24 @@ class OrderCardWidget extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color.fromARGB(255, 170, 46, 92),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Status: ${order.status ?? "Processing"}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: _getStatusColor(order.status),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total: ${order.totalAmount.toStringAsFixed(2)} KM',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -92,12 +128,25 @@ class OrderCardWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                formattedDate,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${order.orderDetails.length} items',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

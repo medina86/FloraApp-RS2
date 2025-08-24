@@ -156,9 +156,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       bool success;
       if (_isFavorite) {
-        success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
+        // Get the favorite ID for this product
+        final favoriteIds = await FavoriteApiService.getFavoriteProductIds(
           widget.userId,
         );
+        if (favoriteIds.contains(widget.product!.id)) {
+          success = await FavoriteApiService.removeFromFavoritesByFavoriteId(
+            widget.product!.id,
+          );
+        } else {
+          success = false;
+        }
         if (success) {
           setState(() {
             _isFavorite = false;
@@ -308,6 +316,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            _buildHeader(context), // <-- Add header with favorite icon
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -764,91 +773,49 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: () {
-              if (widget.onBack != null) {
-                widget.onBack!();
-              } else {
-                Navigator.pop(context);
-              }
-            },
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                color: Color(0xFFE91E63),
-                size: 20,
-              ),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: GestureDetector(
+          onTap: (!_isCustomBouquet && AuthProvider.isAuthenticated)
+              ? _toggleFavorite
+              : null,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
+            child: _isCustomBouquet
+                ? Icon(
+                    Icons.palette,
+                    color: _getColorFromString(widget.customBouquet!.color),
+                    size: 24,
+                  )
+                : (_isLoadingFavorite
+                      ? const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFE91E63),
+                          ),
+                        )
+                      : Icon(
+                          _isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: AuthProvider.isAuthenticated
+                              ? const Color(0xFFE91E63)
+                              : Colors.grey,
+                          size: 24,
+                        )),
           ),
-          const Text(
-            'Flora',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFE91E63),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          GestureDetector(
-            onTap: (!_isCustomBouquet && AuthProvider.isAuthenticated)
-                ? _toggleFavorite
-                : null,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: _isCustomBouquet
-                  ? Icon(
-                      Icons.palette,
-                      color: _getColorFromString(widget.customBouquet!.color),
-                      size: 24,
-                    )
-                  : (_isLoadingFavorite
-                        ? const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFFE91E63),
-                            ),
-                          )
-                        : Icon(
-                            _isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: AuthProvider.isAuthenticated
-                                ? const Color(0xFFE91E63)
-                                : Colors.grey,
-                            size: 24,
-                          )),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

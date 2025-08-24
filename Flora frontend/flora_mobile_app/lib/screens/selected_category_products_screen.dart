@@ -3,6 +3,7 @@ import 'package:flora_mobile_app/layouts/constants.dart';
 import 'package:flora_mobile_app/layouts/main_layout.dart';
 import 'package:flora_mobile_app/models/product_model.dart';
 import 'package:flora_mobile_app/providers/auth_provider.dart';
+import 'package:flora_mobile_app/providers/favorites_api.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 

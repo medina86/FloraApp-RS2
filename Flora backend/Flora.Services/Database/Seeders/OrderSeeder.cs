@@ -41,7 +41,7 @@ namespace Flora.Services.Database.Seeders
                     UserId = 2,
                     OrderDate = new DateTime(2025, 7, 15),
                     TotalAmount = 100.00m,
-                    Status = OrderStatus.PaymentInitiated,
+                    Status = OrderStatus.Processed,
                     ShippingAddressId = 4
                 }
             );

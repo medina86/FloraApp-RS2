@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using QuestPDF.Infrastructure;
 using DotNetEnv;
+using Microsoft.OpenApi.Writers;
 
 string GetEnv(string defaultValue, params string[] keys)
 {
@@ -38,8 +39,6 @@ TypeAdapterConfig<ProductRequest, Product>.NewConfig()
     .Ignore(dest => dest.Images);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// Dodajemo DbContextFactory za RecommendationService
 builder.Services.AddDbContextFactory<FLoraDbContext>(options =>
     options.UseSqlServer(connectionString));
 
@@ -125,6 +124,17 @@ builder.Services.AddCors(options =>
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+//Migrations
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<FLoraDbContext>();
+
+    dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
+    
+}
+
 app.UseCors("AllowAll");
 
 using (var scope = app.Services.CreateScope())

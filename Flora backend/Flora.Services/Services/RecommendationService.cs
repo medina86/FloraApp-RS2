@@ -153,10 +153,8 @@ namespace Flora.Services.Services
             {
                 _logger.LogInformation("Započinje treniranje ML.NET item-based preporuka");
 
-                // Prvo dohvatimo sve potrebne podatke iz baze u memoriju
                 List<RecommendationInput> userProductPurchases;
                 
-                // Koristimo poseban scope za dohvaćanje podataka iz baze
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     userProductPurchases = await context.OrderDetails
@@ -171,9 +169,7 @@ namespace Flora.Services.Services
                         })
                         .Distinct()
                         .ToListAsync();
-                } // Context je disposed nakon ovog bloka
-
-                // Provjera imamo li dovoljno podataka
+                } 
                 var uniqueUsers = userProductPurchases.Select(p => p.userId).Distinct().Count();
                 var uniqueProducts = userProductPurchases.Select(p => p.productId).Distinct().Count();
                 var totalPurchases = userProductPurchases.Count;
@@ -188,19 +184,16 @@ namespace Flora.Services.Services
                     return;
                 }
                 
-                // Dodatna provjera da imamo dovoljnu gustoću podataka
                 var density = (double)totalPurchases / (uniqueUsers * uniqueProducts);
                 if (density < 0.01) // Manje od 1% popunjenosti matrice
                 {
                     _logger.LogWarning("Premala gustoća podataka za treniranje MF modela: {Density:P2}. Koristit ćemo jednostavniju metodu.", density);
-                    // Ovdje možemo implementirati jednostavniju metodu preporuke ako je potrebno
+                    
                 }
 
-                // ML operacije radimo s podacima u memoriji
                 var mlContext = new MLContext();
                 var dataView = mlContext.Data.LoadFromEnumerable(userProductPurchases);
 
-                // Dodajemo transformacije za mapiranje string kolona u numeričke ključeve
                 var pipeline = mlContext.Transforms.Conversion
                     .MapValueToKey(inputColumnName: nameof(RecommendationInput.userId), 
                                   outputColumnName: "userIdEncoded")
@@ -208,23 +201,17 @@ namespace Flora.Services.Services
                         .MapValueToKey(inputColumnName: nameof(RecommendationInput.productId), 
                                       outputColumnName: "productIdEncoded"));
                 
-                // Primjenjujemo transformacije na podatke
                 var transformedData = pipeline.Fit(dataView).Transform(dataView);
                 
-                // Definiramo opcije za MatrixFactorization sa stabilnijim parametrima
                 var options = new MatrixFactorizationTrainer.Options
                 {
                     MatrixColumnIndexColumnName = "userIdEncoded",
                     MatrixRowIndexColumnName = "productIdEncoded",
                     LabelColumnName = nameof(RecommendationInput.Label),
-                    // Smanjujemo broj iteracija i rank za stabilnije treniranje
                     NumberOfIterations = 5,
                     ApproximationRank = 8,
-                    // Dodajemo regularizaciju za sprječavanje overfittinga
                     Lambda = 0.1,
-                    // Smanjujemo learning rate za stabilnije treniranje
                     LearningRate = 0.01,
-                    // Dodajemo random seed za reproducibilnost
                     Quiet = true
                 };
 
@@ -232,18 +219,14 @@ namespace Flora.Services.Services
                 var trainer = mlContext.Recommendation().Trainers.MatrixFactorization(options);
                 var model = trainer.Fit(transformedData);
                 
-                // Kreiramo kompletan model koji uključuje transformacije i treniranje
                 var completeModel = pipeline.Append(trainer);
                 var trainedModel = completeModel.Fit(dataView);
                 
-                // Kreiramo prediction engine koji će automatski mapirati string vrijednosti u numeričke ključeve
                 var predictionEngine = mlContext.Model.CreatePredictionEngine<RecommendationInput, RecommendationPrediction>(trainedModel);
 
-                // Kreiramo novi dictionary za sigurno ažuriranje
                 var newSimilarityMap = new Dictionary<(int, int), double>();
                 var productIds = userProductPurchases.Select(p => int.Parse(p.productId)).Distinct().ToList();
 
-                // Koristimo try-catch blok za cijeli proces predikcije
                 try {
                     foreach (var p1 in productIds)
                     {
@@ -263,7 +246,6 @@ namespace Flora.Services.Services
                                     ? 0.0
                                     : prediction.Score;
                                 
-                                // Ograničavamo score na razuman raspon
                                 score = Math.Max(-5.0, Math.Min(5.0, score));
                                 
                                 newSimilarityMap[(p1, p2)] = score;
@@ -278,11 +260,10 @@ namespace Flora.Services.Services
                 }
                 catch (Exception ex) {
                     _logger.LogError(ex, "Greška prilikom izračunavanja sličnosti proizvoda");
-                    // Ako dođe do greške, osiguravamo da imamo barem praznu mapu
+                   
                     newSimilarityMap = new Dictionary<(int, int), double>();
                 }
 
-                // Atomsko ažuriranje reference na _similarityMap
                 _similarityMap = newSimilarityMap;
 
                 _logger.LogInformation("ML.NET sličnosti proizvoda izračunate. Ukupno parova: {Count}", _similarityMap.Count);

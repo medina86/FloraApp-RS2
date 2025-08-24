@@ -44,7 +44,6 @@ namespace Flora.Services.Database
         {
             base.OnModelCreating(modelBuilder);
 
-            // Seeding data
             modelBuilder.Entity<Categories>().SeedData();
             modelBuilder.Entity<Occasion>().SeedData();
             modelBuilder.Entity<Role>().SeedData();
@@ -99,18 +98,17 @@ namespace Flora.Services.Database
                 .Property(o => o.Status)
                 .HasConversion<string>();
                 
-            // Configure DecorationSelection relationships to avoid cascade delete cycles
             modelBuilder.Entity<DecorationSelection>()
                 .HasOne(ds => ds.DecorationSuggestion)
                 .WithMany()
                 .HasForeignKey(ds => ds.DecorationSuggestionId)
-                .OnDelete(DeleteBehavior.NoAction); // Change to NoAction to prevent cascade delete cycles
+                .OnDelete(DeleteBehavior.NoAction); 
                 
             modelBuilder.Entity<DecorationSelection>()
                 .HasOne(ds => ds.DecorationRequest)
                 .WithMany()
                 .HasForeignKey(ds => ds.DecorationRequestId)
-                .OnDelete(DeleteBehavior.NoAction); // Change to NoAction to prevent cascade delete cycles
+                .OnDelete(DeleteBehavior.NoAction); 
         }
     }
     }

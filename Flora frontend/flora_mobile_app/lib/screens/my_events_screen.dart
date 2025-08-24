@@ -184,7 +184,7 @@ class _MyEventsScreenState extends State<MyEventsScreen> {
                     ),
                   )
                 : _myEvents.isEmpty
-                ? const Center(child: Text('Nema zakazanih događaja.'))
+                ? const Center(child: Text('No events found.'))
                 : ListView.builder(
                     padding: const EdgeInsets.all(16.0),
                     itemCount: _myEvents.length,

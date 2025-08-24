@@ -46,12 +46,6 @@ class _RegisterPageState extends State<RegisterPage> {
       final userResponse = jsonDecode(response.body);
       final userId = userResponse['id'];
 
-      try {
-        await CartApiService.createCartForUser(userId);
-        print('Cart successfully created for user $userId');
-      } catch (e) {
-        print('Warning: Failed to create cart for user $userId: $e');
-      }
 
       showDialog(
         context: context,

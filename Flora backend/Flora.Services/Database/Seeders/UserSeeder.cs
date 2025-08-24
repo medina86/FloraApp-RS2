@@ -11,10 +11,10 @@ namespace Flora.Services.Database.Seeders
         {
             
             string adminSalt;
-            string adminHash = HashPassword("admin123", out adminSalt);
+            string adminHash = HashPassword("test", out adminSalt);
 
             string userSalt;
-            string userHash = HashPassword("user123", out userSalt);
+            string userHash = HashPassword("test", out userSalt);
 
             string user1Salt;
             string user1Hash = HashPassword("medina123", out user1Salt);
@@ -26,7 +26,7 @@ namespace Flora.Services.Database.Seeders
                     FirstName = "Admin",
                     LastName = "Admin",
                     Email = "admin@flora.com",
-                    Username = "admin",
+                    Username = "desktop",
                     PasswordHash = adminHash,
                     PasswordSalt = adminSalt,
                     IsActive = true,
@@ -38,7 +38,7 @@ namespace Flora.Services.Database.Seeders
                     FirstName = "User",
                     LastName = "User",
                     Email = "user@flora.com",
-                    Username = "user",
+                    Username = "mobile",
                     PasswordHash = userHash,
                     PasswordSalt = userSalt,
                     IsActive = true,

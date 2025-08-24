@@ -35,9 +35,11 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
   }
 
   Future<void> _fetchSuggestions() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final response = await http.get(
@@ -49,24 +51,28 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> suggestions = json.decode(response.body);
-        setState(() {
-          _suggestions = suggestions;
-        });
+        if (mounted) {
+          setState(() {
+            _suggestions = suggestions;
+          });
+        }
       } else {
         print('Failed to load suggestions: ${response.statusCode}');
       }
     } catch (e) {
       print('Error loading suggestions: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    if (image != null && mounted) {
       setState(() {
         _selectedImage = File(image.path);
       });
@@ -74,6 +80,8 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
   }
 
   Future<void> _sendMessage() async {
+    if (!mounted) return;
+    
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -141,9 +149,11 @@ class _SendIdeasScreenState extends State<SendIdeasScreen> {
       ).showSnackBar(SnackBar(content: Text('Failed to send ideas: $e')));
       print('Error sending ideas: $e');
     } finally {
-      setState(() {
-        _isSending = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+        });
+      }
     }
   }
 

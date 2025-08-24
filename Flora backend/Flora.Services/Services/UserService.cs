@@ -110,6 +110,13 @@ namespace Flora.Services.Services
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            var cart = new Cart
+            {
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Carts.Add(cart);
+
             if (request.RoleIds != null && request.RoleIds.Count > 0)
             {
                 foreach (var roleId in request.RoleIds)
@@ -125,8 +132,9 @@ namespace Flora.Services.Services
                         _context.UserRoles.Add(userRole);
                     }
                 }
-                await _context.SaveChangesAsync();
             }
+            
+            await _context.SaveChangesAsync();
 
             return await GetUserResponseWithRolesAsync(user.Id);
         }
