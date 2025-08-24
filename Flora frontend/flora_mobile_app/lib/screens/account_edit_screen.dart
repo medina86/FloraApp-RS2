@@ -337,7 +337,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         helperText: isEmail
             ? 'Enter a valid email address'
             : isPhone
-            ? 'Enter phone number (e.g., +387 33 123 456)'
+            ? 'Enter phone number (e.g., +38733123456)'
             : isUsername
             ? 'Letters, numbers, and underscores only'
             : isName

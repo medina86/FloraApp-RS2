@@ -391,7 +391,30 @@ class _MainLayoutState extends State<MainLayout> {
 
     final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        // Handle back button press
+        if (_selectedProductScreen != null) {
+          goBackToProductsList();
+          return false; // Don't exit the app
+        } else if (_selectedCategoryScreen != null) {
+          goBackToCategories();
+          return false; // Don't exit the app
+        } else if (_selectedOccasionScreen != null) {
+          goBackToHome();
+          return false; // Don't exit the app
+        } else if (_selectedIndex != 0) {
+          // If not on home screen, go to home
+          setState(() {
+            _selectedIndex = 0;
+          });
+          return false; // Don't exit the app
+        } else {
+          // If on home screen, allow normal back behavior (exit app)
+          return true;
+        }
+      },
+      child: Scaffold(
       key: scaffoldKey,
       backgroundColor: Colors.white,
       appBar: GlobalAppHeader(
@@ -455,6 +478,7 @@ class _MainLayoutState extends State<MainLayout> {
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Account"),
         ],
+      ),
       ),
     );
   }

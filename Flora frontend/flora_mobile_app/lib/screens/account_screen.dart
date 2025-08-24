@@ -199,8 +199,9 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => FAQDialog.show(context),
         ),
         AccountMenuItem(
-          label: "Contact us (0616813321)",
+          label: "Contact us",
           icon: Icons.contact_phone,
+          onTap: () => _showContactDialog(),
         ),
         AccountMenuItem(
           label: "Log out",
@@ -208,6 +209,37 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => handleLogout(context),
         ),
       ],
+    );
+  }
+
+  void _showContactDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Contact'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Phone: +387 33 123 456'),
+            SizedBox(height: 8),
+            Text('Email: info@flora.ba'),
+            SizedBox(height: 8),
+            Text('Address: Zmaja od Bosne bb, Sarajevo'),
+            SizedBox(height: 16),
+            Text('Working Hours:'),
+            Text('Monday - Friday: 08:00 - 20:00'),
+            Text('Saturday: 08:00 - 17:00'),
+            Text('Sunday: 09:00 - 15:00'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Close'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
     );
   }
 }
