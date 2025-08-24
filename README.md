@@ -45,6 +45,7 @@ Prenijeti ga na Android emulator ili fizički uređaj.
 Nakon instalacije obje aplikacije, prijaviti se pomoću test kredencijala.
 
 🔐 Kredencijali za prijavu
+
 🌼 Administrator
 
 Korisničko ime: desktop
@@ -69,7 +70,7 @@ Email: kupac@example.com
 
 Lozinka: 12345678
 
-🔧 Mikroservis funkcionalnosti
+## 🔧 Mikroservis funkcionalnosti
 
 Aplikacija koristi RabbitMQ mikroservis za automatsko slanje email obavještenja u sljedećim slučajevima:
 
@@ -77,7 +78,7 @@ Aplikacija koristi RabbitMQ mikroservis za automatsko slanje email obavještenja
 
 🌹 Promjene statusa narudžbi
 
-🛠️ Tehnologije
+## 🛠️ Tehnologije
 
 🌸 Backend: ASP.NET Core (C#), EF Core
 
@@ -92,5 +93,7 @@ Aplikacija koristi RabbitMQ mikroservis za automatsko slanje email obavještenja
 🐳 Containerization: Docker
 
 ☁️ Cloud Storage: Azure Blob Storage
+
+
 
 📌 Projekt razvijen u sklopu predmeta Razvoj softvera 2 na Fakultetu informacijskih tehnologija Mostar.
