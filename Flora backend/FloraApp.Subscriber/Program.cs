@@ -55,7 +55,6 @@ try
 
     Console.WriteLine($"Connecting to RabbitMQ at {hostname}:{port} with user {username}");
 
-    // Inicijalizuj SMTP postavke
     var smtpSettings = new SmtpSettings
     {
         Username = GetEnv("your_email@gmail.com", "SMTP_USERNAME"),
@@ -79,7 +78,6 @@ try
     channel.ExchangeDeclare(exchangeName, ExchangeType.Direct, durable: true, autoDelete: false);
     channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
     
-    // Bind queue za različite routing keys
     channel.QueueBind(queueName, exchangeName, "order.created");
     channel.QueueBind(queueName, exchangeName, "order.statuschanged");
     Console.WriteLine("Queue bound to routing keys: order.created, order.statuschanged");

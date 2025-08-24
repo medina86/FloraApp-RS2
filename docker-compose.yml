@@ -1,0 +1,103 @@
+version: '3'
+
+# Load environment variables from .env file
+# Note: Docker Compose automatically loads .env file in the same directory
+services:
+  flora-sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=MySuperStrong!Pass123
+      - MSSQL_PID=Developer
+    ports:
+      - "1401:1433"
+    expose:
+      - 1433
+    networks:
+      - flora-network
+    volumes:
+      - sql_data:/var/lib/sql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - flora-network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    user: "999:999"
+  
+  flora-api:
+    build:
+      context: ./Flora backend
+      dockerfile: FloraAPI/Dockerfile
+    env_file:
+      - ./Flora backend/FloraAPI/.env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings:DefaultConnection=Server=flora-sql,1433;Database=flora-sql;User ID=sa;Password=MySuperStrong!Pass123;TrustServerCertificate=True
+      
+      # RabbitMQ settings
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      
+      - ASPNETCORE_HTTP_PORTS=8080
+    ports:
+      - "5014:8080"
+    networks:
+      - flora-network
+    depends_on:
+      - flora-sql
+      - rabbitmq
+    restart: unless-stopped
+   
+  flora-subscriber:
+    build:
+      context: ./Flora backend
+      dockerfile: FloraApp.Subscriber/Dockerfile
+    env_file:
+      - ./Flora backend/FloraApp.Subscriber/.env
+    environment:
+      # RabbitMQ settings
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+
+      # Queue name
+      - MAIL_QUEUE_NAME=${MAIL_QUEUE_NAME}
+      
+      # SMTP settings
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+    networks:
+      - flora-network
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+
+networks:
+  flora-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
+    driver: local
+  sql_data:
+    driver: local

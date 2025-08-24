@@ -10,6 +10,7 @@ class AppColors {
   static const white = Colors.white;
 }
 
+
 class AppTextStyles {
   static const nameStyle = TextStyle(fontSize: 20, fontWeight: FontWeight.bold);
 

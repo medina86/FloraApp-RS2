@@ -19,9 +19,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final _phone = TextEditingController();
   final _username = TextEditingController();
   final _password = TextEditingController();
+  bool _isLoading = false;
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
 
     final url = Uri.parse('$baseUrl/Users');
 
@@ -46,7 +51,6 @@ class _RegisterPageState extends State<RegisterPage> {
       final userResponse = jsonDecode(response.body);
       final userId = userResponse['id'];
 
-
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -64,31 +68,152 @@ class _RegisterPageState extends State<RegisterPage> {
       );
     } else {
       // Detaljnije error handling
-      String errorMessage =
-          "Registration failed. Please check your information and try again.";
+      String errorMessage = "Registration failed. Please try again.";
+      String? specificField;
 
-      if (response.statusCode == 400) {
-        errorMessage =
-            "Invalid data provided. Please check all fields and try again.";
-      } else if (response.statusCode == 409) {
-        errorMessage = "An account with this email or username already exists.";
-      } else if (response.statusCode == 500) {
-        errorMessage = "Server error occurred. Please try again later.";
+      try {
+        final errorResponse = jsonDecode(response.body);
+        
+        if (response.statusCode == 400) {
+          if (errorResponse['field'] != null && errorResponse['error'] != null) {
+            // Specific field error (username/email already exists)
+            errorMessage = errorResponse['error'];
+            specificField = errorResponse['field'];
+            
+            // Highlight the specific field with error
+            if (specificField == 'email') {
+              _showFieldError('Email already in use', 'This email address is already registered. Please use a different email.');
+              return;
+            } else if (specificField == 'username') {
+              _showFieldError('Username taken', 'This username is already taken. Please choose a different username.');
+              return;
+            }
+          } else if (errorResponse['errors'] != null) {
+            // Validation errors
+            final errors = errorResponse['errors'] as Map<String, dynamic>;
+            _showValidationErrors(errors);
+            return;
+          } else if (errorResponse['message'] != null) {
+            errorMessage = errorResponse['message'];
+          }
+        } else if (response.statusCode == 500) {
+          errorMessage = "Server error occurred. Please try again later.";
+        }
+      } catch (e) {
+        // If we can't parse the error, use default message
+        if (response.statusCode == 400) {
+          errorMessage = "Invalid data provided. Please check all fields and try again.";
+        } else if (response.statusCode == 500) {
+          errorMessage = "Server error occurred. Please try again later.";
+        }
       }
 
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Registration Failed"),
-          content: Text(errorMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text("Try Again"),
+      _showErrorDialog(errorMessage);
+    }
+    
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  void _showFieldError(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Registration Failed"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Try Again"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showValidationErrors(Map<String, dynamic> errors) {
+    List<Widget> errorWidgets = [];
+    
+    errors.forEach((field, fieldErrors) {
+      if (fieldErrors is List) {
+        String fieldName = _getFieldDisplayName(field);
+        for (String error in fieldErrors.cast<String>()) {
+          errorWidgets.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error, color: Colors.red, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '$fieldName: $error',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          );
+        }
+      }
+    });
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Please fix the following errors:"),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: errorWidgets,
+          ),
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFieldDisplayName(String field) {
+    switch (field.toLowerCase()) {
+      case 'firstname':
+        return 'First Name';
+      case 'lastname':
+        return 'Last Name';
+      case 'email':
+        return 'Email';
+      case 'username':
+        return 'Username';
+      case 'phonenumber':
+        return 'Phone Number';
+      case 'password':
+        return 'Password';
+      default:
+        return field;
     }
   }
 
@@ -293,9 +418,11 @@ class _RegisterPageState extends State<RegisterPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _register,
+                      onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(165, 53, 131, 1),
+                        backgroundColor: _isLoading 
+                          ? Colors.grey 
+                          : const Color.fromRGBO(165, 53, 131, 1),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -306,7 +433,23 @@ class _RegisterPageState extends State<RegisterPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text("Register"),
+                      child: _isLoading
+                        ? const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Text("Registering..."),
+                            ],
+                          )
+                        : const Text("Register"),
                     ),
                   ),
                 ],

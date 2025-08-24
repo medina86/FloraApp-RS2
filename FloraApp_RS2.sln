@@ -1,0 +1,50 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Flora backend", "Flora backend", "{1B96C376-E32C-BA75-D007-EE701105009C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flora.Models", "Flora backend\Flora.Models\Flora.Models.csproj", "{AD41B348-1766-1067-6C8E-E064002DC628}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Flora.Services", "Flora backend\Flora.Services\Flora.Services.csproj", "{E3971F95-7A74-CA29-F501-25171A6A6720}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FloraAPI", "Flora backend\FloraAPI\FloraAPI.csproj", "{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FloraApp.Subscriber", "Flora backend\FloraApp.Subscriber\FloraApp.Subscriber.csproj", "{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AD41B348-1766-1067-6C8E-E064002DC628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD41B348-1766-1067-6C8E-E064002DC628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD41B348-1766-1067-6C8E-E064002DC628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD41B348-1766-1067-6C8E-E064002DC628}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3971F95-7A74-CA29-F501-25171A6A6720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3971F95-7A74-CA29-F501-25171A6A6720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3971F95-7A74-CA29-F501-25171A6A6720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3971F95-7A74-CA29-F501-25171A6A6720}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{AD41B348-1766-1067-6C8E-E064002DC628} = {1B96C376-E32C-BA75-D007-EE701105009C}
+		{E3971F95-7A74-CA29-F501-25171A6A6720} = {1B96C376-E32C-BA75-D007-EE701105009C}
+		{6D6C9DA4-AE4F-4D5F-558C-2DF891E71571} = {1B96C376-E32C-BA75-D007-EE701105009C}
+		{4E6DD5FD-2A49-CCB6-4900-FC356D0F57D1} = {1B96C376-E32C-BA75-D007-EE701105009C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1355A57D-1E69-45BB-84E3-D477E5B0355E}
+	EndGlobalSection
+EndGlobal

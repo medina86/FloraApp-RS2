@@ -13,6 +13,8 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FloraAPI/FloraAPI.csproj", "FloraAPI/"]
+COPY ["Flora.Models/Flora.Models.csproj", "Flora.Models/"]
+COPY ["Flora.Services/Flora.Services.csproj", "Flora.Services/"]
 RUN dotnet restore "./FloraAPI/FloraAPI.csproj"
 COPY . .
 WORKDIR "/src/FloraAPI"

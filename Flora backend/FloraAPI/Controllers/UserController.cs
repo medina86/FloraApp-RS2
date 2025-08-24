@@ -42,8 +42,59 @@ namespace FloraAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<UserResponse>> Create(UserRequest request)
         {
-            var createdUser = await _userService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
+            try
+            {
+                // Validate model first
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+                    
+                    return BadRequest(new { 
+                        message = "Validation failed",
+                        errors = errors
+                    });
+                }
+
+                var createdUser = await _userService.CreateAsync(request);
+                return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Handle specific validation errors
+                if (ex.Message.Contains("email"))
+                {
+                    return BadRequest(new { 
+                        message = "Email already exists",
+                        field = "email",
+                        error = "A user with this email address already exists. Please use a different email."
+                    });
+                }
+                else if (ex.Message.Contains("username"))
+                {
+                    return BadRequest(new { 
+                        message = "Username already exists",
+                        field = "username", 
+                        error = "This username is already taken. Please choose a different username."
+                    });
+                }
+                
+                return BadRequest(new { 
+                    message = "Registration failed",
+                    error = ex.Message 
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { 
+                    message = "Internal server error",
+                    error = "An unexpected error occurred. Please try again later."
+                });
+            }
         }
 
         [Authorize]

@@ -24,10 +24,19 @@ namespace Flora.Services.Services
         public RabbitMQService(ILogger<RabbitMQService> logger)
         {
             _logger = logger;
-            _hostname = "localhost";
-            _port = 5672;
-            _username = "guest";
-            _password = "guest";
+            
+            // Get RabbitMQ settings from environment variables or use defaults
+            _hostname = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost";
+            
+            // Try to parse port from environment variable or use default
+            if (!int.TryParse(Environment.GetEnvironmentVariable("RABBITMQ_PORT"), out int port))
+                port = 5672;
+            _port = port;
+            
+            _username = Environment.GetEnvironmentVariable("RABBITMQ_USERNAME") ?? "guest";
+            _password = Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? "guest";
+            
+            _logger.LogInformation($"RabbitMQ configured with host: {_hostname}, port: {_port}");
         }
 
         public void SendMessage<T>(string routingKey, T message)

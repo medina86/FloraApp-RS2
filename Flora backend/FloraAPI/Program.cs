@@ -129,7 +129,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FLoraDbContext>();
-
+    Console.WriteLine("Migracije + seed pokrenut");
     dbContext.Database.EnsureCreated();
     dbContext.Database.Migrate();
     
@@ -137,11 +137,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("AllowAll");
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<FLoraDbContext>();
-
-}
 
 if (app.Environment.IsDevelopment())
 {
