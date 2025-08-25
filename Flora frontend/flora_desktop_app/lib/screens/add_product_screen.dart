@@ -101,27 +101,44 @@ class _AddProductPageState extends State<AddProductPage> {
     int productId,
   ) async {
     List<String> uploadedUrls = [];
-    for (File imageFile in imageFiles) {
-      try {
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('$baseUrl/Product/$productId/upload-images'),
-        );
+    
+    if (imageFiles.isEmpty) return uploadedUrls;
+    
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/Product/$productId/upload-images'),
+      );
+      
+      // Add headers
+      request.headers.addAll(AuthProvider.getHeaders());
+      
+      // Add all files with the same field name 'files'
+      for (File imageFile in imageFiles) {
         request.files.add(
           await http.MultipartFile.fromPath('files', imageFile.path),
         );
-        var response = await request.send();
-        var responseData = await response.stream.bytesToString();
-        if (response.statusCode == 200) {
-          final List<dynamic> urls = json.decode(responseData);
-          if (urls.isNotEmpty) {
-            uploadedUrls.add(urls[0] as String);
-          }
-        }
-      } catch (e) {
-        print('Error uploading image: $e');
       }
+      
+      print('Uploading ${imageFiles.length} images for product $productId');
+      
+      var response = await request.send();
+      var responseData = await response.stream.bytesToString();
+      
+      print('Upload response status: ${response.statusCode}');
+      print('Upload response data: $responseData');
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> urls = json.decode(responseData);
+        uploadedUrls = urls.cast<String>();
+        print('Successfully uploaded ${urls.length} images');
+      } else {
+        print('Failed to upload images: ${response.statusCode} - $responseData');
+      }
+    } catch (e) {
+      print('Error uploading images: $e');
     }
+    
     return uploadedUrls;
   }
 
@@ -156,10 +173,23 @@ class _AddProductPageState extends State<AddProductPage> {
           setState(() {
             isUploadingImages = true;
           });
-          await uploadImages(selectedImages, productId);
+          
+          final uploadedUrls = await uploadImages(selectedImages, productId);
+          
           setState(() {
             isUploadingImages = false;
           });
+          
+          if (uploadedUrls.length != selectedImages.length) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Warning: Only ${uploadedUrls.length} of ${selectedImages.length} images were uploaded successfully',
+                ),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
         }
 
         ScaffoldMessenger.of(context).showSnackBar(

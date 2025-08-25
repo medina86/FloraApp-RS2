@@ -23,8 +23,8 @@ class OrderDetailModel {
     this.customBouquetComponents,
   });
 
-  bool get isCustomBouquet =>
-      productName.toLowerCase().contains('custom bouquet');
+  bool get isCustomBouquet => 
+      customBouquetId != null || productName.toLowerCase().contains('custom bouquet');
 
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
     List<CustomBouquetComponent>? components;
@@ -61,12 +61,12 @@ class OrderDetailModel {
     }
 
     return OrderDetailModel(
-      id: json['id'],
+      id: json['id'] ?? 0,
       productId: json['productId'],
-      productName: json['productName'],
+      productName: json['productName'] ?? 'Unknown Item',
       productImageUrl: json['productImageUrl'],
-      quantity: json['quantity'],
-      priceAtPurchase: json['priceAtPurchase']?.toDouble(),
+      quantity: json['quantity'] ?? 0,
+      priceAtPurchase: (json['priceAtPurchase'] ?? 0.0).toDouble(),
       cardMessage: json['cardMessage'],
       specialInstructions: json['specialInstructions'],
       customBouquetId: json['customBouquetId'],

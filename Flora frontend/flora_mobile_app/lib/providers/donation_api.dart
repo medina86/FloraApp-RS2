@@ -40,6 +40,14 @@ class DonationApiService {
     );
   }
 
+  static Future<Donation> updateDonation(int id, Donation donation) async {
+    return await BaseApiService.put<Donation>(
+      '/Donation/$id',
+      donation.toJson(),
+      (data) => Donation.fromJson(data),
+    );
+  }
+
   // PayPal donacijske metode
   static Future<PayPalDonationResponse> initiatePayPalDonation({
     required int campaignId,

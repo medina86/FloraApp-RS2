@@ -69,6 +69,9 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
 
   Future<void> _pickImage() async {
     if (!mounted) return;
+    
+    // Only allow image picking for new campaigns, not for editing
+    if (_isEditMode) return;
 
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -114,7 +117,8 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
         ..fields['description'] = _descriptionController.text
         ..fields['endDate'] = _selectedEndDate!.toIso8601String();
 
-      if (_selectedImage != null) {
+      // Only add image for new campaigns, not for editing
+      if (_selectedImage != null && !_isEditMode) {
         final file = await http.MultipartFile.fromPath(
           'image',
           _selectedImage!.path,
@@ -261,38 +265,40 @@ class _AddDonationCampaignScreenState extends State<AddDonationCampaignScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        InkWell(
-                          onTap: _pickImage,
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Campaign Image',
-                              border: OutlineInputBorder(),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _selectedImage != null
-                                      ? Icons.check_circle
-                                      : Icons.add_photo_alternate,
-                                  color: _selectedImage != null
-                                      ? Colors.green
-                                      : Colors.grey,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _selectedImage != null
-                                      ? 'Image selected: ${_selectedImage!.name}'
-                                      : 'Click to select image',
-                                  style: TextStyle(
+                        // Only show image picker for new campaigns, not for editing
+                        if (!_isEditMode)
+                          InkWell(
+                            onTap: _pickImage,
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Campaign Image',
+                                border: OutlineInputBorder(),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _selectedImage != null
+                                        ? Icons.check_circle
+                                        : Icons.add_photo_alternate,
                                     color: _selectedImage != null
-                                        ? Colors.black
-                                        : Colors.grey[600],
+                                        ? Colors.green
+                                        : Colors.grey,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _selectedImage != null
+                                        ? 'Image selected: ${_selectedImage!.name}'
+                                        : 'Click to select image',
+                                    style: TextStyle(
+                                      color: _selectedImage != null
+                                          ? Colors.black
+                                          : Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
                         const SizedBox(height: 32),
                         Center(
                           child: ElevatedButton(

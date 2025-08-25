@@ -136,6 +136,12 @@ using System.Threading.Tasks;
                     throw new Exception($"Order with ID {orderId} not found.");
                 }
 
+                // Check if order is already processed to prevent duplicate state transition
+                if (order.Status == OrderStatus.Processed)
+                {
+                    throw new Exception($"Order with ID {orderId} is already processed.");
+                }
+
                 OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Processed);
                 order.Status = OrderStatus.Processed;
                 await _context.SaveChangesAsync();
@@ -166,6 +172,12 @@ using System.Threading.Tasks;
                     throw new Exception($"Order with ID {orderId} not found.");
                 }
 
+                // Check if order is already delivered to prevent duplicate state transition
+                if (order.Status == OrderStatus.Delivered)
+                {
+                    throw new Exception($"Order with ID {orderId} is already delivered.");
+                }
+
                 OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Delivered);
                 order.Status = OrderStatus.Delivered;
                 await _context.SaveChangesAsync();
@@ -194,6 +206,12 @@ using System.Threading.Tasks;
                 if (order == null)
                 {
                     throw new Exception($"Order with ID {orderId} not found.");
+                }
+
+                // Check if order is already completed to prevent duplicate state transition
+                if (order.Status == OrderStatus.Completed)
+                {
+                    throw new Exception($"Order with ID {orderId} is already completed.");
                 }
 
                 OrderStateMachine.EnsureValidTransition(order.Status, OrderStatus.Completed);
@@ -294,6 +312,9 @@ using System.Threading.Tasks;
             {
                 if (orderDetail.Product?.Images != null)
                     return orderDetail.Product.Images.FirstOrDefault()?.ImageUrl;
+
+                if (orderDetail.customBouquet != null)
+                    return "https://via.placeholder.com/150x150/FFB6C1/FFFFFF?text=Custom+Bouquet";
 
                 return null;
             }
